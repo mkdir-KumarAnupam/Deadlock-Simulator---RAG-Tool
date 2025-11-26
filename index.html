@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG OS Simulator v3.6 - Crisp</title>
+    <title>RAG OS Simulator v4.0 - Crisp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -207,12 +207,23 @@
         .neo-btn:hover {
             transform: translate(-1px, -1px);
             box-shadow: 5px 5px 0px black;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .neo-btn:active, .neo-btn.active {
             transform: translate(2px, 2px);
             box-shadow: 1px 1px 0px black;
             background-color: #ffe600;
+            transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes btn-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .neo-btn.pulse-once {
+            animation: btn-pulse 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .neo-btn.danger { color: #d32f2f; border-color: #d32f2f; }
@@ -275,6 +286,27 @@
             font-size: 14px;
             font-weight: bold;
             outline: none;
+        }
+
+        /* Snap/Pop animations for deadlock detection */
+        @keyframes deadlock-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            75% { transform: translateX(5px) rotate(1deg); }
+        }
+
+        @keyframes snap-in {
+            0% { transform: scale(0.8) rotate(-5deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(2deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .snap-effect {
+            animation: snap-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .shake-effect {
+            animation: deadlock-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
         }
 
         /* --- Tabs & Panes --- */
@@ -379,6 +411,91 @@
         .legend-shape { width: 14px; height: 14px; border: 2px solid black; }
 
         canvas { cursor: crosshair; }
+
+        /* Tools Panel Animation */
+        #sidebar-tools {
+            transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #sidebar-tools.shift-left {
+            right: 370px !important;
+        }
+
+        /* Stats Pane */
+        .stats-pane {
+            position: fixed;
+            right: -350px;
+            top: 70px;
+            bottom: 0;
+            width: 350px;
+            background: white;
+            border-left: 4px solid black;
+            box-shadow: -6px 0px 0px black;
+            z-index: 25;
+            transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stats-pane.open {
+            right: 0;
+        }
+
+        .stats-toggle-btn {
+            position: absolute;
+            left: -48px;
+            top: 20px;
+            width: 44px;
+            height: 44px;
+            background: white;
+            border: 4px solid black;
+            box-shadow: -4px 4px 0px black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            transition: all 0.2s;
+        }
+
+        .stats-toggle-btn:hover {
+            transform: translate(2px, -2px);
+            box-shadow: -6px 6px 0px black;
+        }
+
+        .stats-toggle-btn:active {
+            transform: translate(-1px, 1px);
+            box-shadow: -2px 2px 0px black;
+        }
+
+        .stats-section {
+            padding: 15px;
+            border-bottom: 3px solid black;
+        }
+
+        .stats-section h3 {
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+            font-weight: bold;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .stat-value {
+            background: #ffe600;
+            padding: 2px 8px;
+            border: 2px solid black;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col" onclick="closeMenu(event)">
@@ -390,7 +507,7 @@
             <div class="relative">
                 <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
                     <span>DEADLOCK_SIM</span>
-                    <span class="neo-tag">v3.5</span>
+                    <span class="neo-tag">v4.0</span>
                     <span class="text-xs ml-1 opacity-70">▼</span>
                 </div>
 
@@ -516,14 +633,104 @@
             <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i class="fas fa-play"></i> Run OS</button>
             <button onclick="detectDeadlock(false)" class="neo-btn bg-black text-white hover:bg-gray-800">Check Deadlock</button>
             <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera"></i> Snap</button>
+            <button onclick="toggleStatsPane()" id="btn-stats" class="neo-btn" title="Toggle Statistics"><i class="fas fa-chart-bar"></i> Stats</button>
         </div>
     </header>
+
+    <!-- Stats Pane -->
+    <div id="stats-pane" class="stats-pane">
+        <div class="stats-toggle-btn" onclick="toggleStatsPane()" title="Toggle Stats">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+
+        <div class="stats-section bg-black text-white">
+            <h3 class="text-center">LIVE STATISTICS</h3>
+        </div>
+
+        <div class="overflow-y-auto flex-grow">
+            <div class="stats-section">
+                <h3>System Overview</h3>
+                <div class="stat-item">
+                    <span>Total Processes:</span>
+                    <span class="stat-value" id="stat-processes">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Total Resources:</span>
+                    <span class="stat-value" id="stat-resources">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Running Process:</span>
+                    <span class="stat-value" id="stat-running">IDLE</span>
+                </div>
+                <div class="stat-item">
+                    <span>Scheduler:</span>
+                    <span class="stat-value" id="stat-scheduler">FCFS</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>Process States</h3>
+                <div class="stat-item">
+                    <span>Ready:</span>
+                    <span class="stat-value" id="stat-ready">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Running:</span>
+                    <span class="stat-value" id="stat-state-running">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Blocked:</span>
+                    <span class="stat-value" id="stat-blocked">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Terminated:</span>
+                    <span class="stat-value" id="stat-terminated">0</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>Performance Metrics</h3>
+                <div class="stat-item">
+                    <span>Simulation Time:</span>
+                    <span class="stat-value" id="stat-time">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Deadlock Status:</span>
+                    <span class="stat-value" id="stat-deadlock">SAFE</span>
+                </div>
+                <div class="stat-item">
+                    <span>CPU Utilization:</span>
+                    <span class="stat-value" id="stat-cpu">0%</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>Resource Allocation</h3>
+                <div id="resource-stats-container" class="text-xs">
+                    <div class="text-gray-500 italic">No resources allocated</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Workspace -->
     <div class="flex-grow flex relative overflow-hidden">
 
         <!-- Right Toolbar -->
-        <div id="sidebar-tools" class="absolute right-4 top-4 flex flex-col gap-3 z-30">
+        <div id="sidebar-tools" class="absolute right-4 flex flex-col gap-3 z-30" style="top: 80px;">
+            <!-- Undo/Redo Row -->
+            <div class="neo-box bg-white p-2 transform rotate-1">
+                <div class="flex gap-1">
+                    <button onclick="undo()" id="btn-undo" class="neo-btn flex items-center justify-center" title="Undo (Ctrl+Z)" style="width: 29px; height: 44px; padding: 0;">
+                        <i class="fas fa-undo text-sm"></i>
+                    </button>
+                    <button onclick="redo()" id="btn-redo" class="neo-btn flex items-center justify-center" title="Redo (Ctrl+Y)" style="width: 29px; height: 44px; padding: 0;">
+                        <i class="fas fa-redo text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tools Box -->
             <div class="neo-box bg-white p-2 transform rotate-1">
                 <div class="text-xs font-black mb-2 text-center border-b-2 border-black pb-1">TOOLS</div>
                 <div class="flex flex-col gap-2">
@@ -670,6 +877,7 @@
         let selectedNode = null;
         let draggingNode = null;
         let deadlockSet = new Set();
+        let tempLinkPos = null; // Track mouse position in link mode
 
         // Scheduling State
         let schedulingAlgorithm = 'fcfs';
@@ -684,6 +892,25 @@
         // Flow Animation State
         let flowParticles = []; // Array of {edge, progress, direction}
         let animationFrame = 0;
+
+        // Context Switch Animation State
+        let contextSwitchAnimations = []; // Array of {nodeId, startTime, duration}
+
+        // Additional Animation States
+        let nodeCreationAnimations = []; // Node spawn animations
+        let processTerminationAnimations = []; // Process completion effects
+        let buttonClickAnimations = []; // Button press effects
+        let nodeHoverEffects = new Map(); // nodeId -> hover intensity
+        let pulseAnimations = []; // Background pulse effects
+
+        // Undo/Redo System
+        let history = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50;
+
+        // Stats tracking
+        let simulationTime = 0;
+        let simulationStartTime = 0;
 
         // --- DOM Elements ---
         const canvas = document.getElementById('simCanvas');
@@ -889,13 +1116,24 @@
                 memory: type === 'process' ? Math.floor(Math.random() * 224) + 32 : 0,
                 state: type === 'process' ? 'READY' : 'RESOURCE',
                 arrivalTime: 0, // Will be set when simulation starts
+                // Resource capacity (number of instances)
+                capacity: type === 'resource' ? 1 : 0,
+                allocated: type === 'resource' ? 0 : 0, // How many instances currently allocated
                 // New Visual Props
                 rotation: (Math.random() - 0.5) * 0.25, // +/- ~7 degrees
                 pinColor: ['#ff4d4d', '#2d2d2d', '#4a90e2', '#silver'][Math.floor(Math.random()*4)]
             };
             nodes.push(newNode);
+            // Trigger creation animation
+            nodeCreationAnimations.push({
+                x: x,
+                y: y,
+                startTime: Date.now(),
+                duration: 400
+            });
             updateSystemStats();
             draw();
+            saveState();
             return newNode;
         }
 
@@ -909,6 +1147,7 @@
             closeProps();
             updateSystemStats();
             draw();
+            saveState();
         }
 
         function addEdge(source, target) {
@@ -917,14 +1156,33 @@
                 return;
             }
             if (edges.some(e => e.source === source.id && e.target === target.id)) return;
-            if (source.type === 'resource' && edges.some(e => e.source === source.id)) {
-                printToCli(`Resource ${source.label} already held!`, 'error');
-                return;
+
+            // Check resource capacity
+            if (source.type === 'resource') {
+                const allocated = edges.filter(e => e.source === source.id).length;
+                if (allocated >= source.capacity) {
+                    printToCli(`Resource ${source.label} at full capacity (${source.capacity})!`, 'error');
+                    return;
+                }
             }
 
             edges.push({ source: source.id, target: target.id });
+            // Pulse both connected nodes
+            pulseAnimations.push(
+                {
+                    nodeId: source.id,
+                    startTime: Date.now(),
+                    duration: 500
+                },
+                {
+                    nodeId: target.id,
+                    startTime: Date.now(),
+                    duration: 500
+                }
+            );
             updateProcessStates();
             draw();
+            saveState();
         }
 
         // --- Simulation & Scheduler ---
@@ -977,6 +1235,7 @@
                         p.state = 'READY';
                         // Move to back of queue by updating a priority timestamp
                         p.lastPreemptTime = Date.now();
+                        triggerContextSwitch(p.id); // Visual animation
                         currentRunningNodeId = null;
                         quantumRemaining = timeQuantum;
                         preempted = true;
@@ -992,6 +1251,7 @@
                         const shorterProcess = readyProcesses.find(n => n.burstTime < p.burstTime);
                         if (shorterProcess) {
                             p.state = 'READY';
+                            triggerContextSwitch(p.id); // Visual animation
                             currentRunningNodeId = null;
                             preempted = true;
                             printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
@@ -1063,6 +1323,12 @@
                         // Track first start time for response time calculation
                         if (!processStartTimes[nextP.id]) {
                             processStartTimes[nextP.id] = Date.now();
+                            // Pulse animation on first start
+                            pulseAnimations.push({
+                                nodeId: nextP.id,
+                                startTime: Date.now(),
+                                duration: 800
+                            });
                         }
                     }
                 }
@@ -1078,6 +1344,13 @@
             p.state = 'TERMINATED';
             p.burstTime = 0;
             currentRunningNodeId = null;
+            // Trigger completion animation
+            processTerminationAnimations.push({
+                x: p.x,
+                y: p.y,
+                startTime: Date.now(),
+                duration: 600
+            });
             printToCli(`Process ${p.label} FINISHED.`, 'success');
 
             const heldEdges = edges.filter(e => e.target === p.id);
@@ -1255,6 +1528,145 @@
             draw();
         }
 
+        // --- Stats Pane Functions ---
+        function toggleStatsPane() {
+            const pane = document.getElementById('stats-pane');
+            const toolsPanel = document.getElementById('sidebar-tools');
+            pane.classList.toggle('open');
+            toolsPanel.classList.toggle('shift-left');
+            updateStats();
+        }
+
+        function updateStats() {
+            // System Overview
+            document.getElementById('stat-processes').textContent = nodes.filter(n => n.type === 'process').length;
+            document.getElementById('stat-resources').textContent = nodes.filter(n => n.type === 'resource').length;
+            const runningNode = getNodeById(currentRunningNodeId);
+            document.getElementById('stat-running').textContent = runningNode ? runningNode.label : 'IDLE';
+            document.getElementById('stat-scheduler').textContent = document.getElementById('scheduler-label').textContent;
+
+            // Process States
+            const processes = nodes.filter(n => n.type === 'process');
+            document.getElementById('stat-ready').textContent = processes.filter(p => p.state === 'READY').length;
+            document.getElementById('stat-state-running').textContent = processes.filter(p => p.state === 'RUNNING').length;
+            document.getElementById('stat-blocked').textContent = processes.filter(p => p.state === 'BLOCKED').length;
+            document.getElementById('stat-terminated').textContent = processes.filter(p => p.state === 'TERMINATED').length;
+
+            // Performance Metrics
+            if (isRunning && simulationStartTime) {
+                simulationTime = Math.floor((Date.now() - simulationStartTime) / 1000);
+            }
+            document.getElementById('stat-time').textContent = simulationTime + 's';
+            document.getElementById('stat-deadlock').textContent = deadlockSet.size > 0 ? 'DEADLOCK!' : 'SAFE';
+
+            // CPU Utilization
+            const totalProcesses = processes.length;
+            const runningCount = processes.filter(p => p.state === 'RUNNING').length;
+            const cpuUtil = totalProcesses > 0 ? Math.round((runningCount / 1) * 100) : 0;
+            document.getElementById('stat-cpu').textContent = cpuUtil + '%';
+
+            // Resource Allocation
+            const resourceStats = document.getElementById('resource-stats-container');
+            const resources = nodes.filter(n => n.type === 'resource');
+            if (resources.length === 0) {
+                resourceStats.innerHTML = '<div class="text-gray-500 italic">No resources</div>';
+            } else {
+                resourceStats.innerHTML = resources.map(r => {
+                    const holders = edges.filter(e => e.source === r.id).map(e => getNodeById(e.target));
+                    const allocated = holders.length;
+                    return `
+                        <div class="stat-item">
+                            <span>${r.label} (${allocated}/${r.capacity}):</span>
+                            <span class="text-[10px]">${holders.length > 0 ? holders.map(h => h.label).join(', ') : 'Free'}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // --- Undo/Redo Functions ---
+        function saveState() {
+            const state = {
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                edges: JSON.parse(JSON.stringify(edges)),
+                nextId: nextId
+            };
+
+            // Remove future history if we're not at the end
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+
+            history.push(state);
+
+            // Limit history size
+            if (history.length > MAX_HISTORY) {
+                history.shift();
+            } else {
+                historyIndex++;
+            }
+
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(history[historyIndex]);
+                printToCli('Undo', 'info');
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(history[historyIndex]);
+                printToCli('Redo', 'info');
+            }
+        }
+
+        function restoreState(state) {
+            nodes = JSON.parse(JSON.stringify(state.nodes));
+            edges = JSON.parse(JSON.stringify(state.edges));
+            nextId = state.nextId;
+            selectedNode = null;
+            currentRunningNodeId = null;
+            updateSystemStats();
+            updateStats();
+            draw();
+            updateUndoRedoButtons();
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('btn-undo');
+            const redoBtn = document.getElementById('btn-redo');
+
+            if (undoBtn) {
+                undoBtn.disabled = historyIndex <= 0;
+                undoBtn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+                undoBtn.style.cursor = historyIndex <= 0 ? 'not-allowed' : 'pointer';
+            }
+
+            if (redoBtn) {
+                redoBtn.disabled = historyIndex >= history.length - 1;
+                redoBtn.style.opacity = historyIndex >= history.length - 1 ? '0.5' : '1';
+                redoBtn.style.cursor = historyIndex >= history.length - 1 ? 'not-allowed' : 'pointer';
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    undo();
+                } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+                    e.preventDefault();
+                    redo();
+                }
+            }
+        });
+
         // --- Canvas Interactions ---
         function setMode(m) {
             mode = m;
@@ -1324,12 +1736,30 @@
         });
 
         canvas.addEventListener('mousemove', e => {
+            const pos = getMousePos(e);
+
+            // Track position for link mode preview
+            if (mode === 'link' && selectedNode) {
+                tempLinkPos = pos;
+            } else {
+                tempLinkPos = null;
+            }
+
+            // Update hover effects
+            const hoveredNode = getNodeAt(pos.x, pos.y);
+            nodeHoverEffects.clear();
+            if (hoveredNode && !draggingNode) {
+                applyNodeHoverEffect(hoveredNode.id, 1);
+                canvas.style.cursor = 'pointer';
+            } else {
+                canvas.style.cursor = draggingNode ? 'grabbing' : (mode === 'link' && selectedNode ? 'crosshair' : 'default');
+            }
+
             if (draggingNode) {
-                const pos = getMousePos(e);
                 draggingNode.x = pos.x;
                 draggingNode.y = pos.y;
-                draw();
             }
+            draw();
         });
 
         canvas.addEventListener('mouseup', () => draggingNode = null);
@@ -1359,11 +1789,21 @@
                     <div class="mt-2 text-xs font-bold">State: ${node.state}</div>
                 `;
             } else {
-                const holderEdge = edges.find(e => e.source === node.id);
-                const holder = holderEdge ? getNodeById(holderEdge.target) : null;
+                const holders = edges.filter(e => e.source === node.id);
+                const allocated = holders.length;
                 html += `
+                    <div class="mt-3">
+                        <label class="block text-xs font-bold mb-1">CAPACITY:</label>
+                        <input type="number" min="1" class="neo-input" value="${node.capacity}"
+                            onchange="updateCapacity(${node.id}, this.value)">
+                    </div>
                     <div class="mt-3 text-sm">
-                        ${holder ? `Held by: <strong>${holder.label}</strong>` : `<span class="text-green-600">Free</span>`}
+                        <strong>Allocated: ${allocated} / ${node.capacity}</strong>
+                    </div>
+                    <div class="mt-2 text-xs">
+                        ${holders.length > 0 ?
+                            `Held by: <strong>${holders.map(e => getNodeById(e.target).label).join(', ')}</strong>`
+                            : `<span class="text-green-600">Free</span>`}
                     </div>
                 `;
             }
@@ -1379,6 +1819,17 @@
             const n = getNodeById(id);
             if(n) { n.memory = parseInt(val); updateSystemStats(); printToCli(`Updated ${n.label} memory`); }
         };
+        window.updateCapacity = (id, val) => {
+            const n = getNodeById(id);
+            if(n && n.type === 'resource') {
+                n.capacity = Math.max(1, parseInt(val));
+                updateSystemStats();
+                updateStats();
+                draw();
+                printToCli(`Updated ${n.label} capacity to ${n.capacity}`);
+                saveState();
+            }
+        };
 
         // --- Core Functions ---
         function toggleSimulation() {
@@ -1391,6 +1842,8 @@
                 btn.classList.add('primary');
                 printToCli("Simulation Paused.");
             } else {
+                simulationStartTime = Date.now();
+                simulationTime = 0;
                 simInterval = setInterval(scheduler, simSpeed);
                 isRunning = true;
                 btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
@@ -1410,11 +1863,18 @@
             currentRunningNodeId = null;
             quantumRemaining = timeQuantum;
             processStartTimes = {};
+            simulationTime = 0;
+            simulationStartTime = 0;
+            history = [];
+            historyIndex = -1;
             document.getElementById('gantt-chart').innerHTML = '<div class="text-gray-400 text-xs italic">Start Simulation to see data...</div>';
             if(isRunning) toggleSimulation();
             updateSystemStats();
+            updateStats();
             draw();
             printToCli("System Reset.");
+            saveState();
+            updateUndoRedoButtons();
         }
 
         function detectDeadlock(silent = false) {
@@ -1446,10 +1906,15 @@
             nodes.forEach(n => { if(!visited.has(n.id)) dfs(n.id, []); });
 
             if(deadlockSet.size > 0) {
-                if(!silent || !isRunning) printToCli("Deadlock Found!", 'error');
+                if(!silent || !isRunning) {
+                    printToCli("⚠ Deadlock Found!", 'error');
+                    // Shake animation on canvas
+                    canvas.classList.add('shake-effect');
+                    setTimeout(() => canvas.classList.remove('shake-effect'), 500);
+                }
                 if(isRunning && !silent) toggleSimulation();
             } else {
-                if(!silent) printToCli("System Safe.", 'success');
+                if(!silent) printToCli("✓ System Safe.", 'success');
             }
             draw();
             return deadlockSet;
@@ -1610,13 +2075,239 @@
             });
         }
 
-        // --- Drawing ---
+        function triggerContextSwitch(nodeId) {
+            contextSwitchAnimations.push({
+                nodeId: nodeId,
+                startTime: Date.now(),
+                duration: 600 // milliseconds
+            });
+        }
+
+        function drawContextSwitchAnimations() {
+            const now = Date.now();
+            contextSwitchAnimations = contextSwitchAnimations.filter(anim => {
+                const elapsed = now - anim.startTime;
+                if (elapsed > anim.duration) return false;
+
+                const node = getNodeById(anim.nodeId);
+                if (!node) return false;
+
+                const progress = elapsed / anim.duration;
+
+                ctx.save();
+
+                // Subtle rotating circular brackets around the node
+                const rotation = progress * Math.PI * 2;
+                const radius = config.nodeRadius + 12;
+                const alpha = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'square';
+
+                // Four corner brackets rotating
+                for (let i = 0; i < 4; i++) {
+                    const angle = (Math.PI / 2) * i + rotation;
+                    const x = node.x + Math.cos(angle) * radius;
+                    const y = node.y + Math.sin(angle) * radius;
+
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(angle + Math.PI / 4);
+
+                    // Shadow bracket
+                    ctx.strokeStyle = `rgba(0, 0, 0, ${alpha * 0.3})`;
+                    ctx.beginPath();
+                    ctx.moveTo(-6 + 1, -6 + 1);
+                    ctx.lineTo(-2 + 1, -6 + 1);
+                    ctx.lineTo(-2 + 1, -2 + 1);
+                    ctx.moveTo(6 + 1, 6 + 1);
+                    ctx.lineTo(2 + 1, 6 + 1);
+                    ctx.lineTo(2 + 1, 2 + 1);
+                    ctx.stroke();
+
+                    // Main bracket
+                    ctx.strokeStyle = `rgba(255, 140, 0, ${alpha * 0.8})`;
+                    ctx.beginPath();
+                    ctx.moveTo(-6, -6);
+                    ctx.lineTo(-2, -6);
+                    ctx.lineTo(-2, -2);
+                    ctx.moveTo(6, 6);
+                    ctx.lineTo(2, 6);
+                    ctx.lineTo(2, 2);
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
+                // Small "CS" text at top
+                if (progress > 0.2 && progress < 0.8) {
+                    const textAlpha = progress < 0.4 ? (progress - 0.2) / 0.2 : (progress < 0.6 ? 1 : (0.8 - progress) / 0.2);
+
+                    ctx.font = 'bold 11px "Courier New", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Text shadow
+                    ctx.fillStyle = `rgba(0, 0, 0, ${textAlpha * 0.4})`;
+                    ctx.fillText('CS', node.x + 1, node.y - config.nodeRadius - 18 + 1);
+
+                    // Main text
+                    ctx.fillStyle = `rgba(255, 140, 0, ${textAlpha})`;
+                    ctx.fillText('CS', node.x, node.y - config.nodeRadius - 18);
+                }
+
+                ctx.restore();
+                return true;
+            });
+        }
+
+        function drawNodeCreationAnimations() {
+            const now = Date.now();
+            nodeCreationAnimations = nodeCreationAnimations.filter(anim => {
+                const elapsed = now - anim.startTime;
+                if (elapsed > anim.duration) return false;
+
+                const progress = elapsed / anim.duration;
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                ctx.save();
+
+                // Simple fade-in with gentle scale
+                const scale = 0.7 + (easeOut * 0.3); // Scale from 70% to 100%
+                const alpha = easeOut;
+
+                // Single expanding ring
+                const radius = config.nodeRadius * 0.8 + (progress * 15);
+                const ringAlpha = (1 - progress) * 0.5;
+
+                // Shadow ring
+                ctx.strokeStyle = `rgba(0, 0, 0, ${ringAlpha * 0.3})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(anim.x + 2, anim.y + 2, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Main ring
+                ctx.strokeStyle = `rgba(163, 255, 172, ${ringAlpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(anim.x, anim.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Subtle plus indicator at center
+                if (progress < 0.5) {
+                    const plusAlpha = (1 - progress / 0.5) * 0.6;
+                    const plusSize = 8;
+
+                    ctx.strokeStyle = `rgba(0, 0, 0, ${plusAlpha * 0.3})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(anim.x - plusSize + 1, anim.y + 1);
+                    ctx.lineTo(anim.x + plusSize + 1, anim.y + 1);
+                    ctx.moveTo(anim.x + 1, anim.y - plusSize + 1);
+                    ctx.lineTo(anim.x + 1, anim.y + plusSize + 1);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = `rgba(163, 255, 172, ${plusAlpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(anim.x - plusSize, anim.y);
+                    ctx.lineTo(anim.x + plusSize, anim.y);
+                    ctx.moveTo(anim.x, anim.y - plusSize);
+                    ctx.lineTo(anim.x, anim.y + plusSize);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+                return true;
+            });
+        }
+
+        function drawProcessTerminationAnimations() {
+            const now = Date.now();
+            processTerminationAnimations = processTerminationAnimations.filter(anim => {
+                const elapsed = now - anim.startTime;
+                if (elapsed > anim.duration) return false;
+
+                const progress = elapsed / anim.duration;
+
+                ctx.save();
+
+                // Exploding squares outward
+                for (let i = 0; i < 8; i++) {
+                    const angle = (Math.PI * 2 / 8) * i;
+                    const distance = progress * 60;
+                    const x = anim.x + Math.cos(angle) * distance;
+                    const y = anim.y + Math.sin(angle) * distance;
+                    const size = 12 * (1 - progress);
+                    const alpha = 1 - progress;
+
+                    // Square particle
+                    ctx.fillStyle = `rgba(76, 175, 80, ${alpha})`;
+                    ctx.fillRect(x - size/2, y - size/2, size, size);
+
+                    // Border
+                    ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x - size/2, y - size/2, size, size);
+                }
+
+                // "DONE" text
+                if (progress < 0.5) {
+                    ctx.fillStyle = 'black';
+                    ctx.font = 'bold 14px "Courier New", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('✓', anim.x + 2, anim.y + 2);
+                    ctx.fillStyle = '#4caf50';
+                    ctx.fillText('✓', anim.x, anim.y);
+                }
+
+                ctx.restore();
+                return true;
+            });
+        }
+
+        function drawPulseAnimations() {
+            // Pulse animations removed - no longer used
+            pulseAnimations = [];
+        }
+
+        function applyNodeHoverEffect(nodeId, intensity) {
+            nodeHoverEffects.set(nodeId, intensity);
+        }        // --- Drawing ---
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Update flow animation
             if (isRunning) {
                 updateFlowParticles();
+            }
+
+            // Draw preview line in link mode
+            if (mode === 'link' && selectedNode && tempLinkPos) {
+                ctx.save();
+                ctx.setLineDash([8, 4]);
+                ctx.strokeStyle = '#4a90e2';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(selectedNode.x, selectedNode.y);
+                ctx.lineTo(tempLinkPos.x, tempLinkPos.y);
+                ctx.stroke();
+
+                // Animated dots along preview line
+                const distance = Math.sqrt(
+                    Math.pow(tempLinkPos.x - selectedNode.x, 2) +
+                    Math.pow(tempLinkPos.y - selectedNode.y, 2)
+                );
+                const numDots = Math.floor(distance / 30);
+                for (let i = 0; i < numDots; i++) {
+                    const t = (i / numDots) + (animationFrame * 0.01 % 1);
+                    const x = selectedNode.x + (tempLinkPos.x - selectedNode.x) * (t % 1);
+                    const y = selectedNode.y + (tempLinkPos.y - selectedNode.y) * (t % 1);
+                    ctx.fillStyle = '#4a90e2';
+                    ctx.fillRect(x - 3, y - 3, 6, 6);
+                }
+                ctx.restore();
             }
 
             // Edges (Drawn first so they are behind cards)
@@ -1635,6 +2326,12 @@
                 drawFlowParticles();
             }
 
+            // Draw all animations
+            drawContextSwitchAnimations();
+            drawNodeCreationAnimations();
+            drawProcessTerminationAnimations();
+            drawPulseAnimations();
+
             // Nodes (Cards)
             nodes.forEach(n => {
                 ctx.save();
@@ -1646,6 +2343,19 @@
                 let shadowColor = 'black'; // Solid crisp black shadow
                 let shadowOff = 4;
 
+                // Hover effect - extra shadow offset
+                const hoverIntensity = nodeHoverEffects.get(n.id) || 0;
+                if (hoverIntensity > 0) {
+                    shadowOff += hoverIntensity * 2;
+                }
+
+                // Running process bounce
+                let bounceOffset = 0;
+                if (n.state === 'RUNNING' && isRunning) {
+                    bounceOffset = Math.sin(animationFrame * 0.15) * 3;
+                }
+                ctx.translate(0, bounceOffset);
+
                 // Highlight states
                 if(deadlockSet.has(n.id)) {
                     shadowColor = config.colors.deadlock;
@@ -1654,7 +2364,7 @@
                     ctx.shadowColor = 'red';
                 } else if(selectedNode && selectedNode.id === n.id) {
                     shadowColor = 'black';
-                    shadowOff = 6;
+                    shadowOff = 8; // Extra offset for selected
                 }
 
                 // Shadow (Manual drawing for rotation accuracy)
@@ -1758,10 +2468,19 @@
 
         resizeCanvas();
 
+        // Initialize first state for undo/redo
+        saveState();
+        updateUndoRedoButtons();
+
         // Continuous animation loop for smooth flow
         function animate() {
             if (isRunning) {
                 draw();
+                // Update stats if pane is open
+                const statsPane = document.getElementById('stats-pane');
+                if (statsPane && statsPane.classList.contains('open')) {
+                    updateStats();
+                }
             }
             requestAnimationFrame(animate);
         }
