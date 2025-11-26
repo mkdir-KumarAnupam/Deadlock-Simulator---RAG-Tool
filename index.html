@@ -757,7 +757,7 @@
 
             <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i class="fas fa-play"></i> Run OS</button>
             <button onclick="detectDeadlock(false)" class="neo-btn bg-white text-black hover:bg-black hover:text-white">Check Deadlock</button>
-            <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera"></i></button>
+            <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera h-5"></i></button>
         </div>
     </header>
 
@@ -1696,9 +1696,12 @@
 
                         // Initialize metrics for new process
                         if (!processMetrics[nextP.id]) {
+                            // If process was created before simulation started, arrival time is 0
+                            // If created during simulation, arrival time is current time
+                            const arrivalTime = processMetrics[nextP.id]?.created ? 0 : (Date.now() - simulationStartTime);
                             processMetrics[nextP.id] = {
                                 label: nextP.label,
-                                arrivalTime: Date.now() - simulationStartTime,
+                                arrivalTime: arrivalTime,
                                 firstRunTime: null,
                                 completionTime: null,
                                 totalExecutionTime: 0,
@@ -1712,7 +1715,7 @@
 
                         // Set arrival time if not set yet
                         if (processMetrics[nextP.id].arrivalTime === null) {
-                            processMetrics[nextP.id].arrivalTime = Date.now() - simulationStartTime;
+                            processMetrics[nextP.id].arrivalTime = 0;
                         }
 
                         // Track first start time for response time calculation
@@ -2799,8 +2802,32 @@
                 btn.classList.add('primary');
                 printToCli("Simulation Paused.");
             } else {
-                simulationStartTime = Date.now();
-                simulationTime = 0;
+                // Only set simulationStartTime on first start, not on resume
+                if (simulationStartTime === 0) {
+                    simulationStartTime = Date.now();
+                    simulationTime = 0;
+
+                    // Initialize arrival time for all existing processes at simulation start
+                    nodes.filter(n => n.type === 'process').forEach(p => {
+                        if (!processMetrics[p.id]) {
+                            processMetrics[p.id] = {
+                                label: p.label,
+                                arrivalTime: 0,
+                                firstRunTime: null,
+                                completionTime: null,
+                                totalExecutionTime: 0,
+                                turnaroundTime: 0,
+                                waitingTime: 0,
+                                responseTime: 0,
+                                executionSegments: [],
+                                created: true
+                            };
+                        } else if (processMetrics[p.id].arrivalTime === null) {
+                            processMetrics[p.id].arrivalTime = 0;
+                        }
+                    });
+                }
+
                 simInterval = setInterval(scheduler, simSpeed);
                 isRunning = true;
                 btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
