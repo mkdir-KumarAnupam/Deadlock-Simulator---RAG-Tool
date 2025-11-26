@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG OS Simulator v4.0 - Crisp</title>
+    <title>RAG OS Simulator v4.5 - Crisp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -385,7 +385,13 @@
             z-index: 10;
             pointer-events: none;
             transform: rotate(-2deg);
+            transition: left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+
+        .legend-box.minimized {
+            left: -240px;
+        }
+
         /* Visual Pin for Legend */
         .legend-box::after {
             content: '';
@@ -398,6 +404,69 @@
             border-radius: 50%;
             border: 2px solid black;
             box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+        }
+
+        .legend-minimize-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 2px solid black;
+            box-shadow: 2px 2px 0px black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            pointer-events: auto;
+            transition: all 0.2s;
+        }
+
+        .legend-minimize-btn:hover {
+            transform: translate(1px, -1px);
+            box-shadow: 3px 3px 0px black;
+        }
+
+        .legend-minimize-btn:active {
+            transform: translate(-1px, 1px);
+            box-shadow: 1px 1px 0px black;
+        }
+
+        .legend-toggle-btn {
+            position: absolute;
+            left: -30px;
+            top: 28px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 2px solid black;
+            box-shadow: 2px 2px 0px black;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            z-index: 9;
+            transition: left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: rotate(-2deg);
+        }
+
+        .legend-toggle-btn.visible {
+            left: 0;
+        }
+
+        .legend-toggle-btn:hover {
+            transform: rotate(-2deg) translate(1px, -1px);
+            box-shadow: 3px 3px 0px black;
+        }
+
+        .legend-toggle-btn:active {
+            transform: rotate(-2deg) translate(-1px, 1px);
+            box-shadow: 1px 1px 0px black;
         }
 
         .legend-item {
@@ -597,8 +666,48 @@
                 <button class="neo-btn flex items-center gap-2 h-10" onclick="toggleMenu(event, 'settings-menu')" title="Settings">
                     <i class="fas fa-cog"></i>
                 </button>
-                <div id="settings-menu" class="neo-dropdown" style="width: 220px;">
+                <div id="settings-menu" class="neo-dropdown" style="width: 280px; max-height: 500px; overflow-y: auto;">
                     <div class="neo-dropdown-item border-b-2 border-black pb-2 mb-2">
+                        <strong>System Configuration:</strong>
+                    </div>
+                    <div class="neo-dropdown-item flex flex-col gap-2">
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Max Memory (MB):</span>
+                            <input type="number" id="config-max-memory" value="1024" min="256" max="8192" step="256"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateMaxMemory(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">CPU Cores:</span>
+                            <input type="number" id="config-cpu-cores" value="1" min="1" max="8"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateCPUCores(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Context Switch (ms):</span>
+                            <input type="number" id="config-context-switch" value="5" min="1" max="100"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateContextSwitchTime(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Sim Speed (ms):</span>
+                            <input type="number" id="config-sim-speed" value="200" min="50" max="2000" step="50"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateSimSpeed(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Edge Label Size:</span>
+                            <input type="number" id="config-edge-label-size" value="10" min="0" max="20"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateEdgeLabelSize(this.value)">
+                        </label>
+                        <label class="flex items-center gap-2 text-xs cursor-pointer">
+                            <input type="checkbox" id="config-show-edge-labels" checked
+                                onchange="toggleEdgeLabels(this.checked)">
+                            <span class="font-bold">Show Edge Labels</span>
+                        </label>
+                    </div>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
                         <strong>Toolbar Position:</strong>
                     </div>
                     <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
@@ -633,7 +742,6 @@
             <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i class="fas fa-play"></i> Run OS</button>
             <button onclick="detectDeadlock(false)" class="neo-btn bg-black text-white hover:bg-gray-800">Check Deadlock</button>
             <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera"></i> Snap</button>
-            <button onclick="toggleStatsPane()" id="btn-stats" class="neo-btn" title="Toggle Statistics"><i class="fas fa-chart-bar"></i> Stats</button>
         </div>
     </header>
 
@@ -665,6 +773,14 @@
                 <div class="stat-item">
                     <span>Scheduler:</span>
                     <span class="stat-value" id="stat-scheduler">FCFS</span>
+                </div>
+                <div class="stat-item">
+                    <span>CPU Cores:</span>
+                    <span class="stat-value" id="stat-cpu-cores">1</span>
+                </div>
+                <div class="stat-item">
+                    <span>Max Memory:</span>
+                    <span class="stat-value" id="stat-max-memory">1024 MB</span>
                 </div>
             </div>
 
@@ -717,7 +833,7 @@
     <div class="flex-grow flex relative overflow-hidden">
 
         <!-- Right Toolbar -->
-        <div id="sidebar-tools" class="absolute right-4 flex flex-col gap-3 z-30" style="top: 80px;">
+        <div id="sidebar-tools" class="absolute right-4 flex flex-col gap-3 z-50" style="top: 80px;">
             <!-- Undo/Redo Row -->
             <div class="neo-box bg-white p-2 transform rotate-1">
                 <div class="flex gap-1">
@@ -746,12 +862,36 @@
                     <button id="btn-delete" class="neo-btn danger flex items-center justify-center" onclick="setMode('delete')" title="Delete Node" style="width: 50px; height: 50px;">
                         <i class="fas fa-trash text-lg"></i>
                     </button>
+                    <button id="btn-select" class="neo-btn flex items-center justify-center" onclick="setMode('select')" title="Select Multiple (Shift+Click)" style="width: 50px; height: 50px;">
+                        <i class="fas fa-hand-pointer text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Batch Operations (visible when nodes selected) -->
+            <div id="batch-ops" class="neo-box bg-white p-2 transform rotate-1" style="display: none; position: fixed; right: 24px; z-index: 100;">
+                <div class="text-xs font-black mb-2 text-center border-b-2 border-black pb-1">BATCH</div>
+                <div class="flex flex-col gap-2">
+                    <button onclick="batchDelete()" class="neo-btn danger flex items-center justify-center text-xs" title="Delete Selected" style="width: 50px; height: 40px; padding: 0;">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <button onclick="clearSelection()" class="neo-btn flex items-center justify-center text-xs" title="Clear Selection" style="width: 50px; height: 40px; padding: 0;">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Legend Toggle Button -->
+        <div class="legend-toggle-btn" id="legend-toggle-btn" onclick="toggleLegend()" title="Show Legend">
+            <i class="fas fa-chevron-right"></i>
+        </div>
+
         <!-- Legend Overlay -->
-        <div class="legend-box">
+        <div class="legend-box" id="legend-box">
+            <div class="legend-minimize-btn" onclick="toggleLegend()" title="Minimize">
+                <i class="fas fa-chevron-left"></i>
+            </div>
             <h3 class="font-black underline mb-3 text-base">LEGEND</h3>
             <div class="legend-item">
                 <div class="legend-shape rounded-full bg-[#a3ffac]"></div>
@@ -777,7 +917,7 @@
         <canvas id="simCanvas" class="w-full h-full bg-transparent relative z-0"></canvas>
 
         <!-- Properties Panel -->
-        <div id="prop-panel" class="absolute top-4 right-4 w-60 neo-box p-4 hidden transform transition-all z-30 rotate-1">
+        <div id="prop-panel" class="absolute top-4 w-60 neo-box p-4 transform z-30 rotate-1" style="right: -280px; transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
             <div class="flex justify-between items-center border-b-2 border-black mb-3 pb-1">
                 <h3 class="font-black text-sm">PROPERTIES</h3>
                 <button onclick="closeProps()" class="text-xs font-bold hover:text-red-500">X</button>
@@ -865,6 +1005,16 @@
             totalMemory: 1024
         };
 
+        // System Configuration
+        let systemConfig = {
+            maxMemory: 1024,
+            cpuCores: 1,
+            contextSwitchTime: 5,
+            simSpeed: 200,
+            edgeLabelSize: 10,
+            showEdgeLabels: true
+        };
+
         // --- State ---
         let nodes = [];
         let edges = [];
@@ -878,6 +1028,24 @@
         let draggingNode = null;
         let deadlockSet = new Set();
         let tempLinkPos = null; // Track mouse position in link mode
+
+        // Drag-to-connect
+        let dragLinkStart = null; // Starting node for drag-to-connect
+        let dragLinkEnd = null; // Current mouse position or target node
+        let dragStartPos = null; // Initial mouse position to detect movement threshold
+
+        // Batch operations
+        let selectedNodes = new Set(); // Set of selected node IDs
+        let isSelectionMode = false;
+        let selectionBox = null; // {x1, y1, x2, y2} for box selection
+
+        // Zoom & Pan
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
 
         // Scheduling State
         let schedulingAlgorithm = 'fcfs';
@@ -1166,7 +1334,7 @@
                 }
             }
 
-            edges.push({ source: source.id, target: target.id });
+            edges.push({ source: source.id, target: target.id, label: '1' });
             // Pulse both connected nodes
             pulseAnimations.push(
                 {
@@ -1409,8 +1577,13 @@
         }
 
         function printToCli(text, type='normal') {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timestamp = `${hours}:${minutes}`;
+
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = `${timestamp} ${text}`;
             if (type === 'error') div.style.color = 'red';
             if (type === 'success') div.style.color = 'green';
             if (type === 'info') div.style.color = 'blue';
@@ -1528,6 +1701,86 @@
             draw();
         }
 
+        // --- System Configuration Functions ---
+        function updateMaxMemory(value) {
+            const mem = parseInt(value);
+            if (mem >= 256 && mem <= 8192) {
+                systemConfig.maxMemory = mem;
+                config.totalMemory = mem;
+                updateSystemStats();
+                printToCli(`Max memory set to: ${mem} MB`, 'success');
+            } else {
+                printToCli('Memory must be between 256-8192 MB', 'error');
+                document.getElementById('config-max-memory').value = systemConfig.maxMemory;
+            }
+        }
+
+        function updateCPUCores(value) {
+            const cores = parseInt(value);
+            if (cores >= 1 && cores <= 8) {
+                systemConfig.cpuCores = cores;
+                printToCli(`CPU cores set to: ${cores}`, 'success');
+                updateStats();
+            } else {
+                printToCli('CPU cores must be between 1-8', 'error');
+                document.getElementById('config-cpu-cores').value = systemConfig.cpuCores;
+            }
+        }
+
+        function updateContextSwitchTime(value) {
+            const time = parseInt(value);
+            if (time >= 1 && time <= 100) {
+                systemConfig.contextSwitchTime = time;
+                printToCli(`Context switch time set to: ${time} ms`, 'success');
+            } else {
+                printToCli('Context switch time must be between 1-100 ms', 'error');
+                document.getElementById('config-context-switch').value = systemConfig.contextSwitchTime;
+            }
+        }
+
+        function updateSimSpeed(value) {
+            const speed = parseInt(value);
+            if (speed >= 50 && speed <= 2000) {
+                systemConfig.simSpeed = speed;
+                simSpeed = speed;
+                if (isRunning) {
+                    clearInterval(simInterval);
+                    simInterval = setInterval(scheduler, simSpeed);
+                }
+                printToCli(`Simulation speed set to: ${speed} ms`, 'success');
+            } else {
+                printToCli('Sim speed must be between 50-2000 ms', 'error');
+                document.getElementById('config-sim-speed').value = systemConfig.simSpeed;
+            }
+        }
+
+        function updateEdgeLabelSize(value) {
+            const size = parseInt(value);
+            if (size >= 0 && size <= 20) {
+                systemConfig.edgeLabelSize = size;
+                draw();
+                printToCli(`Edge label size set to: ${size}px`, 'success');
+            } else {
+                printToCli('Edge label size must be between 0-20', 'error');
+                document.getElementById('config-edge-label-size').value = systemConfig.edgeLabelSize;
+            }
+        }
+
+        function toggleEdgeLabels(show) {
+            systemConfig.showEdgeLabels = show;
+            draw();
+            printToCli(`Edge labels ${show ? 'shown' : 'hidden'}`, 'info');
+        }
+
+        // --- Legend Functions ---
+        function toggleLegend() {
+            const legendBox = document.getElementById('legend-box');
+            const toggleBtn = document.getElementById('legend-toggle-btn');
+
+            legendBox.classList.toggle('minimized');
+            toggleBtn.classList.toggle('visible');
+        }
+
         // --- Stats Pane Functions ---
         function toggleStatsPane() {
             const pane = document.getElementById('stats-pane');
@@ -1544,6 +1797,8 @@
             const runningNode = getNodeById(currentRunningNodeId);
             document.getElementById('stat-running').textContent = runningNode ? runningNode.label : 'IDLE';
             document.getElementById('stat-scheduler').textContent = document.getElementById('scheduler-label').textContent;
+            document.getElementById('stat-cpu-cores').textContent = systemConfig.cpuCores;
+            document.getElementById('stat-max-memory').textContent = systemConfig.maxMemory + ' MB';
 
             // Process States
             const processes = nodes.filter(n => n.type === 'process');
@@ -1671,12 +1926,18 @@
         function setMode(m) {
             mode = m;
             selectedNode = null;
+            dragLinkStart = null;
+            dragLinkEnd = null;
+            if (m !== 'select') {
+                clearSelection();
+            }
             document.querySelectorAll('.neo-btn').forEach(b => b.classList.remove('active'));
             const map = {
                 process: 'btn-process',
                 resource: 'btn-resource',
                 link: 'btn-link',
-                delete: 'btn-delete'
+                delete: 'btn-delete',
+                select: 'btn-select'
             };
             const topMap = {
                 process: 'btn-process-top',
@@ -1696,7 +1957,9 @@
 
         function getMousePos(e) {
             const r = canvas.getBoundingClientRect();
-            return { x: e.clientX - r.left, y: e.clientY - r.top };
+            const x = (e.clientX - r.left - offsetX) / scale;
+            const y = (e.clientY - r.top - offsetY) / scale;
+            return { x, y };
         }
 
         function getNodeAt(x, y) {
@@ -1708,9 +1971,73 @@
             return null;
         }
 
+        function updateBatchOpsPosition() {
+            const batchOps = document.getElementById('batch-ops');
+            const sidebar = document.getElementById('sidebar-tools');
+            if (sidebar) {
+                const rect = sidebar.getBoundingClientRect();
+                batchOps.style.top = (rect.bottom + 10) + 'px';
+            }
+        }
+
+        function clearSelection() {
+            selectedNodes.clear();
+            document.getElementById('batch-ops').style.display = 'none';
+            draw();
+        }
+
+        function batchDelete() {
+            selectedNodes.forEach(nodeId => {
+                const node = getNodeById(nodeId);
+                if (node) deleteNode(node);
+            });
+            clearSelection();
+            saveState();
+        }
+
         canvas.addEventListener('mousedown', e => {
             const pos = getMousePos(e);
             const node = getNodeAt(pos.x, pos.y);
+
+            // Middle mouse button or Space+Click for panning
+            if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+                isPanning = true;
+                panStartX = e.clientX - offsetX;
+                panStartY = e.clientY - offsetY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+
+            // Handle selection mode
+            if (mode === 'select') {
+                if (node) {
+                    if (e.shiftKey) {
+                        // Shift+Click: toggle selection
+                        if (selectedNodes.has(node.id)) selectedNodes.delete(node.id);
+                        else selectedNodes.add(node.id);
+                    } else {
+                        // Regular click: select only this node
+                        selectedNodes.clear();
+                        selectedNodes.add(node.id);
+                    }
+                    // Show batch ops if nodes selected
+                    document.getElementById('batch-ops').style.display = selectedNodes.size > 0 ? 'block' : 'none';
+                    if (selectedNodes.size > 0) updateBatchOpsPosition();
+                } else {
+                    // Start selection box
+                    if (!e.shiftKey) clearSelection();
+                    selectionBox = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
+                }
+                draw();
+                return;
+            }
+
+            // Drag-to-connect: detect if starting a drag from a node
+            if (node && mode !== 'delete' && mode !== 'link' && mode !== 'select') {
+                dragLinkStart = node;
+                dragStartPos = { x: pos.x, y: pos.y };
+            }
 
             if (mode === 'process' || mode === 'resource') {
                 if (!node) addNode(mode, pos.x, pos.y);
@@ -1736,7 +2063,42 @@
         });
 
         canvas.addEventListener('mousemove', e => {
+            // Handle panning
+            if (isPanning) {
+                offsetX = e.clientX - panStartX;
+                offsetY = e.clientY - panStartY;
+                draw();
+                return;
+            }
+
             const pos = getMousePos(e);
+
+            // Update selection box
+            if (selectionBox) {
+                selectionBox.x2 = pos.x;
+                selectionBox.y2 = pos.y;
+                draw();
+                return;
+            }
+
+            // Drag-to-connect preview (only after movement threshold)
+            if (dragLinkStart && !draggingNode && dragStartPos) {
+                const dx = pos.x - dragStartPos.x;
+                const dy = pos.y - dragStartPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Activate drag-to-connect only if moved more than 10 pixels
+                if (distance > 10) {
+                    const hoveredNode = getNodeAt(pos.x, pos.y);
+                    if (hoveredNode && hoveredNode.id !== dragLinkStart.id) {
+                        dragLinkEnd = hoveredNode;
+                    } else {
+                        dragLinkEnd = pos; // Just mouse position for preview
+                    }
+                    draw();
+                    return;
+                }
+            }
 
             // Track position for link mode preview
             if (mode === 'link' && selectedNode) {
@@ -1762,16 +2124,98 @@
             draw();
         });
 
-        canvas.addEventListener('mouseup', () => draggingNode = null);
+        canvas.addEventListener('mouseup', e => {
+            if (isPanning) {
+                isPanning = false;
+                canvas.style.cursor = 'default';
+                return;
+            }
+
+            const pos = getMousePos(e);
+
+            // Complete drag-to-connect
+            if (dragLinkStart && dragLinkEnd) {
+                if (typeof dragLinkEnd === 'object' && dragLinkEnd.id) {
+                    // dragLinkEnd is a node
+                    if (dragLinkStart.id !== dragLinkEnd.id) {
+                        addEdge(dragLinkStart, dragLinkEnd);
+                        saveState();
+                    }
+                }
+            }
+
+            // Reset drag-to-connect state
+            dragLinkStart = null;
+            dragLinkEnd = null;
+            dragStartPos = null;
+
+            // Complete selection box
+            if (selectionBox) {
+                const { x1, y1, x2, y2 } = selectionBox;
+                const minX = Math.min(x1, x2);
+                const maxX = Math.max(x1, x2);
+                const minY = Math.min(y1, y2);
+                const maxY = Math.max(y1, y2);
+
+                nodes.forEach(node => {
+                    if (node.x >= minX && node.x <= maxX && node.y >= minY && node.y <= maxY) {
+                        selectedNodes.add(node.id);
+                    }
+                });
+
+                selectionBox = null;
+                document.getElementById('batch-ops').style.display = selectedNodes.size > 0 ? 'block' : 'none';
+                if (selectedNodes.size > 0) updateBatchOpsPosition();
+            }
+
+            draggingNode = null;
+            draw();
+        });
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Calculate mouse position in world coordinates before zoom
+            const worldX = (mouseX - offsetX) / scale;
+            const worldY = (mouseY - offsetY) / scale;
+
+            // Update scale
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale = Math.max(0.1, Math.min(5, scale * delta));
+
+            // Adjust offset to zoom toward mouse position
+            offsetX = mouseX - worldX * scale;
+            offsetY = mouseY - worldY * scale;
+
+            draw();
+        }, { passive: false });
+
+        canvas.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const clickedNode = getNodeAt(pos.x, pos.y);
+            if (clickedNode) {
+                selectedNode = clickedNode;
+                openProps(clickedNode);
+                draw();
+            }
+        });
 
         // --- Props Panel ---
         function openProps(node) {
-            propPanel.classList.remove('hidden');
+            propPanel.style.right = '120px';
             const content = document.getElementById('prop-content');
 
             let html = `
-                <div class="text-sm"><strong>ID:</strong> ${node.label}</div>
-                <div class="text-sm"><strong>Type:</strong> ${node.type}</div>
+                <div class="mt-3">
+                    <label class="block text-xs font-bold mb-1">LABEL:</label>
+                    <input type="text" class="neo-input" value="${node.label}"
+                        onchange="updateLabel(${node.id}, this.value)">
+                </div>
+                <div class="text-sm mt-2"><strong>Type:</strong> ${node.type}</div>
             `;
 
             if (node.type === 'process') {
@@ -1810,7 +2254,18 @@
             content.innerHTML = html;
         }
 
-        function closeProps() { propPanel.classList.add('hidden'); }
+        function closeProps() {
+            propPanel.style.right = '-280px';
+        }
+        window.updateLabel = (id, val) => {
+            const n = getNodeById(id);
+            if(n) {
+                n.label = val.trim() || n.label;
+                printToCli(`Renamed to ${n.label}`);
+                draw();
+                saveState();
+            }
+        };
         window.updateBurst = (id, val) => {
             const n = getNodeById(id);
             if(n) { n.burstTime = parseInt(val); if(n.burstTime > n.maxBurst) n.maxBurst = n.burstTime; draw();}
@@ -1999,8 +2454,8 @@
         function updateFlowParticles() {
             animationFrame++;
 
-            // Add new particles every 30 frames
-            if (animationFrame % 30 === 0) {
+            // Add new arrows every 40 frames
+            if (animationFrame % 40 === 0) {
                 edges.forEach(e => {
                     const s = getNodeById(e.source);
                     const t = getNodeById(e.target);
@@ -2017,10 +2472,10 @@
                 });
             }
 
-            // Update particle positions
+            // Update arrow positions
             flowParticles = flowParticles.filter(p => {
-                p.progress += 0.02; // Speed of animation
-                return p.progress <= 1.0; // Remove completed particles
+                p.progress += 0.025; // Speed of animation
+                return p.progress <= 1.0; // Remove completed arrows
             });
         }
 
@@ -2038,38 +2493,46 @@
                 const ex = t.x - offset * Math.cos(angle);
                 const ey = t.y - offset * Math.sin(angle);
 
-                // Interpolate position
+                // Interpolate position (center of arrow)
                 const px = sx + (ex - sx) * p.progress;
                 const py = sy + (ey - sy) * p.progress;
 
-                // Draw particle
+                // Draw crisp arrow
                 ctx.save();
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = p.isAllocation ? config.colors.running : config.colors.blocked;
 
-                // Different shapes for allocation vs request
-                if (p.isAllocation) {
-                    // Circle for allocation
-                    ctx.fillStyle = config.colors.running;
-                    ctx.beginPath();
-                    ctx.arc(px, py, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    // Square for request
-                    ctx.fillStyle = config.colors.blocked;
-                    ctx.fillRect(px - 4, py - 4, 8, 8);
-                }
+                // Arrow properties
+                const arrowLength = 16;
+                const arrowWidth = 8;
+                const arrowColor = p.isAllocation ? config.colors.running : config.colors.blocked;
 
-                // Add glow effect
-                ctx.globalAlpha = 1 - p.progress * 0.3;
-                ctx.fillStyle = 'white';
-                if (p.isAllocation) {
-                    ctx.beginPath();
-                    ctx.arc(px, py, 2, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillRect(px - 2, py - 2, 4, 4);
-                }
+                // Fade effect based on progress
+                ctx.globalAlpha = 1 - (p.progress * 0.4);
+
+                ctx.translate(px, py);
+                ctx.rotate(angle);
+
+                // Draw arrow body (rectangle)
+                ctx.fillStyle = arrowColor;
+                ctx.fillRect(-arrowLength / 2, -arrowWidth / 4, arrowLength * 0.6, arrowWidth / 2);
+
+                // Draw arrow head (triangle)
+                ctx.beginPath();
+                ctx.moveTo(arrowLength * 0.1, 0);
+                ctx.lineTo(arrowLength * 0.1 - arrowWidth, -arrowWidth / 1.5);
+                ctx.lineTo(arrowLength * 0.1 - arrowWidth, arrowWidth / 1.5);
+                ctx.closePath();
+                ctx.fill();
+
+                // Add border for crispness
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(-arrowLength / 2, -arrowWidth / 4, arrowLength * 0.6, arrowWidth / 2);
+                ctx.beginPath();
+                ctx.moveTo(arrowLength * 0.1, 0);
+                ctx.lineTo(arrowLength * 0.1 - arrowWidth, -arrowWidth / 1.5);
+                ctx.lineTo(arrowLength * 0.1 - arrowWidth, arrowWidth / 1.5);
+                ctx.closePath();
+                ctx.stroke();
 
                 ctx.restore();
             });
@@ -2278,6 +2741,11 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Apply zoom and pan transforms
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+
             // Update flow animation
             if (isRunning) {
                 updateFlowParticles();
@@ -2310,6 +2778,40 @@
                 ctx.restore();
             }
 
+            // Draw drag-to-connect preview
+            if (dragLinkStart && dragLinkEnd) {
+                ctx.save();
+                ctx.setLineDash([6, 3]);
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(dragLinkStart.x, dragLinkStart.y);
+                if (dragLinkEnd.id) {
+                    // Dragging to a node
+                    ctx.lineTo(dragLinkEnd.x, dragLinkEnd.y);
+                } else {
+                    // Dragging to mouse position
+                    ctx.lineTo(dragLinkEnd.x, dragLinkEnd.y);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw selection box
+            if (selectionBox) {
+                ctx.save();
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = '#6366f1';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.1)';
+                const { x1, y1, x2, y2 } = selectionBox;
+                const width = x2 - x1;
+                const height = y2 - y1;
+                ctx.fillRect(x1, y1, width, height);
+                ctx.strokeRect(x1, y1, width, height);
+                ctx.restore();
+            }
+
             // Edges (Drawn first so they are behind cards)
             edges.forEach(e => {
                 const s = getNodeById(e.source);
@@ -2318,6 +2820,23 @@
                     let c = 'black';
                     if(deadlockSet.has(s.id) && deadlockSet.has(t.id)) c = config.colors.deadlock;
                     drawArrow(s, t, c);
+
+                    // Draw edge label
+                    if (e.label && systemConfig.showEdgeLabels && systemConfig.edgeLabelSize > 0) {
+                        const midX = (s.x + t.x) / 2;
+                        const midY = (s.y + t.y) / 2;
+                        ctx.save();
+                        ctx.fillStyle = 'white';
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = 2;
+                        ctx.font = `${systemConfig.edgeLabelSize}px Courier New`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.strokeText(e.label, midX, midY - 10);
+                        ctx.fillStyle = 'black';
+                        ctx.fillText(e.label, midX, midY - 10);
+                        ctx.restore();
+                    }
                 }
             });
 
@@ -2365,6 +2884,12 @@
                 } else if(selectedNode && selectedNode.id === n.id) {
                     shadowColor = 'black';
                     shadowOff = 8; // Extra offset for selected
+                } else if(selectedNodes.has(n.id)) {
+                    // Highlight for batch selection
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#6366f1';
+                    shadowColor = '#6366f1';
+                    shadowOff = 6;
                 }
 
                 // Shadow (Manual drawing for rotation accuracy)
@@ -2432,6 +2957,9 @@
 
                 ctx.restore();
             });
+
+            // Restore transform
+            ctx.restore();
         }
 
         function drawArrow(sourceNode, targetNode, color) {
