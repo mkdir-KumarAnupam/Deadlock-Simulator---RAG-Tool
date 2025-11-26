@@ -1,0 +1,31 @@
+{
+  "scenarios": [
+    {
+      "key": "custom_starvation",
+      "name": "Custom: Starvation (Extreme)",
+      "description": "10 Processes fighting for 1 Resource",
+      "data": {
+        "nodes": [
+          {"id": 1, "type": "resource", "label": "R1", "x": 400, "y": 300, "state": "RESOURCE"},
+          {"id": 2, "type": "process", "label": "P1", "x": 400, "y": 150, "burstTime": 500, "maxBurst": 500, "memory": 128, "state": "READY", "arrivalOrder": 1},
+          {"id": 3, "type": "process", "label": "P2", "x": 529, "y": 196, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 2},
+          {"id": 4, "type": "process", "label": "P3", "x": 546, "y": 362, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 3},
+          {"id": 5, "type": "process", "label": "P4", "x": 446, "y": 442, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 4},
+          {"id": 6, "type": "process", "label": "P5", "x": 353, "y": 442, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 5},
+          {"id": 7, "type": "process", "label": "P6", "x": 253, "y": 362, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 6},
+          {"id": 8, "type": "process", "label": "P7", "x": 270, "y": 196, "burstTime": 100, "maxBurst": 100, "memory": 64, "state": "READY", "arrivalOrder": 7}
+        ],
+        "edges": [
+          {"source": 1, "target": 2},
+          {"source": 3, "target": 1},
+          {"source": 4, "target": 1},
+          {"source": 5, "target": 1},
+          {"source": 6, "target": 1},
+          {"source": 7, "target": 1},
+          {"source": 8, "target": 1}
+        ],
+        "nextId": 9
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Resource Allocation Graph</title>
+            <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+            <style type="text/css">
+                body { background-color: #1e1e2e; color: #ffffff; font-family: sans-serif; margin: 0; }
+                #mynetwork { width: 100vw; height: 100vh; border: 1px solid #444444; }
+                .legend { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; pointer-events: none; }
+                h2 { margin-top: 0; }
+            </style>
+        </head>
+        <body>
+            <div id="mynetwork"></div>
+            <div class="legend">
+                <h2>RAG Simulation</h2>
+                <p><span style="color:#44b0f2">●</span> Process</p>
+                <p><span style="color:#9370DB">■</span> Resource (Available)</p>
+                <p><span style="color:#ff5757">■</span> Resource (Empty)</p>
+                <p><span style="color:gray">──</span> Allocation</p>
+                <p><span style="color:orange">--</span> Request (Waiting)</p>
+            </div>
+
+            <script type="text/javascript">
+                var nodes = new vis.DataSet([{"id": "P1", "label": "P1", "shape": "dot", "color": "#44b0f2", "font": {"color": "white"}}, {"id": "P2", "label": "P2", "shape": "dot", "color": "#44b0f2", "font": {"color": "white"}}, {"id": "R1", "label": "R1\n(0/1)", "shape": "box", "color": "#ff5757", "font": {"color": "white"}}, {"id": "R2", "label": "R2\n(0/1)", "shape": "box", "color": "#ff5757", "font": {"color": "white"}}]);
+                var edges = new vis.DataSet([{"from": "P1", "to": "R2", "arrows": "to", "width": 2, "dashes": true, "color": {"color": "orange"}, "label": "Wait"}, {"from": "R1", "to": "P1", "arrows": "to", "width": 2, "color": {"color": "gray"}}, {"from": "R2", "to": "P2", "arrows": "to", "width": 2, "color": {"color": "gray"}}]);
+                var container = document.getElementById('mynetwork');
+                var data = { nodes: nodes, edges: edges };
+                var options = {
+                    physics: {
+                        enabled: true,
+                        stabilization: { iterations: 150 }
+                    },
+                    nodes: {
+                        font: { size: 16, face: 'arial' }
+                    },
+                    layout: {
+                        randomSeed: 2
+                    }
+                };
+                var network = new vis.Network(container, data, options);
+            </script>
+        </body>
+        </html>
+        
