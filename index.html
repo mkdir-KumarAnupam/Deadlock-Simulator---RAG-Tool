@@ -594,35 +594,27 @@
                 </div>
             </div>
 
-            <!-- Scenarios Dropdown -->
-            <div class="relative">
-                <button class="neo-btn" onclick="toggleMenu(event, 'scenario-menu')">
-                    <i class="fas fa-book"></i> Scenarios <span class="ml-1 text-[10px]">▼</span>
+            <!-- Scenario UI (Library or Legacy) -->
+            <div id="scenario-ui-container">
+                <!-- Scenario Library Button (Default) -->
+                <button id="scenario-library-btn" class="neo-btn" onclick="openScenarioLibrary()">
+                    <i class="fas fa-book-open"></i> Scenario Library
                 </button>
-                <div id="scenario-menu" class="neo-dropdown">
-                    <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')">
-                        1. Simple Deadlock
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')">
-                        2. Circular Wait (3P)
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('safe_state')">
-                        3. Safe State
-                    </div>
-                     <div class="neo-dropdown-item" onclick="loadScenario('starvation')">
-                        4. Starvation Risk
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('fcfs_test')">
-                        5. FCFS Test
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('sjf_test')">
-                        6. SJF Test
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('srtf_test')">
-                        7. SRTF Test
-                    </div>
-                    <div class="neo-dropdown-item" onclick="loadScenario('rr_test')">
-                        8. Round Robin Test
+
+                <!-- Legacy Scenario Dropdown (Hidden by default) -->
+                <div id="legacy-scenario-dropdown" class="relative" style="display: none;">
+                    <button class="neo-btn" onclick="toggleMenu(event, 'legacy-scenario-menu')">
+                        <i class="fas fa-list"></i> Scenarios <span class="ml-1 text-[10px]">▼</span>
+                    </button>
+                    <div id="legacy-scenario-menu" class="neo-dropdown">
+                        <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')">Simple Deadlock</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')">Circular Wait</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('safe_state')">Safe State</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('starvation')">Starvation</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('fcfs_test')">FCFS Test</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('sjf_test')">SJF Test</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('srtf_test')">SRTF Test</div>
+                        <div class="neo-dropdown-item" onclick="loadScenario('rr_test')">Round Robin Test</div>
                     </div>
                 </div>
             </div>
@@ -733,6 +725,13 @@
                     <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="toolbar-position" value="topbar" onchange="setToolbarPosition('topbar')">
                         <span>Top Bar</span>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Scenario UI:</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="config-legacy-scenarios" onchange="toggleScenarioUIMode(this.checked)">
+                        <span class="font-bold">Use Legacy Scenario Dropdown</span>
                     </label>
                     <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
                         <strong>Theme:</strong>
@@ -881,6 +880,9 @@
                     <button id="btn-select" class="neo-btn flex items-center justify-center" onclick="setMode('select')" title="Select Multiple (Shift+Click)" style="width: 40px; height: 40px;">
                         <i class="fas fa-hand-pointer" style="font-size: 14px;"></i>
                     </button>
+                    <button id="btn-pan" class="neo-btn flex items-center justify-center" onclick="setMode('pan')" title="Pan Mode (Space+Drag)" style="width: 40px; height: 40px;">
+                        <i class="fas fa-arrows-alt" style="font-size: 14px;"></i>
+                    </button>
                 </div>
             </div>
 
@@ -955,6 +957,167 @@
         </div>
 
     </div>
+
+    <!-- Scenario Library Modal (Inserted) -->
+    <div id="scenario-library-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.92); z-index: 10000; overflow-y: auto; padding: 20px; font-family: 'Courier New', monospace;"></div>
+
+    <style>
+        .scenario-card {
+            background: white;
+            border: 5px solid black;
+            box-shadow: 10px 10px 0 black;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            font-family: 'Courier New', monospace;
+        }
+        .scenario-card:nth-child(even) {
+            transform: rotate(1deg);
+        }
+        .scenario-card:nth-child(odd) {
+            transform: rotate(-1deg);
+        }
+        .scenario-card:nth-child(3n) {
+            transform: rotate(0.5deg);
+        }
+        .scenario-card:hover {
+            transform: rotate(0deg) translate(-5px, -5px) !important;
+            box-shadow: 15px 15px 0 black;
+            z-index: 100;
+        }
+        .scenario-card:active {
+            transform: rotate(0deg) translate(3px, 3px) !important;
+            box-shadow: 5px 5px 0 black;
+        }
+        .scenario-category {
+            position: absolute;
+            top: -12px;
+            left: 16px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 900;
+            color: white;
+            border: 3px solid black;
+            box-shadow: 3px 3px 0 black;
+            letter-spacing: 1px;
+        }
+        .scenario-number {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 32px;
+            font-weight: 900;
+            color: #f0f0f0;
+            line-height: 1;
+        }
+        .scenario-title {
+            font-size: 22px;
+            font-weight: 900;
+            margin-top: 8px;
+            margin-bottom: 14px;
+            border-bottom: 4px solid black;
+            padding-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .scenario-description {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 14px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+        .scenario-outcome {
+            background: #ffe600;
+            border: 3px solid black;
+            padding: 14px;
+            font-size: 12px;
+            margin-bottom: 14px;
+            line-height: 1.6;
+            box-shadow: 4px 4px 0 black;
+            font-weight: bold;
+        }
+        .scenario-config {
+            display: flex;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            color: black;
+            flex-wrap: wrap;
+        }
+        .scenario-config span {
+            background: white;
+            border: 3px solid black;
+            padding: 6px 10px;
+            white-space: nowrap;
+            box-shadow: 3px 3px 0 black;
+        }
+        .card-pin {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #ff4757;
+            border: 3px solid black;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 3px white, 3px 3px 0 black;
+            z-index: 10;
+        }
+        .card-pin-top-left {
+            top: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .title-pin {
+            position: absolute;
+            width: 40px;
+            height: 40px  ;
+            background: #ff4757;
+            border: 3px solid black;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 3px white, 3px 3px 0 black;
+            z-index: 10;
+        }
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUpBounce {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes cardPopIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .scenario-library-content {
+            animation: slideUpBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .scenario-card {
+            animation: cardPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+        }
+    </style>
 
     <!-- Footer -->
     <footer class="h-64 border-t-4 border-black flex flex-col md:flex-row z-20">
@@ -1183,6 +1346,194 @@
             }
         }
 
+        // --- Scenario UI Toggle ---
+        function toggleScenarioUIMode(useLegacy) {
+            const libraryBtn = document.getElementById('scenario-library-btn');
+            const legacyDropdown = document.getElementById('legacy-scenario-dropdown');
+
+            if (useLegacy) {
+                libraryBtn.style.display = 'none';
+                legacyDropdown.style.display = 'block';
+                localStorage.setItem('useLegacyScenarios', 'true');
+            } else {
+                libraryBtn.style.display = 'block';
+                legacyDropdown.style.display = 'none';
+                localStorage.setItem('useLegacyScenarios', 'false');
+            }
+        }
+
+        // Load saved preference on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const useLegacy = localStorage.getItem('useLegacyScenarios') === 'true';
+            document.getElementById('config-legacy-scenarios').checked = useLegacy;
+            if (useLegacy) {
+                toggleScenarioUIMode(true);
+            }
+        });
+
+        // --- Scenario Library Functions ---
+        function openScenarioLibrary() {
+            const modal = document.getElementById('scenario-library-modal');
+
+            // Build modal content dynamically
+            const scenarios = getScenarioData();
+            let html = `
+                <div class="scenario-library-content" style="max-width: 1200px; margin: 40px auto; position: relative;">
+                    <button onclick="closeScenarioLibrary()" class="neo-btn" style="position: absolute; top: -50px; right: 0; background: #ff4757; color: white; font-weight: bold;">
+                        <i class="fas fa-times"></i> CLOSE
+                    </button>
+
+                    <div style="background: white; border: 6px solid black; box-shadow: 12px 12px 0 black; padding: 32px; margin-bottom: 32px; transform: rotate(-1deg); position: relative; transform-origin: top right;">
+                        <h1 style="font-family: 'Courier New', monospace; font-size: 3rem; font-weight: 900; border: 5px solid black; background: #ffe600; padding: 20px; box-shadow: 8px 8px 0 black; text-align: center; margin: 0 0 20px 0; letter-spacing: 2px; position: relative;">
+                            <div class="title-pin" style="top: -10px; right: 2%; position: absolute; width: 26px; height: 26px; box-shadow: inset 0 0 0 4px white, 4px 4px 0 black;"></div>
+                            SCENARIO LIBRARY
+                        </h1>
+                        <p style="font-family: 'Courier New', monospace; font-size: 15px; text-align: center; padding: 16px; background: white; border: 3px solid black; margin: 0; line-height: 1.6;">
+                            <strong>Learn Operating System concepts through interactive scenarios.</strong><br>
+                            Click any card to load the scenario and start exploring.
+                        </p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px;">
+            `;
+
+            scenarios.forEach(s => {
+                html += `
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('${s.id}')">
+                        <div class="card-pin card-pin-top-left"></div>
+                        <div class="scenario-category" style="background: ${s.categoryColor};">${s.category}</div>
+                        <div class="scenario-number">${s.number}</div>
+                        <h3 class="scenario-title">${s.title}</h3>
+                        <p class="scenario-description">${s.description}</p>
+                        <div class="scenario-outcome bg-white ">
+                            <strong class"bg-white">LEARNING OUTCOME:</strong><br>
+                            ${s.outcome}
+                        </div>
+                        <div class="scenario-config">
+                            ${s.config.map(c => `<span><i class="${c.icon}"></i> ${c.text}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                    <div style="background: #4ecdc4; border: 4px solid black; box-shadow: 8px 8px 0 black; padding: 20px; margin-top: 32px; text-align: center; transform: rotate(1deg);">
+                        <p style="font-family: 'Courier New', monospace; font-size: 14px; color: black; margin: 0; font-weight: bold;">
+                            PRO TIP: After loading a scenario, use the Settings menu to adjust simulation speed and observe behavior in detail!
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            modal.innerHTML = html;
+            modal.style.display = 'block';
+            modal.style.animation = 'modalFadeIn 0.3s ease-out';
+            document.body.style.overflow = 'hidden';
+
+            // Add staggered animation delays to cards
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.scenario-card');
+                cards.forEach((card, index) => {
+                    card.style.animationDelay = `${0.1 + (index * 0.05)}s`;
+                });
+            }, 10);
+        }
+
+        function closeScenarioLibrary() {
+            document.getElementById('scenario-library-modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function loadScenarioFromLibrary(type) {
+            closeScenarioLibrary();
+            loadScenario(type);
+        }
+
+        function getScenarioData() {
+            return [
+                { id: 'simple_deadlock', number: '01', category: 'DEADLOCK', categoryColor: '#ff6b6b', title: 'Simple Deadlock',
+                  description: 'Two processes and two resources in a classic mutual hold-and-wait situation. Both processes hold one resource and request the other.',
+                  outcome: 'Understand the four necessary conditions for deadlock: mutual exclusion, hold and wait, no preemption, and circular wait.',
+                  config: [{icon: 'fas fa-circle', text: '2 Processes'}, {icon: 'fas fa-square', text: '2 Resources'}] },
+
+                { id: 'circular_wait', number: '02', category: 'DEADLOCK', categoryColor: '#ff6b6b', title: 'Circular Wait (3 Processes)',
+                  description: 'Three processes form a circular chain where each holds one resource and waits for another, creating a cycle in the resource allocation graph.',
+                  outcome: 'Visualize how circular wait condition manifests in RAG. Learn cycle detection algorithms and deadlock prevention strategies.',
+                  config: [{icon: 'fas fa-circle', text: '3 Processes'}, {icon: 'fas fa-square', text: '3 Resources'}] },
+
+                { id: 'safe_state', number: '03', category: 'SAFE STATE', categoryColor: '#4ecdc4', title: 'Safe State Example',
+                  description: 'Linear resource dependency chain without cycles. Demonstrates a safe allocation where processes can complete sequentially without deadlock.',
+                  outcome: 'Distinguish between safe and unsafe states. Understand how proper resource ordering prevents deadlock formation.',
+                  config: [{icon: 'fas fa-circle', text: '3 Processes'}, {icon: 'fas fa-square', text: '2 Resources'}] },
+
+                { id: 'starvation', number: '04', category: 'STARVATION', categoryColor: '#feca57', title: 'Resource Starvation',
+                  description: 'One process monopolizes a resource with long burst time while five other processes compete endlessly for access, demonstrating indefinite postponement.',
+                  outcome: 'Understand starvation vs deadlock. Learn aging techniques and fair scheduling to prevent indefinite blocking.',
+                  config: [{icon: 'fas fa-circle', text: '6 Processes'}, {icon: 'fas fa-square', text: '1 Resource'}] },
+
+                { id: 'fcfs_test', number: '05', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'FCFS Scheduling Test',
+                  description: 'First-Come-First-Served: Four processes with varying burst times executed in arrival order. Non-preemptive, simple but can cause convoy effect.',
+                  outcome: 'Analyze average waiting time in FCFS. Identify convoy effect where short processes wait behind long ones.',
+                  config: [{icon: 'fas fa-clock', text: 'Algorithm: FCFS'}, {icon: 'fas fa-circle', text: '4 Processes'}] },
+
+                { id: 'sjf_test', number: '06', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'SJF Scheduling Test',
+                  description: 'Shortest Job First: Processes with intentionally varied burst times to demonstrate optimal average waiting time when executed shortest-first.',
+                  outcome: 'Prove SJF minimizes average waiting time. Understand the challenge of predicting burst times in real systems.',
+                  config: [{icon: 'fas fa-clock', text: 'Algorithm: SJF'}, {icon: 'fas fa-circle', text: '4 Processes'}] },
+
+                { id: 'srtf_test', number: '07', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'SRTF Preemptive Test',
+                  description: 'Shortest Remaining Time First: Long-running process repeatedly preempted by incoming short processes. Shows context switching overhead.',
+                  outcome: 'Compare preemptive vs non-preemptive scheduling. Observe context switching costs and response time improvements.',
+                  config: [{icon: 'fas fa-clock', text: 'Algorithm: SRTF'}, {icon: 'fas fa-circle', text: '4 Processes'}] },
+
+                { id: 'rr_test', number: '08', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'Round Robin Test',
+                  description: 'Time-sharing with quantum=30ms. Four processes with similar burst times take turns executing, providing fair CPU time distribution.',
+                  outcome: 'Understand time quantum trade-offs: too small increases overhead, too large reduces responsiveness. Balance fairness and efficiency.',
+                  config: [{icon: 'fas fa-clock', text: 'Algorithm: RR (Q=30)'}, {icon: 'fas fa-circle', text: '4 Processes'}] },
+
+                { id: 'dining_philosophers', number: '09', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Dining Philosophers',
+                  description: 'Five philosophers alternately think and eat. Each needs two chopsticks (shared resources) to eat, but only five chopsticks exist.',
+                  outcome: 'Study classic synchronization problem. Learn solutions: resource hierarchy, arbitrator, or asymmetric approach.',
+                  config: [{icon: 'fas fa-circle', text: '5 Philosophers'}, {icon: 'fas fa-square', text: '5 Chopsticks'}] },
+
+                { id: 'producer_consumer', number: '10', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Producer-Consumer',
+                  description: 'Producers generate data and consumers process it. Shared buffer with limited capacity requires synchronization to prevent overflow/underflow.',
+                  outcome: 'Master bounded-buffer problem. Understand semaphores, mutexes, and condition variables for synchronization.',
+                  config: [{icon: 'fas fa-circle', text: '2 Producers'}, {icon: 'fas fa-circle', text: '2 Consumers'}] },
+
+                { id: 'readers_writers', number: '11', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Readers-Writers',
+                  description: 'Multiple readers can access shared data simultaneously, but writers need exclusive access. Demonstrates reader/writer priority trade-offs.',
+                  outcome: 'Explore reader-writer locks. Compare reader-preference vs writer-preference policies and their starvation implications.',
+                  config: [{icon: 'fas fa-circle', text: '4 Readers'}, {icon: 'fas fa-circle', text: '2 Writers'}] },
+
+                { id: 'priority_inversion', number: '12', category: 'PRIORITY', categoryColor: '#ff9ff3', title: 'Priority Inversion',
+                  description: 'High-priority process blocked by low-priority process holding a resource. Medium-priority process runs instead, inverting priorities.',
+                  outcome: 'Identify priority inversion problem. Learn priority inheritance and priority ceiling protocols as solutions.',
+                  config: [{icon: 'fas fa-circle', text: '3 Processes'}, {icon: 'fas fa-layer-group', text: 'Different Priorities'}] },
+
+                { id: 'convoy_effect', number: '13', category: 'PERFORMANCE', categoryColor: '#feca57', title: 'Convoy Effect Demo',
+                  description: 'One CPU-bound process with very long burst time followed by many I/O-bound processes. All short processes wait, reducing system throughput.',
+                  outcome: 'Observe convoy effect in FCFS. Understand why preemptive schedulers perform better for mixed workloads.',
+                  config: [{icon: 'fas fa-circle', text: '1 CPU-bound'}, {icon: 'fas fa-circle', text: '6 I/O-bound'}] },
+
+                { id: 'resource_preemption', number: '14', category: 'RECOVERY', categoryColor: '#4ecdc4', title: 'Resource Preemption',
+                  description: 'Deadlock occurs and must be resolved by preempting resources from victim processes. Demonstrates one recovery strategy.',
+                  outcome: 'Learn deadlock recovery techniques: victim selection, rollback, and starvation prevention during recovery.',
+                  config: [{icon: 'fas fa-circle', text: '3 Processes'}, {icon: 'fas fa-recycle', text: 'Preemption Demo'}] },
+
+                { id: 'multi_instance', number: '15', category: 'RESOURCES', categoryColor: '#54a0ff', title: 'Multiple Resource Instances',
+                  description: 'Resources with multiple identical instances. Processes request and release instances dynamically, testing allocation strategies.',
+                  outcome: 'Understand difference between single and multi-instance resources. Apply Banker\'s Algorithm for safe state checking.',
+                  config: [{icon: 'fas fa-circle', text: '4 Processes'}, {icon: 'fas fa-layer-group', text: 'Multi-instance'}] },
+
+                { id: 'aging_demo', number: '16', category: 'STARVATION FIX', categoryColor: '#feca57', title: 'Aging Mechanism',
+                  description: 'Low-priority processes gradually increase their priority over time to prevent indefinite postponement in priority scheduling.',
+                  outcome: 'See how aging prevents starvation. Balance between priority respect and fairness in scheduling algorithms.',
+                  config: [{icon: 'fas fa-circle', text: '5 Processes'}, {icon: 'fas fa-chart-line', text: 'Dynamic Priority'}] }
+            ];
+        }
+
         // --- Scenario Logic ---
         function loadScenario(type) {
             resetGraph();
@@ -1296,6 +1647,213 @@
                 p4.burstTime = 150; p4.originalBurst = 150;
                 printToCli("Round Robin Test: Q=30, equal priority tasks", 'info');
                 printToCli("Best for: Interactive systems, time-sharing", 'success');
+            }
+            // Advanced scenarios
+            else if (type === 'dining_philosophers') {
+                const centerX = cx;
+                const centerY = cy;
+                const radius = 120;
+                const philosophers = [];
+                const chopsticks = [];
+
+                // Create 5 philosophers in a circle
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                    const px = centerX + radius * Math.cos(angle);
+                    const py = centerY + radius * Math.sin(angle);
+                    const p = addNode('process', px, py);
+                    p.label = 'Phil' + (i + 1);
+                    philosophers.push(p);
+                }
+
+                // Create 5 chopsticks between philosophers
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2 + (Math.PI / 5);
+                    const rx = centerX + radius * 0.6 * Math.cos(angle);
+                    const ry = centerY + radius * 0.6 * Math.sin(angle);
+                    const r = addNode('resource', rx, ry);
+                    r.label = 'Fork' + (i + 1);
+                    chopsticks.push(r);
+                }
+
+                // Each philosopher requests two adjacent chopsticks
+                for (let i = 0; i < 5; i++) {
+                    addEdge(philosophers[i], chopsticks[i]);
+                    addEdge(philosophers[i], chopsticks[(i + 1) % 5]);
+                }
+
+                printToCli("Dining Philosophers: Classic synchronization problem", 'info');
+                printToCli("All trying to pick up two forks - potential deadlock!", 'error');
+            }
+            else if (type === 'producer_consumer') {
+                const buffer = addNode('resource', cx, cy);
+                buffer.label = 'Buffer';
+                buffer.capacity = 3;
+                buffer.instances = 3;
+
+                const prod1 = addNode('process', cx - 120, cy - 80);
+                const prod2 = addNode('process', cx - 120, cy + 80);
+                const cons1 = addNode('process', cx + 120, cy - 80);
+                const cons2 = addNode('process', cx + 120, cy + 80);
+
+                prod1.label = 'Prod1';
+                prod2.label = 'Prod2';
+                cons1.label = 'Cons1';
+                cons2.label = 'Cons2';
+
+                prod1.burstTime = 200; prod1.originalBurst = 200;
+                prod2.burstTime = 180; prod2.originalBurst = 180;
+                cons1.burstTime = 150; cons1.originalBurst = 150;
+                cons2.burstTime = 170; cons2.originalBurst = 170;
+
+                addEdge(prod1, buffer);
+                addEdge(prod2, buffer);
+                addEdge(buffer, cons1);
+                addEdge(buffer, cons2);
+
+                printToCli("Producer-Consumer: Bounded buffer problem", 'info');
+                printToCli("Buffer capacity: 3. Producers fill, consumers empty", 'success');
+            }
+            else if (type === 'readers_writers') {
+                const database = addNode('resource', cx, cy);
+                database.label = 'DB';
+
+                // Readers can share
+                const r1 = addNode('process', cx - 100, cy - 100);
+                const r2 = addNode('process', cx + 100, cy - 100);
+                const r3 = addNode('process', cx - 150, cy);
+                const r4 = addNode('process', cx + 150, cy);
+
+                // Writers need exclusive access
+                const w1 = addNode('process', cx - 50, cy + 100);
+                const w2 = addNode('process', cx + 50, cy + 100);
+
+                r1.label = 'Read1'; r2.label = 'Read2';
+                r3.label = 'Read3'; r4.label = 'Read4';
+                w1.label = 'Write1'; w2.label = 'Write2';
+
+                r1.burstTime = 80; r1.originalBurst = 80;
+                r2.burstTime = 90; r2.originalBurst = 90;
+                r3.burstTime = 70; r3.originalBurst = 70;
+                r4.burstTime = 85; r4.originalBurst = 85;
+                w1.burstTime = 150; w1.originalBurst = 150;
+                w2.burstTime = 160; w2.originalBurst = 160;
+
+                addEdge(r1, database);
+                addEdge(r2, database);
+                addEdge(r3, database);
+                addEdge(r4, database);
+                addEdge(w1, database);
+                addEdge(w2, database);
+
+                printToCli("Readers-Writers: Multiple readers, exclusive writers", 'info');
+                printToCli("Challenge: Balance reader/writer priority", 'error');
+            }
+            else if (type === 'priority_inversion') {
+                selectScheduler('fcfs', 'FCFS');
+                const r1 = addNode('resource', cx, cy);
+                r1.label = 'Lock';
+
+                const low = addNode('process', cx - 120, cy);
+                const med = addNode('process', cx, cy - 100);
+                const high = addNode('process', cx + 120, cy);
+
+                low.label = 'Low-P';
+                med.label = 'Med-P';
+                high.label = 'High-P';
+
+                low.burstTime = 250; low.originalBurst = 250;
+                med.burstTime = 150; med.originalBurst = 150;
+                high.burstTime = 100; high.originalBurst = 100;
+
+                // Low priority holds resource
+                addEdge(r1, low);
+                // High priority waits for it
+                addEdge(high, r1);
+                // Medium priority runs freely (priority inversion!)
+
+                printToCli("Priority Inversion: High waits for low", 'error');
+                printToCli("Medium-priority process runs instead!", 'info');
+            }
+            else if (type === 'convoy_effect') {
+                selectScheduler('fcfs', 'FCFS');
+                const cpuBound = addNode('process', cx, cy - 100);
+                cpuBound.label = 'CPU';
+                cpuBound.burstTime = 500;
+                cpuBound.originalBurst = 500;
+
+                const radius = 100;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 / 6) * i;
+                    const px = cx + radius * Math.cos(angle);
+                    const py = cy + 50 + radius * Math.sin(angle);
+                    const p = addNode('process', px, py);
+                    p.label = 'IO' + (i + 1);
+                    p.burstTime = 40 + i * 10;
+                    p.originalBurst = 40 + i * 10;
+                }
+
+                printToCli("Convoy Effect: Long CPU-bound blocks short I/O", 'error');
+                printToCli("All short processes wait unnecessarily", 'info');
+            }
+            else if (type === 'resource_preemption') {
+                const p1 = addNode('process', cx - 100, cy);
+                const p2 = addNode('process', cx + 100, cy);
+                const p3 = addNode('process', cx, cy + 100);
+                const r1 = addNode('resource', cx - 50, cy - 80);
+                const r2 = addNode('resource', cx + 50, cy - 80);
+
+                p1.label = 'P1'; p2.label = 'P2'; p3.label = 'P3';
+                r1.label = 'R1'; r2.label = 'R2';
+
+                addEdge(r1, p1); addEdge(p1, r2);
+                addEdge(r2, p2); addEdge(p2, r1);
+                addEdge(p3, r1);
+
+                printToCli("Resource Preemption: Deadlock detected!", 'error');
+                printToCli("Solution: Preempt resource from victim process", 'info');
+            }
+            else if (type === 'multi_instance') {
+                const r1 = addNode('resource', cx, cy);
+                r1.label = 'Pool';
+                r1.capacity = 4;
+                r1.instances = 4;
+
+                const p1 = addNode('process', cx - 130, cy - 80);
+                const p2 = addNode('process', cx + 130, cy - 80);
+                const p3 = addNode('process', cx - 130, cy + 80);
+                const p4 = addNode('process', cx + 130, cy + 80);
+
+                p1.label = 'P1'; p2.label = 'P2';
+                p3.label = 'P3'; p4.label = 'P4';
+
+                addEdge(p1, r1);
+                addEdge(p2, r1);
+                addEdge(p3, r1);
+                addEdge(p4, r1);
+
+                printToCli("Multi-Instance Resources: 4 instances available", 'info');
+                printToCli("Use Banker's Algorithm to check safe states", 'success');
+            }
+            else if (type === 'aging_demo') {
+                selectScheduler('fcfs', 'FCFS');
+                const r1 = addNode('resource', cx, cy);
+                r1.label = 'CPU';
+
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                    const px = cx + 130 * Math.cos(angle);
+                    const py = cy + 130 * Math.sin(angle);
+                    const p = addNode('process', px, py);
+                    p.label = 'P' + (i + 1);
+                    // Vary burst times to create priority differences
+                    p.burstTime = 100 + i * 40;
+                    p.originalBurst = 100 + i * 40;
+                    addEdge(p, r1);
+                }
+
+                printToCli("Aging Demo: Priorities gradually increase", 'info');
+                printToCli("Prevents indefinite postponement", 'success');
             }
             document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
             detectDeadlock(true);
@@ -1826,6 +2384,19 @@
             if (chart.children.length === 1 && chart.children[0].innerText.includes('Start')) {
                 chart.innerHTML = '';
             }
+
+            // If switching from one process to another (not extending current block)
+            if (lastGanttEntry && lastGanttEntry.dataset.label !== label) {
+                // This is a context switch - mark the end time of previous block
+                lastGanttEntry.dataset.endTime = currentTime;
+                const container = lastGanttEntry.parentElement;
+                const timeLabel = container.querySelector('.time-label');
+                if (timeLabel) {
+                    const startTime = lastGanttEntry.dataset.startTime;
+                    timeLabel.innerHTML = `<span>${startTime}s</span><span style="margin-left: 8px;">${currentTime}s</span>`;
+                }
+            }
+
             if (lastGanttEntry && lastGanttEntry.dataset.label === label) {
                 const w = parseInt(lastGanttEntry.style.width) || 20;
                 lastGanttEntry.style.width = (w + 2) + 'px';
@@ -2413,13 +2984,20 @@
             if (m !== 'select') {
                 clearSelection();
             }
+            // Change cursor for pan mode
+            if (m === 'pan') {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'default';
+            }
             document.querySelectorAll('.neo-btn').forEach(b => b.classList.remove('active'));
             const map = {
                 process: 'btn-process',
                 resource: 'btn-resource',
                 link: 'btn-link',
                 delete: 'btn-delete',
-                select: 'btn-select'
+                select: 'btn-select',
+                pan: 'btn-pan'
             };
             const topMap = {
                 process: 'btn-process-top',
@@ -2481,7 +3059,17 @@
             const pos = getMousePos(e);
             const node = getNodeAt(pos.x, pos.y);
 
-            // Middle mouse button or Space+Click for panning
+            // Pan mode: left-click to pan
+            if (mode === 'pan' && e.button === 0) {
+                isPanning = true;
+                panStartX = e.clientX - offsetX;
+                panStartY = e.clientY - offsetY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+
+            // Middle mouse button or Ctrl+Click for panning
             if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
                 isPanning = true;
                 panStartX = e.clientX - offsetX;
@@ -2609,7 +3197,8 @@
         canvas.addEventListener('mouseup', e => {
             if (isPanning) {
                 isPanning = false;
-                canvas.style.cursor = 'default';
+                // Restore cursor based on current mode
+                canvas.style.cursor = (mode === 'pan') ? 'grab' : 'default';
                 return;
             }
 

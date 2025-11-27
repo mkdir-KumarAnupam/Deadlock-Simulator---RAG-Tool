@@ -1,0 +1,387 @@
+<!-- This file contains the scenario library modal HTML to be inserted after prop-panel -->
+
+        <!-- Scenario Library Modal -->
+        <div id="scenario-library-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10000; overflow-y: auto; padding: 20px;">
+            <div style="max-width: 1200px; margin: 40px auto; position: relative;">
+                <!-- Close Button -->
+                <button onclick="closeScenarioLibrary()" class="neo-btn" style="position: absolute; top: -50px; right: 0; background: #ff4757; color: white; font-weight: bold;">
+                    <i class="fas fa-times"></i> CLOSE
+                </button>
+
+                <!-- Header -->
+                <div class="neo-box bg-white p-6 mb-6 transform -rotate-1">
+                    <h1 style="font-family: 'Courier New', monospace; font-size: 2.5rem; font-weight: 900; border: 4px solid black; background: #ffe600; padding: 16px; box-shadow: 8px 8px 0 black; text-align: center; margin-bottom: 12px;">
+                        📚 SCENARIO LIBRARY
+                    </h1>
+                    <p style="font-family: 'Courier New', monospace; font-size: 14px; text-align: center; padding: 8px; background: #f0f0f0; border: 2px solid black;">
+                        <strong>Learn Operating System concepts through interactive scenarios.</strong><br>
+                        Click any card to load the scenario and start exploring!
+                    </p>
+                </div>
+
+                <!-- Scenarios Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 24px;">
+
+                    <!-- Deadlock Scenarios -->
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('simple_deadlock')">
+                        <div class="scenario-category" style="background: #ff6b6b;">DEADLOCK</div>
+                        <div class="scenario-number">01</div>
+                        <h3 class="scenario-title">Simple Deadlock</h3>
+                        <p class="scenario-description">
+                            Two processes and two resources in a classic mutual hold-and-wait situation. Both processes hold one resource and request the other.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Understand the four necessary conditions for deadlock: mutual exclusion, hold and wait, no preemption, and circular wait.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 2 Processes</span>
+                            <span><i class="fas fa-square"></i> 2 Resources</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('circular_wait')">
+                        <div class="scenario-category" style="background: #ff6b6b;">DEADLOCK</div>
+                        <div class="scenario-number">02</div>
+                        <h3 class="scenario-title">Circular Wait (3 Processes)</h3>
+                        <p class="scenario-description">
+                            Three processes form a circular chain where each holds one resource and waits for another, creating a cycle in the resource allocation graph.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Visualize how circular wait condition manifests in RAG. Learn cycle detection algorithms and deadlock prevention strategies.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 3 Processes</span>
+                            <span><i class="fas fa-square"></i> 3 Resources</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('safe_state')">
+                        <div class="scenario-category" style="background: #4ecdc4;">SAFE STATE</div>
+                        <div class="scenario-number">03</div>
+                        <h3 class="scenario-title">Safe State Example</h3>
+                        <p class="scenario-description">
+                            Linear resource dependency chain without cycles. Demonstrates a safe allocation where processes can complete sequentially without deadlock.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Distinguish between safe and unsafe states. Understand how proper resource ordering prevents deadlock formation.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 3 Processes</span>
+                            <span><i class="fas fa-square"></i> 2 Resources</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('starvation')">
+                        <div class="scenario-category" style="background: #feca57;">STARVATION</div>
+                        <div class="scenario-number">04</div>
+                        <h3 class="scenario-title">Resource Starvation</h3>
+                        <p class="scenario-description">
+                            One process monopolizes a resource with long burst time while five other processes compete endlessly for access, demonstrating indefinite postponement.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Understand starvation vs deadlock. Learn aging techniques and fair scheduling to prevent indefinite blocking.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 6 Processes</span>
+                            <span><i class="fas fa-square"></i> 1 Resource</span>
+                        </div>
+                    </div>
+
+                    <!-- Scheduling Scenarios -->
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('fcfs_test')">
+                        <div class="scenario-category" style="background: #a29bfe;">SCHEDULING</div>
+                        <div class="scenario-number">05</div>
+                        <h3 class="scenario-title">FCFS Scheduling Test</h3>
+                        <p class="scenario-description">
+                            First-Come-First-Served: Four processes with varying burst times executed in arrival order. Non-preemptive, simple but can cause convoy effect.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Analyze average waiting time in FCFS. Identify convoy effect where short processes wait behind long ones.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-clock"></i> Algorithm: FCFS</span>
+                            <span><i class="fas fa-circle"></i> 4 Processes</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('sjf_test')">
+                        <div class="scenario-category" style="background: #a29bfe;">SCHEDULING</div>
+                        <div class="scenario-number">06</div>
+                        <h3 class="scenario-title">SJF Scheduling Test</h3>
+                        <p class="scenario-description">
+                            Shortest Job First: Processes with intentionally varied burst times to demonstrate optimal average waiting time when executed shortest-first.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Prove SJF minimizes average waiting time. Understand the challenge of predicting burst times in real systems.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-clock"></i> Algorithm: SJF</span>
+                            <span><i class="fas fa-circle"></i> 4 Processes</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('srtf_test')">
+                        <div class="scenario-category" style="background: #a29bfe;">SCHEDULING</div>
+                        <div class="scenario-number">07</div>
+                        <h3 class="scenario-title">SRTF Preemptive Test</h3>
+                        <p class="scenario-description">
+                            Shortest Remaining Time First: Long-running process repeatedly preempted by incoming short processes. Shows context switching overhead.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Compare preemptive vs non-preemptive scheduling. Observe context switching costs and response time improvements.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-clock"></i> Algorithm: SRTF</span>
+                            <span><i class="fas fa-circle"></i> 4 Processes</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('rr_test')">
+                        <div class="scenario-category" style="background: #a29bfe;">SCHEDULING</div>
+                        <div class="scenario-number">08</div>
+                        <h3 class="scenario-title">Round Robin Test</h3>
+                        <p class="scenario-description">
+                            Time-sharing with quantum=30ms. Four processes with similar burst times take turns executing, providing fair CPU time distribution.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Understand time quantum trade-offs: too small increases overhead, too large reduces responsiveness. Balance fairness and efficiency.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-clock"></i> Algorithm: RR (Q=30)</span>
+                            <span><i class="fas fa-circle"></i> 4 Processes</span>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Scenarios -->
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('dining_philosophers')">
+                        <div class="scenario-category" style="background: #ee5a6f;">CLASSIC PROBLEM</div>
+                        <div class="scenario-number">09</div>
+                        <h3 class="scenario-title">Dining Philosophers</h3>
+                        <p class="scenario-description">
+                            Five philosophers alternately think and eat. Each needs two chopsticks (shared resources) to eat, but only five chopsticks exist.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Study classic synchronization problem. Learn solutions: resource hierarchy, arbitrator, or asymmetric approach.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 5 Philosophers</span>
+                            <span><i class="fas fa-square"></i> 5 Chopsticks</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('producer_consumer')">
+                        <div class="scenario-category" style="background: #ee5a6f;">CLASSIC PROBLEM</div>
+                        <div class="scenario-number">10</div>
+                        <h3 class="scenario-title">Producer-Consumer</h3>
+                        <p class="scenario-description">
+                            Producers generate data and consumers process it. Shared buffer with limited capacity requires synchronization to prevent overflow/underflow.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Master bounded-buffer problem. Understand semaphores, mutexes, and condition variables for synchronization.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 2 Producers</span>
+                            <span><i class="fas fa-circle"></i> 2 Consumers</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('readers_writers')">
+                        <div class="scenario-category" style="background: #ee5a6f;">CLASSIC PROBLEM</div>
+                        <div class="scenario-number">11</div>
+                        <h3 class="scenario-title">Readers-Writers</h3>
+                        <p class="scenario-description">
+                            Multiple readers can access shared data simultaneously, but writers need exclusive access. Demonstrates reader/writer priority trade-offs.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Explore reader-writer locks. Compare reader-preference vs writer-preference policies and their starvation implications.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 4 Readers</span>
+                            <span><i class="fas fa-circle"></i> 2 Writers</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('priority_inversion')">
+                        <div class="scenario-category" style="background: #ff9ff3;">PRIORITY</div>
+                        <div class="scenario-number">12</div>
+                        <h3 class="scenario-title">Priority Inversion</h3>
+                        <p class="scenario-description">
+                            High-priority process blocked by low-priority process holding a resource. Medium-priority process runs instead, inverting priorities.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Identify priority inversion problem. Learn priority inheritance and priority ceiling protocols as solutions.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 3 Processes</span>
+                            <span><i class="fas fa-layer-group"></i> Different Priorities</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('convoy_effect')">
+                        <div class="scenario-category" style="background: #feca57;">PERFORMANCE</div>
+                        <div class="scenario-number">13</div>
+                        <h3 class="scenario-title">Convoy Effect Demo</h3>
+                        <p class="scenario-description">
+                            One CPU-bound process with very long burst time followed by many I/O-bound processes. All short processes wait, reducing system throughput.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Observe convoy effect in FCFS. Understand why preemptive schedulers perform better for mixed workloads.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 1 CPU-bound</span>
+                            <span><i class="fas fa-circle"></i> 6 I/O-bound</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('resource_preemption')">
+                        <div class="scenario-category" style="background: #4ecdc4;">RECOVERY</div>
+                        <div class="scenario-number">14</div>
+                        <h3 class="scenario-title">Resource Preemption</h3>
+                        <p class="scenario-description">
+                            Deadlock occurs and must be resolved by preempting resources from victim processes. Demonstrates one recovery strategy.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Learn deadlock recovery techniques: victim selection, rollback, and starvation prevention during recovery.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 3 Processes</span>
+                            <span><i class="fas fa-recycle"></i> Preemption Demo</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('multi_instance')">
+                        <div class="scenario-category" style="background: #54a0ff;">RESOURCES</div>
+                        <div class="scenario-number">15</div>
+                        <h3 class="scenario-title">Multiple Resource Instances</h3>
+                        <p class="scenario-description">
+                            Resources with multiple identical instances. Processes request and release instances dynamically, testing allocation strategies.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            Understand difference between single and multi-instance resources. Apply Banker's Algorithm for safe state checking.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 4 Processes</span>
+                            <span><i class="fas fa-layer-group"></i> Multi-instance</span>
+                        </div>
+                    </div>
+
+                    <div class="scenario-card" onclick="loadScenarioFromLibrary('aging_demo')">
+                        <div class="scenario-category" style="background: #feca57;">STARVATION FIX</div>
+                        <div class="scenario-number">16</div>
+                        <h3 class="scenario-title">Aging Mechanism</h3>
+                        <p class="scenario-description">
+                            Low-priority processes gradually increase their priority over time to prevent indefinite postponement in priority scheduling.
+                        </p>
+                        <div class="scenario-outcome">
+                            <strong>🎯 Learning Outcome:</strong><br>
+                            See how aging prevents starvation. Balance between priority respect and fairness in scheduling algorithms.
+                        </div>
+                        <div class="scenario-config">
+                            <span><i class="fas fa-circle"></i> 5 Processes</span>
+                            <span><i class="fas fa-chart-line"></i> Dynamic Priority</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="neo-box bg-white p-4 mt-6 transform rotate-1" style="text-align: center;">
+                    <p style="font-family: 'Courier New', monospace; font-size: 12px; color: #666;">
+                        💡 <strong>Pro Tip:</strong> After loading a scenario, use the Settings menu to adjust simulation speed and observe behavior in detail!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .scenario-card {
+                background: white;
+                border: 4px solid black;
+                box-shadow: 8px 8px 0 black;
+                padding: 20px;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+                font-family: 'Courier New', monospace;
+            }
+            .scenario-card:hover {
+                transform: translate(-4px, -4px);
+                box-shadow: 12px 12px 0 black;
+            }
+            .scenario-card:active {
+                transform: translate(2px, 2px);
+                box-shadow: 4px 4px 0 black;
+            }
+            .scenario-category {
+                position: absolute;
+                top: -12px;
+                left: 16px;
+                padding: 4px 12px;
+                font-size: 11px;
+                font-weight: 900;
+                color: white;
+                border: 3px solid black;
+                box-shadow: 3px 3px 0 black;
+                letter-spacing: 1px;
+            }
+            .scenario-number {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                font-size: 32px;
+                font-weight: 900;
+                color: #f0f0f0;
+                line-height: 1;
+            }
+            .scenario-title {
+                font-size: 20px;
+                font-weight: 900;
+                margin-top: 8px;
+                margin-bottom: 12px;
+                border-bottom: 3px solid black;
+                padding-bottom: 8px;
+            }
+            .scenario-description {
+                font-size: 13px;
+                line-height: 1.6;
+                margin-bottom: 12px;
+                color: #333;
+            }
+            .scenario-outcome {
+                background: #fffbea;
+                border: 2px dashed black;
+                padding: 12px;
+                font-size: 12px;
+                margin-bottom: 12px;
+                line-height: 1.5;
+            }
+            .scenario-config {
+                display: flex;
+                gap: 12px;
+                font-size: 11px;
+                font-weight: bold;
+                color: #666;
+                flex-wrap: wrap;
+            }
+            .scenario-config span {
+                background: #f0f0f0;
+                border: 2px solid #ccc;
+                padding: 4px 8px;
+                white-space: nowrap;
+            }
+        </style>
