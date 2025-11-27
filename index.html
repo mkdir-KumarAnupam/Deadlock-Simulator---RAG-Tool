@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG OS Simulator v5.0 - Crisp</title>
+    <title>RAG OS Simulator v5.5 - Crisp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -481,6 +481,60 @@
 
         canvas { cursor: crosshair; }
 
+        /* Background Pattern Styles */
+        body.bg-pattern-none .flex-grow.flex {
+            background: var(--bg-color);
+        }
+        body.bg-pattern-dots .flex-grow.flex {
+            background: var(--bg-color);
+            background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        body.bg-pattern-grid .flex-grow.flex {
+            background: var(--bg-color);
+            background-image:
+                linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Background Pattern Styles */
+        body.bg-pattern-none .flex-grow.flex {
+            background: var(--bg-color);
+        }
+        body.bg-pattern-dots .flex-grow.flex {
+            background: var(--bg-color);
+            background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        body.bg-pattern-grid .flex-grow.flex {
+            background: var(--bg-color);
+            background-image:
+                linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Background Pattern Styles */
+        :root {
+            --pattern-opacity: 0.1;
+        }
+        body.bg-pattern-none .flex-grow.flex {
+            background: var(--bg-color);
+        }
+        body.bg-pattern-dots .flex-grow.flex {
+            background: var(--bg-color);
+            background-image: radial-gradient(circle, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        body.bg-pattern-grid .flex-grow.flex {
+            background: var(--bg-color);
+            background-image:
+                linear-gradient(rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,var(--pattern-opacity)) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
         /* Tools Panel Animation */
         #sidebar-tools {
             transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -576,7 +630,7 @@
             <div class="relative">
                 <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
                     <span>DEADLOCK_SIM</span>
-                    <span class="neo-tag">v5.0 CRISP</span>
+                    <span class="neo-tag">v5.5 CRISP</span>
                     <span class="text-xs ml-1 opacity-70">▼</span>
                 </div>
 
@@ -732,6 +786,28 @@
                     <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="config-legacy-scenarios" onchange="toggleScenarioUIMode(this.checked)">
                         <span class="font-bold">Use Legacy Scenario Dropdown</span>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Background Pattern:</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="none" onchange="setBackgroundPattern('none')">
+                        <span>None (Clean)</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="dots" onchange="setBackgroundPattern('dots')" checked>
+                        <span>Dots</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="grid" onchange="setBackgroundPattern('grid')">
+                        <span>Grid</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center justify-between text-xs">
+                        <span class="font-bold">Pattern Opacity:</span>
+                        <input type="range" id="config-pattern-opacity" min="0" max="30" value="10"
+                            class="w-24"
+                            oninput="setPatternOpacity(this.value)">
+                        <span id="pattern-opacity-value" class="font-mono" style="min-width: 35px;">10%</span>
                     </label>
                     <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
                         <strong>Theme:</strong>
@@ -959,7 +1035,7 @@
     </div>
 
     <!-- Scenario Library Modal (Inserted) -->
-    <div id="scenario-library-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.92); z-index: 10000; overflow-y: auto; padding: 20px; font-family: 'Courier New', monospace;"></div>
+    <div id="scenario-library-modal" onclick="if(event.target===this) closeScenarioLibrary()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; font-family: 'Courier New', monospace;"></div>
 
     <style>
         .scenario-card {
@@ -1109,6 +1185,56 @@
             100% {
                 opacity: 1;
                 transform: scale(1);
+            }
+        }
+
+        @keyframes slideInFromLeft {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes moveDots {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 24px 24px;
+            }
+        }
+
+        @keyframes titleWobble {
+            0%, 100% {
+                transform: rotate(-1deg);
+            }
+            25% {
+                transform: rotate(-0.5deg);
+            }
+            50% {
+                transform: rotate(-1.5deg);
+            }
+            75% {
+                transform: rotate(-0.8deg);
+            }
+        }
+
+        @keyframes titleWobble {
+            0%, 100% {
+                transform: rotate(-1deg);
+            }
+            25% {
+                transform: rotate(-0.5deg);
+            }
+            50% {
+                transform: rotate(-1.5deg);
+            }
+            75% {
+                transform: rotate(-0.8deg);
             }
         }
         .scenario-library-content {
@@ -1369,7 +1495,34 @@
             if (useLegacy) {
                 toggleScenarioUIMode(true);
             }
+
+            // Load saved background pattern
+            const savedPattern = localStorage.getItem('backgroundPattern') || 'dots';
+            setBackgroundPattern(savedPattern);
+            const patternRadio = document.querySelector(`input[name="bg-pattern"][value="${savedPattern}"]`);
+            if (patternRadio) patternRadio.checked = true;
+
+            // Load saved pattern opacity
+            const savedOpacity = localStorage.getItem('patternOpacity') || '10';
+            document.getElementById('config-pattern-opacity').value = savedOpacity;
+            setPatternOpacity(savedOpacity);
         });
+
+        function setBackgroundPattern(pattern) {
+            // Remove all pattern classes
+            document.body.classList.remove('bg-pattern-none', 'bg-pattern-dots', 'bg-pattern-grid');
+            // Add selected pattern class
+            document.body.classList.add(`bg-pattern-${pattern}`);
+            // Save preference
+            localStorage.setItem('backgroundPattern', pattern);
+        }
+
+        function setPatternOpacity(value) {
+            const opacity = value / 100;
+            document.documentElement.style.setProperty('--pattern-opacity', opacity);
+            document.getElementById('pattern-opacity-value').textContent = value + '%';
+            localStorage.setItem('patternOpacity', value);
+        }
 
         // --- Scenario Library Functions ---
         function openScenarioLibrary() {
@@ -1378,12 +1531,12 @@
             // Build modal content dynamically
             const scenarios = getScenarioData();
             let html = `
-                <div class="scenario-library-content" style="max-width: 1200px; margin: 40px auto; position: relative;">
-                    <button onclick="closeScenarioLibrary()" class="neo-btn" style="position: absolute; top: -50px; right: 0; background: #ff4757; color: white; font-weight: bold;">
+                <div class="scenario-library-content" style="background: #f8f8f8; background-image: radial-gradient(circle, #d0d0d0 2px, transparent 2px); background-size: 24px 24px; background-position: 0 0; border-right: 8px solid black; box-shadow: 12px 0 0 black; width: 75%; height: 100vh; overflow-y: auto; padding: 50px; position: fixed; top: 0; left: 0; animation: slideInFromLeft 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), moveDots 3s linear infinite;">
+                    <button onclick="closeScenarioLibrary()" class="neo-btn" style="position: fixed; top: 20px; right: calc(25% + 20px); background: #ff4757; color: white; font-weight: bold; z-index: 10001;">
                         <i class="fas fa-times"></i> CLOSE
                     </button>
 
-                    <div style="background: white; border: 6px solid black; box-shadow: 12px 12px 0 black; padding: 32px; margin-bottom: 32px; transform: rotate(-1deg); position: relative; transform-origin: top right;">
+                    <div style="border: 6px solid black; box-shadow: 8px 8px 0 black; padding: 32px; margin-bottom: 32px; transform: rotate(-1deg); position: relative; transform-origin: top right; background: white; animation: titleWobble 4s ease-in-out infinite;">
                         <h1 style="font-family: 'Courier New', monospace; font-size: 3rem; font-weight: 900; border: 5px solid black; background: #ffe600; padding: 20px; box-shadow: 8px 8px 0 black; text-align: center; margin: 0 0 20px 0; letter-spacing: 2px; position: relative;">
                             <div class="title-pin" style="top: -10px; right: 2%; position: absolute; width: 26px; height: 26px; box-shadow: inset 0 0 0 4px white, 4px 4px 0 black;"></div>
                             SCENARIO LIBRARY
