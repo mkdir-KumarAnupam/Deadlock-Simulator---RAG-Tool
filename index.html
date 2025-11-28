@@ -1582,6 +1582,10 @@
         let isScrubbing = false;
         let tickCounter = 0;
 
+        // --- Auto-Pause State ---
+let consecutiveIdleTicks = 0;
+const AUTO_PAUSE_THRESHOLD = 50; // 50 ticks (~10 seconds at default speed)
+
         // Drag-to-connect
         let dragLinkStart = null; // Starting node for drag-to-connect
         let dragLinkEnd = null; // Current mouse position or target node
@@ -4234,197 +4238,161 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
             updateSystemStats();
         }
 
-        function scheduler() {
 
-//time travel prevention @anshu
-            if (!isScrubbing) {
+        //updated scheduler to not keep cpu idle even after everything is done
+function scheduler() {
+    // --- Time Travel Recording ---
+    if (!isScrubbing) {
         recordHistory();
         tickCounter++;
         const display = document.getElementById('tick-display');
         if (display) display.innerText = `TICK: ${tickCounter}`;
     }
 
-            let activeLabel = "IDLE";
-            let activeColor = "#eee";
-            let preempted = false;
+    let activeLabel = "IDLE";
+    let activeColor = "#eee";
+    let preempted = false;
 
-            // Update quantum input if changed
-            if (schedulingAlgorithm === 'rr') {
-                const newQuantum = parseInt(document.getElementById('quantum-input').value) || 20;
-                if (newQuantum !== timeQuantum && !currentRunningNodeId) {
-                    timeQuantum = newQuantum;
-                    quantumRemaining = timeQuantum;
-                }
-            }
-
-            // Execute current running process
-            if (currentRunningNodeId) {
-                const p = getNodeById(currentRunningNodeId);
-                if (p && p.state === 'RUNNING') {
-                    p.burstTime -= 5;
-                    quantumRemaining -= 5;
-                    activeLabel = p.label;
-                    activeColor = config.colors.running;
-
-                    // Check if process completed
-                    if (p.burstTime <= 0) {
-                        terminateProcess(p);
-                    }
-                    // Round Robin: Check quantum expiry
-                    else if (schedulingAlgorithm === 'rr' && quantumRemaining <= 0) {
-                        p.state = 'READY';
-                        // Move to back of queue by updating a priority timestamp
-                        p.lastPreemptTime = Date.now();
-                        triggerContextSwitch(p.id); // Visual animation
-                        currentRunningNodeId = null;
-                        quantumRemaining = timeQuantum;
-                        preempted = true;
-                        printToCli(`${p.label} quantum expired - context switch`, 'info');
-                    }
-                    // SRTF: Check for preemption
-                    else if (schedulingAlgorithm === 'srtf') {
-                        const readyProcesses = nodes.filter(n =>
-                            n.type === 'process' &&
-                            n.state === 'READY' &&
-                            n.burstTime > 0
-                        );
-                        const shorterProcess = readyProcesses.find(n => n.burstTime < p.burstTime);
-                        if (shorterProcess) {
-                            p.state = 'READY';
-                            triggerContextSwitch(p.id); // Visual animation
-                            currentRunningNodeId = null;
-                            preempted = true;
-                            printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
-                        }
-                    }
-                    // Update properties panel if open
-                    else if (!propPanel.classList.contains('hidden')) {
-                        const content = document.getElementById('prop-content');
-                        if(content.innerText.includes(`ID: ${p.label}`)) openProps(p);
-                    }
-                } else {
-                    currentRunningNodeId = null;
-                }
-            }
-
-            // Select next process based on algorithm
-            if (!currentRunningNodeId) {
-                const candidates = nodes.filter(n =>
-                    n.type === 'process' &&
-                    n.state === 'READY' &&
-                    n.burstTime > 0
-                );
-
-                if (candidates.length > 0) {
-                    let nextP = null;
-
-                    switch(schedulingAlgorithm) {
-                        case 'fcfs':
-                            // First Come First Served - first in ready queue
-                            nextP = candidates[0];
-                            break;
-
-                        case 'sjf':
-                            // Shortest Job First - process with shortest original burst time
-                            nextP = candidates.reduce((shortest, p) =>
-                                p.originalBurst < shortest.originalBurst ? p : shortest
-                            );
-                            break;
-
-                        case 'srtf':
-                            // Shortest Remaining Time First - process with shortest remaining time
-                            nextP = candidates.reduce((shortest, p) =>
-                                p.burstTime < shortest.burstTime ? p : shortest
-                            );
-                            break;
-
-                        case 'rr':
-                            // Round Robin - first in ready queue (FIFO order), reset quantum
-                            // Sort by last preempt time to ensure proper queue order
-                            candidates.sort((a, b) => {
-                                const timeA = a.lastPreemptTime || a.arrivalTime || 0;
-                                const timeB = b.lastPreemptTime || b.arrivalTime || 0;
-                                return timeA - timeB;
-                            });
-                            nextP = candidates[0];
-                            quantumRemaining = timeQuantum;
-                            break;
-
-                        default:
-                            nextP = candidates[0];
-                    }
-
-                    if (nextP) {
-                        nextP.state = 'RUNNING';
-                        currentRunningNodeId = nextP.id;
-                        activeLabel = nextP.label;
-                        activeColor = config.colors.running;
-
-                        // Initialize metrics for new process
-                        if (!processMetrics[nextP.id]) {
-                            // If process was created before simulation started, arrival time is 0
-                            // If created during simulation, arrival time is current time
-                            const arrivalTime = processMetrics[nextP.id]?.created ? 0 : (Date.now() - simulationStartTime);
-                            processMetrics[nextP.id] = {
-                                label: nextP.label,
-                                arrivalTime: arrivalTime,
-                                firstRunTime: null,
-                                completionTime: null,
-                                totalExecutionTime: 0,
-                                turnaroundTime: 0,
-                                waitingTime: 0,
-                                responseTime: 0,
-                                executionSegments: [],
-                                created: true
-                            };
-                        }
-
-                        // Set arrival time if not set yet
-                        if (processMetrics[nextP.id].arrivalTime === null) {
-                            processMetrics[nextP.id].arrivalTime = 0;
-                        }
-
-                        // Track first start time for response time calculation
-                        if (!processStartTimes[nextP.id]) {
-                            processStartTimes[nextP.id] = Date.now();
-                            processMetrics[nextP.id].firstRunTime = Date.now() - simulationStartTime;
-                            // Pulse animation on first start
-                            pulseAnimations.push({
-                                nodeId: nextP.id,
-                                startTime: Date.now(),
-                                duration: 800
-                            });
-                        }
-
-                        // Track context switch
-                        if (currentRunningNodeId && currentRunningNodeId !== nextP.id) {
-                            contextSwitchCount++;
-                            // Close previous process execution segment
-                            const prevMetrics = processMetrics[currentRunningNodeId];
-                            if (prevMetrics && prevMetrics.executionSegments.length > 0) {
-                                const lastSeg = prevMetrics.executionSegments[prevMetrics.executionSegments.length - 1];
-                                if (lastSeg.end === null) {
-                                    lastSeg.end = Date.now() - simulationStartTime;
-                                }
-                            }
-                        }
-
-                        // Start new execution segment
-                        processMetrics[nextP.id].executionSegments.push({
-                            start: Date.now() - simulationStartTime,
-                            end: null
-                        });
-                    }
-                }
-            }
-
-            updateGantt(activeLabel, activeColor);
-            detectDeadlock(true);
-            updateStarvationTracking(); // Track starvation during simulation
-            updateSystemStats();
-            draw();
+    // Update quantum input if changed
+    if (schedulingAlgorithm === 'rr') {
+        const newQuantum = parseInt(document.getElementById('quantum-input').value) || 20;
+        if (newQuantum !== timeQuantum && !currentRunningNodeId) {
+            timeQuantum = newQuantum;
+            quantumRemaining = timeQuantum;
         }
+    }
 
+    // --- 1. HANDLE RUNNING PROCESS ---
+    if (currentRunningNodeId) {
+        // CPU IS BUSY - RESET IDLE COUNTER
+        consecutiveIdleTicks = 0;
+        
+        const p = getNodeById(currentRunningNodeId);
+        if (p && p.state === 'RUNNING') {
+            p.burstTime -= 5;
+            quantumRemaining -= 5;
+            activeLabel = p.label;
+            activeColor = config.colors.running;
+
+            // Check if process completed
+            if (p.burstTime <= 0) {
+                terminateProcess(p);
+            }
+            // Round Robin: Check quantum expiry
+            else if (schedulingAlgorithm === 'rr' && quantumRemaining <= 0) {
+                p.state = 'READY';
+                p.lastPreemptTime = Date.now();
+                triggerContextSwitch(p.id);
+                currentRunningNodeId = null;
+                quantumRemaining = timeQuantum;
+                preempted = true;
+                printToCli(`${p.label} quantum expired - context switch`, 'info');
+            }
+            // SRTF: Check for preemption
+            else if (schedulingAlgorithm === 'srtf') {
+                const readyProcesses = nodes.filter(n => n.type === 'process' && n.state === 'READY' && n.burstTime > 0);
+                const shorterProcess = readyProcesses.find(n => n.burstTime < p.burstTime);
+                if (shorterProcess) {
+                    p.state = 'READY';
+                    triggerContextSwitch(p.id);
+                    currentRunningNodeId = null;
+                    preempted = true;
+                    printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
+                }
+            }
+            // Update properties panel if open
+            else if (!propPanel.classList.contains('hidden')) {
+                const content = document.getElementById('prop-content');
+                if(content.innerText.includes(`ID: ${p.label}`)) openProps(p);
+            }
+        } else {
+            currentRunningNodeId = null;
+        }
+    }
+
+    // --- 2. SELECT NEXT PROCESS ---
+    if (!currentRunningNodeId) {
+        const candidates = nodes.filter(n => n.type === 'process' && n.state === 'READY' && n.burstTime > 0);
+
+        if (candidates.length > 0) {
+            // CPU WILL BE BUSY - RESET IDLE COUNTER
+            consecutiveIdleTicks = 0;
+            
+            let nextP = null;
+
+            switch(schedulingAlgorithm) {
+                case 'fcfs': nextP = candidates[0]; break;
+                case 'sjf': nextP = candidates.reduce((shortest, p) => p.originalBurst < shortest.originalBurst ? p : shortest); break;
+                case 'srtf': nextP = candidates.reduce((shortest, p) => p.burstTime < shortest.burstTime ? p : shortest); break;
+                case 'rr':
+                    candidates.sort((a, b) => { 
+                        const timeA = a.lastPreemptTime || a.arrivalTime || 0; 
+                        const timeB = b.lastPreemptTime || b.arrivalTime || 0; 
+                        return timeA - timeB; 
+                    });
+                    nextP = candidates[0];
+                    quantumRemaining = timeQuantum;
+                    break;
+                default: nextP = candidates[0];
+            }
+
+            if (nextP) {
+                nextP.state = 'RUNNING';
+                currentRunningNodeId = nextP.id;
+                activeLabel = nextP.label;
+                activeColor = config.colors.running;
+
+                // Metrics Initialization
+                if (!processMetrics[nextP.id]) {
+                    const arrivalTime = processMetrics[nextP.id]?.created ? 0 : (Date.now() - simulationStartTime);
+                    processMetrics[nextP.id] = { label: nextP.label, arrivalTime: arrivalTime, firstRunTime: null, completionTime: null, totalExecutionTime: 0, turnaroundTime: 0, waitingTime: 0, responseTime: 0, executionSegments: [], created: true };
+                }
+                if (processMetrics[nextP.id].arrivalTime === null) processMetrics[nextP.id].arrivalTime = 0;
+                
+                // First Run Tracking
+                if (!processStartTimes[nextP.id]) {
+                    processStartTimes[nextP.id] = Date.now();
+                    processMetrics[nextP.id].firstRunTime = Date.now() - simulationStartTime;
+                    pulseAnimations.push({ nodeId: nextP.id, startTime: Date.now(), duration: 800 });
+                }
+                
+                // Context Switch Tracking
+                if (currentRunningNodeId && currentRunningNodeId !== nextP.id) {
+                    contextSwitchCount++;
+                    const prevMetrics = processMetrics[currentRunningNodeId];
+                    if (prevMetrics && prevMetrics.executionSegments.length > 0) {
+                        const lastSeg = prevMetrics.executionSegments[prevMetrics.executionSegments.length - 1];
+                        if (lastSeg.end === null) lastSeg.end = Date.now() - simulationStartTime;
+                    }
+                }
+                processMetrics[nextP.id].executionSegments.push({ start: Date.now() - simulationStartTime, end: null });
+            }
+        } else {
+            // --- 3. CPU IS IDLE - CHECK FOR AUTO-PAUSE ---
+            consecutiveIdleTicks++;
+            
+            // Check waiting/blocked queue
+            const blockedCount = nodes.filter(n => n.type === 'process' && n.state === 'BLOCKED').length;
+            
+            // Conditions: No Ready procs (candidates=0), No Blocked procs, Timeout exceeded
+            if (blockedCount === 0 && consecutiveIdleTicks >= AUTO_PAUSE_THRESHOLD) {
+                // Ensure we don't pause on an empty board immediately (require at least 1 process to have existed OR explicit user pause)
+                // But for simulation completion:
+                toggleSimulation();
+                printToCli("Simulation completed — CPU entering final idle state.", 'success');
+                // Force Gantt update to show final idle block before stopping
+                updateGantt(activeLabel, activeColor);
+                return; // Stop execution here
+            }
+        }
+    }
+
+    updateGantt(activeLabel, activeColor);
+    detectDeadlock(true);
+    updateStarvationTracking();
+    updateSystemStats();
+    draw();
+}
         function terminateProcess(p) {
             p.state = 'TERMINATED';
             p.burstTime = 0;
@@ -5761,6 +5729,9 @@ function resetGraph() {
     // Reset History Array
     if (typeof simHistory !== 'undefined') simHistory = [];
     if (typeof tickCounter !== 'undefined') tickCounter = 0;
+
+    // [ADD THIS LINE] Reset Auto-Pause Counter
+    consecutiveIdleTicks = 0;
 
     // Reset Slider
     const slider = document.getElementById('history-slider');
