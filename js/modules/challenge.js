@@ -112,6 +112,10 @@
       currentChallenge = challenge;
       closeChallengeModal();
 
+      // Hide Challenge Mode menu item
+      const challengeItem = document.getElementById('challenge-mode-item');
+      if (challengeItem) challengeItem.style.display = 'none';
+
       // Reset minimized state
       restoreChallenge();
 
@@ -300,5 +304,10 @@
       currentDifficulty = null;
       document.getElementById('challenge-active-panel').style.display = 'none';
       document.getElementById('challenge-reset-btn').style.display = 'none';
+
+      // Show Challenge Mode menu item
+      const challengeItem = document.getElementById('challenge-mode-item');
+      if (challengeItem) challengeItem.style.display = 'block';
+
       printToCli("Challenge aborted.", 'info');
     }

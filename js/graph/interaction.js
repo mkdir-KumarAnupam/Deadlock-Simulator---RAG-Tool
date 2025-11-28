@@ -54,6 +54,50 @@
       return null;
     }
 
+    function getEdgeAt(x, y) {
+      const threshold = 10; // Detection radius
+      for (let i = edges.length - 1; i >= 0; i--) {
+        const e = edges[i];
+        const s = getNodeById(e.source);
+        const t = getNodeById(e.target);
+        if (s && t) {
+          // Calculate distance from point (x,y) to line segment (s)-(t)
+          const A = x - s.x;
+          const B = y - s.y;
+          const C = t.x - s.x;
+          const D = t.y - s.y;
+
+          const dot = A * C + B * D;
+          const len_sq = C * C + D * D;
+          let param = -1;
+          if (len_sq !== 0) // in case of 0 length line
+              param = dot / len_sq;
+
+          let xx, yy;
+
+          if (param < 0) {
+            xx = s.x;
+            yy = s.y;
+          }
+          else if (param > 1) {
+            xx = t.x;
+            yy = t.y;
+          }
+          else {
+            xx = s.x + param * C;
+            yy = s.y + param * D;
+          }
+
+          const dx = x - xx;
+          const dy = y - yy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < threshold) return e;
+        }
+      }
+      return null;
+    }
+
     function updateBatchOpsPosition() {
       const batchOps = document.getElementById('batch-ops');
       const sidebar = document.getElementById('sidebar-tools');
@@ -127,6 +171,7 @@
       }
 
       // Drag-to-connect: detect if starting a drag from a node
+      // Drag-to-connect: detect if starting a drag from a node
       if (node && mode !== 'delete' && mode !== 'link' && mode !== 'select') {
         dragLinkStart = node;
         dragStartPos = { x: pos.x, y: pos.y };
@@ -146,7 +191,16 @@
         } else selectedNode = null;
       }
       else if (mode === 'delete') {
-        if (node) deleteNode(node);
+        if (node) {
+          deleteNode(node);
+          hoveredNode = null; // Clear hover after delete
+        } else {
+          const edge = getEdgeAt(pos.x, pos.y);
+          if (edge) {
+            deleteEdge(edge);
+            hoveredEdge = null; // Clear hover after delete
+          }
+        }
       }
 
       if (node && mode !== 'delete' && mode !== 'link') openProps(node);
@@ -196,18 +250,49 @@
       // Track position for link mode preview
       if (mode === 'link' && selectedNode) {
         tempLinkPos = pos;
-      } else {
+        draw();
+      } else if (tempLinkPos) {
         tempLinkPos = null;
+        draw();
       }
 
       // Update hover effects
       const hoveredNode = getNodeAt(pos.x, pos.y);
       nodeHoverEffects.clear();
-      if (hoveredNode && !draggingNode) {
-        applyNodeHoverEffect(hoveredNode.id, 1);
-        canvas.style.cursor = 'pointer';
+
+      // Handle delete mode highlighting
+      if (mode === 'delete') {
+        const node = getNodeAt(pos.x, pos.y);
+        const edge = !node ? getEdgeAt(pos.x, pos.y) : null;
+
+        let needsRedraw = false;
+        if (window.hoveredNode !== node) {
+          window.hoveredNode = node;
+          needsRedraw = true;
+        }
+        if (window.hoveredEdge !== edge) {
+          window.hoveredEdge = edge;
+          needsRedraw = true;
+        }
+
+        if (needsRedraw) {
+          draw();
+          canvas.style.cursor = (window.hoveredNode || window.hoveredEdge) ? 'pointer' : 'default';
+        }
       } else {
-        canvas.style.cursor = draggingNode ? 'grabbing' : (mode === 'link' && selectedNode ? 'crosshair' : 'default');
+        // Reset hover states if not in delete mode
+        if (window.hoveredNode || window.hoveredEdge) {
+          window.hoveredNode = null;
+          window.hoveredEdge = null;
+          draw();
+        }
+
+        if (hoveredNode && !draggingNode) {
+          applyNodeHoverEffect(hoveredNode.id, 1);
+          canvas.style.cursor = 'pointer';
+        } else {
+          canvas.style.cursor = draggingNode ? 'grabbing' : (mode === 'link' && selectedNode ? 'crosshair' : 'default');
+        }
       }
 
       if (draggingNode) {
@@ -285,6 +370,9 @@
       offsetY = mouseY - worldY * scale;
 
       draw();
+      if (window.updateBackgroundScale) {
+        window.updateBackgroundScale(scale);
+      }
     }, { passive: false });
 
     canvas.addEventListener('contextmenu', e => {

@@ -58,56 +58,70 @@
         },
 
         {
-          id: 'dining_philosophers', number: '09', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Dining Philosophers',
+          id: 'priority_test', number: '09', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'Priority Scheduling Test',
+          description: 'Processes with different priorities (1=High, 10=Low). Demonstrates execution order based on priority rather than arrival time.',
+          outcome: 'Observe high priority processes executing first. Switch between Preemptive and Non-Preemptive modes to see differences.',
+          config: [{ icon: 'fas fa-sort-numeric-down', text: 'Priorities: 1, 5, 10' }, { icon: 'fas fa-circle', text: '3 Processes' }]
+        },
+
+        {
+          id: 'priority_preemptive_test', number: '10', category: 'SCHEDULING', categoryColor: '#a29bfe', title: 'Priority Preemptive Demo',
+          description: 'Demonstrates preemption. Start simulation, then add a new process with Priority 0 to see the current running process get preempted.',
+          outcome: 'Witness immediate context switch when a higher priority (lower value) process becomes ready.',
+          config: [{ icon: 'fas fa-bolt', text: 'Algorithm: Priority (P)' }, { icon: 'fas fa-plus-circle', text: 'Add Process to Test' }]
+        },
+
+        {
+          id: 'dining_philosophers', number: '11', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Dining Philosophers',
           description: 'Five philosophers alternately think and eat. Each needs two chopsticks (shared resources) to eat, but only five chopsticks exist.',
           outcome: 'Study classic synchronization problem. Learn solutions: resource hierarchy, arbitrator, or asymmetric approach.',
           config: [{ icon: 'fas fa-circle', text: '5 Philosophers' }, { icon: 'fas fa-square', text: '5 Chopsticks' }]
         },
 
         {
-          id: 'producer_consumer', number: '10', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Producer-Consumer',
+          id: 'producer_consumer', number: '12', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Producer-Consumer',
           description: 'Producers generate data and consumers process it. Shared buffer with limited capacity requires synchronization to prevent overflow/underflow.',
           outcome: 'Master bounded-buffer problem. Understand semaphores, mutexes, and condition variables for synchronization.',
           config: [{ icon: 'fas fa-circle', text: '2 Producers' }, { icon: 'fas fa-circle', text: '2 Consumers' }]
         },
 
         {
-          id: 'readers_writers', number: '11', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Readers-Writers',
+          id: 'readers_writers', number: '13', category: 'CLASSIC PROBLEM', categoryColor: '#ee5a6f', title: 'Readers-Writers',
           description: 'Multiple readers can access shared data simultaneously, but writers need exclusive access. Demonstrates reader/writer priority trade-offs.',
           outcome: 'Explore reader-writer locks. Compare reader-preference vs writer-preference policies and their starvation implications.',
           config: [{ icon: 'fas fa-circle', text: '4 Readers' }, { icon: 'fas fa-circle', text: '2 Writers' }]
         },
 
         {
-          id: 'priority_inversion', number: '12', category: 'PRIORITY', categoryColor: '#ff9ff3', title: 'Priority Inversion',
+          id: 'priority_inversion', number: '14', category: 'PRIORITY', categoryColor: '#ff9ff3', title: 'Priority Inversion',
           description: 'High-priority process blocked by low-priority process holding a resource. Medium-priority process runs instead, inverting priorities.',
           outcome: 'Identify priority inversion problem. Learn priority inheritance and priority ceiling protocols as solutions.',
           config: [{ icon: 'fas fa-circle', text: '3 Processes' }, { icon: 'fas fa-layer-group', text: 'Different Priorities' }]
         },
 
         {
-          id: 'convoy_effect', number: '13', category: 'PERFORMANCE', categoryColor: '#feca57', title: 'Convoy Effect Demo',
+          id: 'convoy_effect', number: '15', category: 'PERFORMANCE', categoryColor: '#feca57', title: 'Convoy Effect Demo',
           description: 'One CPU-bound process with very long burst time followed by many I/O-bound processes. All short processes wait, reducing system throughput.',
           outcome: 'Observe convoy effect in FCFS. Understand why preemptive schedulers perform better for mixed workloads.',
           config: [{ icon: 'fas fa-circle', text: '1 CPU-bound' }, { icon: 'fas fa-circle', text: '6 I/O-bound' }]
         },
 
         {
-          id: 'resource_preemption', number: '14', category: 'RECOVERY', categoryColor: '#4ecdc4', title: 'Resource Preemption',
+          id: 'resource_preemption', number: '16', category: 'RECOVERY', categoryColor: '#4ecdc4', title: 'Resource Preemption',
           description: 'Deadlock occurs and must be resolved by preempting resources from victim processes. Demonstrates one recovery strategy.',
           outcome: 'Learn deadlock recovery techniques: victim selection, rollback, and starvation prevention during recovery.',
           config: [{ icon: 'fas fa-circle', text: '3 Processes' }, { icon: 'fas fa-recycle', text: 'Preemption Demo' }]
         },
 
         {
-          id: 'multi_instance', number: '15', category: 'RESOURCES', categoryColor: '#54a0ff', title: 'Multiple Resource Instances',
+          id: 'multi_instance', number: '17', category: 'RESOURCES', categoryColor: '#54a0ff', title: 'Multiple Resource Instances',
           description: 'Resources with multiple identical instances. Processes request and release instances dynamically, testing allocation strategies.',
           outcome: 'Understand difference between single and multi-instance resources. Apply Banker\'s Algorithm for safe state checking.',
           config: [{ icon: 'fas fa-circle', text: '4 Processes' }, { icon: 'fas fa-layer-group', text: 'Multi-instance' }]
         },
 
         {
-          id: 'aging_demo', number: '16', category: 'STARVATION FIX', categoryColor: '#feca57', title: 'Aging Mechanism',
+          id: 'aging_demo', number: '18', category: 'STARVATION FIX', categoryColor: '#feca57', title: 'Aging Mechanism',
           description: 'Low-priority processes gradually increase their priority over time to prevent indefinite postponement in priority scheduling.',
           outcome: 'See how aging prevents starvation. Balance between priority respect and fairness in scheduling algorithms.',
           config: [{ icon: 'fas fa-circle', text: '5 Processes' }, { icon: 'fas fa-chart-line', text: 'Dynamic Priority' }]
@@ -252,6 +266,41 @@
         p4.burstTime = 150; p4.originalBurst = 150;
         printToCli("Round Robin Test: Q=30, equal priority tasks", 'info');
         printToCli("Best for: Interactive systems, time-sharing", 'success');
+      }
+      // Priority Scheduling Test
+      else if (type === 'priority_test') {
+        selectScheduler('priority_np', 'Priority (NP)');
+        const p1 = addNode('process', cx - 150, cy);
+        const p2 = addNode('process', cx, cy);
+        const p3 = addNode('process', cx + 150, cy);
+
+        p1.label = 'Low'; p1.priority = 10; p1.burstTime = 100; p1.originalBurst = 100;
+        p2.label = 'High'; p2.priority = 1; p2.burstTime = 100; p2.originalBurst = 100;
+        p3.label = 'Med'; p3.priority = 5; p3.burstTime = 100; p3.originalBurst = 100;
+
+        printToCli("Priority Test: High(1) -> Med(5) -> Low(10)", 'info');
+        printToCli("Try switching to 'Priority (Preemptive)' to see differences", 'success');
+
+        // Add a visual CPU resource (unconnected to prevent blocking)
+        const cpu = addNode('resource', cx, cy - 100);
+        cpu.label = 'CPU';
+      }
+      // Priority Preemptive Test
+      else if (type === 'priority_preemptive_test') {
+        selectScheduler('priority_p', 'Priority (Preemptive)');
+        const p1 = addNode('process', cx - 100, cy);
+        const p2 = addNode('process', cx + 100, cy);
+
+        p1.label = 'P1'; p1.priority = 5; p1.burstTime = 200; p1.originalBurst = 200;
+        p2.label = 'P2'; p2.priority = 5; p2.burstTime = 200; p2.originalBurst = 200;
+
+        // Visual CPU
+        const cpu = addNode('resource', cx, cy - 100);
+        cpu.label = 'CPU';
+
+        printToCli("Priority Preemptive: P1 & P2 have Priority 5", 'info');
+        printToCli("ACTION: Start simulation, then add a new process with Priority 1", 'success');
+        printToCli("Observe how the new high-priority process preempts the running one", 'warning');
       }
       // Advanced scenarios
       else if (type === 'dining_philosophers') {

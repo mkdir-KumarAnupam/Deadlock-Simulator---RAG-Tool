@@ -86,6 +86,30 @@
               preempted = true;
               printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
             }
+            if (shorterProcess) {
+              p.state = 'READY';
+              triggerContextSwitch(p.id); // Visual animation
+              currentRunningNodeId = null;
+              preempted = true;
+              printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
+            }
+          }
+          // Priority (Preemptive): Check for preemption
+          else if (schedulingAlgorithm === 'priority_p') {
+            const readyProcesses = nodes.filter(n =>
+              n.type === 'process' &&
+              n.state === 'READY' &&
+              n.burstTime > 0
+            );
+            // Find if any ready process has strictly higher priority (lower value)
+            const higherPriorityProcess = readyProcesses.find(n => (n.priority || 1) < (p.priority || 1));
+            if (higherPriorityProcess) {
+              p.state = 'READY';
+              triggerContextSwitch(p.id); // Visual animation
+              currentRunningNodeId = null;
+              preempted = true;
+              printToCli(`${p.label} (Prio ${p.priority || 1}) preempted by ${higherPriorityProcess.label} (Prio ${higherPriorityProcess.priority || 1})`, 'info');
+            }
           }
           // Update properties panel if open
           else if (!propPanel.classList.contains('hidden')) {
@@ -138,6 +162,20 @@
               });
               nextP = candidates[0];
               quantumRemaining = timeQuantum;
+              break;
+
+            case 'priority_np':
+              // Priority Non-Preemptive - process with lowest priority value
+              nextP = candidates.reduce((highest, p) =>
+                (p.priority || 1) < (highest.priority || 1) ? p : highest
+              );
+              break;
+
+            case 'priority_p':
+              // Priority Preemptive - process with lowest priority value
+              nextP = candidates.reduce((highest, p) =>
+                (p.priority || 1) < (highest.priority || 1) ? p : highest
+              );
               break;
 
             default:

@@ -78,8 +78,16 @@
         const t = getNodeById(e.target);
         if (s && t) {
           let c = 'black';
-          if (deadlockSet.has(s.id) && deadlockSet.has(t.id)) c = config.colors.deadlock;
-          drawArrow(s, t, c);
+          let width = systemConfig.edgeThickness;
+
+          if (mode === 'delete' && window.hoveredEdge === e) {
+            c = '#3b82f6'; // Blue for delete hover
+            width = systemConfig.edgeThickness + 4; // Thicker for outline effect
+          } else if (deadlockSet.has(s.id) && deadlockSet.has(t.id)) {
+            c = config.colors.deadlock;
+          }
+
+          drawArrow(s, t, c, width);
 
           // Draw edge label
           if (e.label && systemConfig.showEdgeLabels && systemConfig.edgeLabelSize > 0) {
@@ -140,6 +148,11 @@
         } else if (selectedNodes.has(n.id)) {
           ctx.shadowBlur = 8;
           ctx.shadowColor = '#6366f1';
+        } else if (mode === 'delete' && window.hoveredNode && window.hoveredNode.id === n.id) {
+          // Blue outline effect instead of red shadow
+          ctx.shadowBlur = 0;
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#3b82f6';
         }
 
         // Shape Background
@@ -328,11 +341,38 @@
         ctx.restore();
       });
 
+      // Draw preview line in link mode (Drawn last to be on top)
+      if (mode === 'link' && selectedNode && tempLinkPos) {
+        ctx.save();
+        ctx.setLineDash([8, 4]);
+        ctx.strokeStyle = '#4a90e2';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(selectedNode.x, selectedNode.y);
+        ctx.lineTo(tempLinkPos.x, tempLinkPos.y);
+        ctx.stroke();
+
+        // Animated dots along preview line
+        const distance = Math.sqrt(
+          Math.pow(tempLinkPos.x - selectedNode.x, 2) +
+          Math.pow(tempLinkPos.y - selectedNode.y, 2)
+        );
+        const numDots = Math.floor(distance / 30);
+        for (let i = 0; i < numDots; i++) {
+          const t = (i / numDots) + (animationFrame * 0.01 % 1);
+          const x = selectedNode.x + (tempLinkPos.x - selectedNode.x) * (t % 1);
+          const y = selectedNode.y + (tempLinkPos.y - selectedNode.y) * (t % 1);
+          ctx.fillStyle = '#4a90e2';
+          ctx.fillRect(x - 3, y - 3, 6, 6);
+        }
+        ctx.restore();
+      }
+
       // Restore transform
       ctx.restore();
     }
 
-    function drawArrow(sourceNode, targetNode, color) {
+    function drawArrow(sourceNode, targetNode, color, width = systemConfig.edgeThickness) {
       // Arrows are drawn normally between centers
       // The visual rotation doesn't change the logical connection point much for circles
       const fromX = sourceNode.x;
@@ -353,7 +393,7 @@
       ctx.moveTo(sx, sy);
       ctx.lineTo(ex, ey);
       ctx.strokeStyle = color;
-      ctx.lineWidth = systemConfig.edgeThickness;
+      ctx.lineWidth = width;
       ctx.stroke();
 
       ctx.beginPath();

@@ -110,5 +110,27 @@
           chart: chart,
           impact: 'DILEMMA: Large = Unfair (FCFS). Small = Inefficient (Overhead).'
         };
+      } else if (algorithm === 'priority_np' || algorithm === 'priority_p') {
+        // Indefinite Blocking / Starvation
+        const timeline = [
+          { time: '0-10', process: 'P2 (Prio 1)', color: '#4ecdc4' },
+          { time: '10-20', process: 'P3 (Prio 1)', color: '#95e1d3' },
+          { time: '20-?', process: 'P1 (Prio 10) WAITING', color: '#ff6b6b' }
+        ];
+
+        let chart = timeline.map(entry => `
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-weight: bold; width: 60px; font-size: 11px;">${entry.time}</span>
+                <div style="flex: 1; height: 24px; background: ${entry.color}; border: 2px solid black; display: flex; align-items: center; padding: 0 8px; font-weight: bold; font-size: 10px;">
+                    ${entry.process}
+                </div>
+            </div>
+        `).join('');
+
+        return {
+          description: '<strong>Scenario:</strong> High priority processes (Prio 1) keep arriving. Low priority P1 (Prio 10) waits indefinitely.',
+          chart: chart,
+          impact: 'INDEFINITE BLOCKING: Low priority processes may never execute. Solution: Aging.'
+        };
       }
     }

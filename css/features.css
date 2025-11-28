@@ -132,6 +132,9 @@
   pointer-events: none;
   transform: rotate(-2deg);
   transition: left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .legend-box.minimized {
@@ -441,4 +444,34 @@
 
 .library-close-btn.animate-in {
   animation: closeButtonPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Responsive Legend */
+@media (max-height: 800px) {
+  .legend-box {
+    zoom: 0.9;
+    transform: none;
+  }
+}
+
+@media (max-height: 600px) {
+  .legend-box {
+    zoom: 0.8;
+    transform: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .legend-box {
+    zoom: 0.9;
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .legend-box {
+    zoom: 0.75;
+    transform: none;
+    left: 10px;
+  }
 }

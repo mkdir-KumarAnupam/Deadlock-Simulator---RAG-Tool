@@ -28,16 +28,13 @@
 
     // --- Scenario UI Toggle ---
     function toggleScenarioUIMode(useLegacy) {
-      const libraryBtn = document.getElementById('scenario-library-btn');
-      const legacyDropdown = document.getElementById('legacy-scenario-dropdown');
+      const legacyOptions = document.getElementById('legacy-scenario-options');
 
       if (useLegacy) {
-        libraryBtn.style.display = 'none';
-        legacyDropdown.style.display = 'block';
+        if (legacyOptions) legacyOptions.style.display = 'block';
         localStorage.setItem('useLegacyScenarios', 'true');
       } else {
-        libraryBtn.style.display = 'block';
-        legacyDropdown.style.display = 'none';
+        if (legacyOptions) legacyOptions.style.display = 'none';
         localStorage.setItem('useLegacyScenarios', 'false');
       }
     }

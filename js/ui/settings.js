@@ -180,11 +180,28 @@
     }
 
     // --- Zoom & Pan Functions ---
+    function updateBackgroundScale(currentScale) {
+      const baseSize = 20;
+      const newSize = baseSize * currentScale;
+      const bgElement = document.querySelector('.flex-grow.flex');
+      if (bgElement) {
+        bgElement.style.backgroundSize = `${newSize}px ${newSize}px`;
+        // Also scale the position to match the pan offset so dots stay "pinned" to the canvas space
+        // Note: The background-position is relative to the container, while offsetX/Y are canvas transforms.
+        // To make it look like the background is part of the canvas, we need to sync the phase.
+        // However, simple scaling of size is often enough for the visual effect requested.
+        // Let's stick to size scaling first as per request.
+      }
+    }
+    // Expose for other modules
+    window.updateBackgroundScale = updateBackgroundScale;
+
     function resetZoom() {
       scale = 1;
       offsetX = 0;
       offsetY = 0;
       draw();
+      updateBackgroundScale(1);
       printToCli('Zoom reset to 100%', 'info');
     }
 
@@ -216,5 +233,6 @@
       offsetY = canvas.height / 2 - graphCenterY * scale;
 
       draw();
+      updateBackgroundScale(scale);
       printToCli('Fitted to screen', 'info');
     }

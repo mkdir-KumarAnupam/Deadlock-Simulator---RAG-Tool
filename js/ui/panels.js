@@ -191,6 +191,11 @@
                             onchange="updateBurst(${node.id}, this.value)">
                     </div>
                     <div class="mt-3">
+                        <label class="block text-xs font-bold mb-1">PRIORITY (Lower=High):</label>
+                        <input type="number" class="neo-input" value="${node.priority || 1}" min="0"
+                            onchange="updatePriority(${node.id}, this.value)">
+                    </div>
+                    <div class="mt-3">
                         <label class="block text-xs font-bold mb-1">RAM (MB):</label>
                         <input type="number" class="neo-input" value="${node.memory}"
                             onchange="updateMemory(${node.id}, this.value)">
@@ -248,6 +253,10 @@
     window.updateBurst = (id, val) => {
       const n = getNodeById(id);
       if (n) { n.burstTime = parseInt(val); if (n.burstTime > n.maxBurst) n.maxBurst = n.burstTime; draw(); }
+    };
+    window.updatePriority = (id, val) => {
+      const n = getNodeById(id);
+      if (n) { n.priority = parseInt(val); draw(); printToCli(`Updated ${n.label} priority to ${n.priority}`); saveState(); }
     };
     window.updateMemory = (id, val) => {
       const n = getNodeById(id);

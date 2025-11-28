@@ -25,7 +25,8 @@
             maxBurst: node.maxBurst,
             originalBurst: node.originalBurst,
             instances: node.instances,
-            customColor: node.customColor
+            customColor: node.customColor,
+            priority: node.priority || 1
           });
         }
       });
@@ -87,6 +88,7 @@
           originalBurst: nodeToCopy.originalBurst || 100,
           instances: nodeToCopy.instances || 1,
           customColor: nodeToCopy.customColor,
+          priority: nodeToCopy.priority || 1,
           rotation: (Math.random() - 0.5) * 0.25,
           pinColor: '#333'
         };
@@ -150,6 +152,7 @@
         maxBurst: 100,
         originalBurst: type === 'process' ? 100 : 0,
         memory: type === 'process' ? Math.floor(Math.random() * 224) + 32 : 0,
+        priority: type === 'process' ? 1 : 0,
         state: type === 'process' ? 'READY' : 'RESOURCE',
         arrivalTime: 0, // Will be set when simulation starts
         // Resource capacity (number of instances)
@@ -274,4 +277,21 @@
       printToCli("System Reset.");
       saveState();
       updateUndoRedoButtons();
+    }
+
+    function deleteEdge(edge) {
+      if (!edge) return;
+
+      const index = edges.indexOf(edge);
+      if (index > -1) {
+        saveState();
+        edges.splice(index, 1);
+        printToCli(`Deleted edge from ${getNodeById(edge.source).label} to ${getNodeById(edge.target).label}`, 'success');
+
+        // Check for deadlock/starvation resolution
+        if (deadlockSet.size > 0) detectDeadlock(false);
+        if (starvingSet.size > 0) detectStarvation();
+
+        draw();
+      }
     }

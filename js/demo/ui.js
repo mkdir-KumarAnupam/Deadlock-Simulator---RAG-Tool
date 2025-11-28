@@ -34,6 +34,8 @@
         'sjf': '#a3ffac',
         'srtf': '#ffa3a3',
         'priority': '#b5a3ff',
+        'priority_np': '#ff9ff3',
+        'priority_p': '#54a0ff',
         'rr': '#e1bee7'
       };
       const currentColor = algoColorMap[currentAlgorithm] || '#e8e6e0';
@@ -159,6 +161,61 @@
             'Interactive systems requiring responsiveness',
             'Systems where burst times can be predicted accurately',
             'Environments where minimizing response time is critical'
+          ]
+        },
+
+        'priority_np': {
+          name: 'Priority (Non-Preemptive)',
+          color: '#ff9ff3',
+          desc: 'CPU assigned to process with highest priority (lowest number).',
+          advantages: [
+            'Handles important tasks first',
+            'Good for real-time systems',
+            'Flexible - can mimic other algorithms',
+            'Simple priority logic'
+          ],
+          disadvantages: [
+            'Indefinite blocking (Starvation)',
+            'Low priority processes may never run',
+            'No preemption for urgent tasks',
+            'Priority assignment can be complex'
+          ],
+          problems: [
+            '<strong>Starvation:</strong> Low priority processes may wait indefinitely if high priority processes keep arriving.',
+            '<strong>Priority Inversion:</strong> High priority process waits for resource held by low priority process.'
+          ],
+          useCases: [
+            'Batch systems with job classes',
+            'Real-time systems (soft)',
+            'Environments with clear task hierarchy',
+            'System processes vs User processes'
+          ]
+        },
+        'priority_p': {
+          name: 'Priority (Preemptive)',
+          color: '#54a0ff',
+          desc: 'CPU assigned to highest priority. Preempts if higher priority arrives.',
+          advantages: [
+            'Most responsive for high priority',
+            'Urgent tasks run immediately',
+            'Good for hard real-time systems',
+            'Dynamic priority handling'
+          ],
+          disadvantages: [
+            'Context switching overhead',
+            'Starvation still possible',
+            'Complex to implement',
+            'Race conditions more likely'
+          ],
+          problems: [
+            '<strong>Starvation:</strong> Low priority processes suffer even more than in non-preemptive if high priority tasks are frequent.',
+            '<strong>Thrashing:</strong> If priorities change frequently or many high priority tasks arrive, system spends time switching.'
+          ],
+          useCases: [
+            'Real-time operating systems (RTOS)',
+            'Interrupt handling',
+            'Device driver execution',
+            'Mission-critical systems'
           ]
         },
         'rr': {
@@ -545,6 +602,60 @@
             'Interactive multi-user systems',
             'Systems requiring fair CPU distribution',
             'General-purpose operating systems'
+          ]
+        },
+        'priority_np': {
+          name: 'Priority (Non-Preemptive)',
+          color: '#ff9ff3',
+          desc: 'CPU assigned to process with highest priority (lowest number).',
+          advantages: [
+            'Handles important tasks first',
+            'Good for real-time systems',
+            'Flexible - can mimic other algorithms',
+            'Simple priority logic'
+          ],
+          disadvantages: [
+            'Indefinite blocking (Starvation)',
+            'Low priority processes may never run',
+            'No preemption for urgent tasks',
+            'Priority assignment can be complex'
+          ],
+          problems: [
+            '<strong>Starvation:</strong> Low priority processes may wait indefinitely if high priority processes keep arriving.',
+            '<strong>Priority Inversion:</strong> High priority process waits for resource held by low priority process.'
+          ],
+          useCases: [
+            'Batch systems with job classes',
+            'Real-time systems (soft)',
+            'Environments with clear task hierarchy',
+            'System processes vs User processes'
+          ]
+        },
+        'priority_p': {
+          name: 'Priority (Preemptive)',
+          color: '#54a0ff',
+          desc: 'CPU assigned to highest priority. Preempts if higher priority arrives.',
+          advantages: [
+            'Most responsive for high priority',
+            'Urgent tasks run immediately',
+            'Good for hard real-time systems',
+            'Dynamic priority handling'
+          ],
+          disadvantages: [
+            'Context switching overhead',
+            'Starvation still possible',
+            'Complex to implement',
+            'Race conditions more likely'
+          ],
+          problems: [
+            '<strong>Starvation:</strong> Low priority processes suffer even more than in non-preemptive if high priority tasks are frequent.',
+            '<strong>Thrashing:</strong> If priorities change frequently or many high priority tasks arrive, system spends time switching.'
+          ],
+          useCases: [
+            'Real-time operating systems (RTOS)',
+            'Interrupt handling',
+            'Device driver execution',
+            'Mission-critical systems'
           ]
         }
       };

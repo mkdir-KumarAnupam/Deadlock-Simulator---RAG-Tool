@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAG OS Simulator v6.5 - Crisp</title>
+  <title>RAG OS Simulator v1.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
@@ -25,7 +25,7 @@
       <div class="relative">
         <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
           <span>DEADLOCK_SIM</span>
-          <span class="neo-tag">v6.5 CRISP</span>
+          <span class="neo-tag">v1.0</span>
           <span class="text-xs ml-1 opacity-70">▼</span>
         </div>
 
@@ -43,103 +43,11 @@
         </div>
       </div>
 
-      <!-- Scenario UI (Library or Legacy) -->
-      <!-- Scenario UI (Library or Legacy) -->
-      <div id="scenario-ui-container" class="flex gap-2">
-        <button onclick="openScenarioLibrary()" class="neo-btn primary flex items-center gap-2"
-          style="font-weight: 900; font-size: 13px;">
-          <i class="fas fa-book-open"></i> SCENARIO LIBRARY
-        </button>
-        <button onclick="openChallengeModal()" class="neo-btn flex items-center gap-2"
-          style="font-weight: 900; font-size: 13px; background: #ff9ff3; border: 2px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s;">
-          <i class="fas fa-trophy"></i> CHALLENGE MODE
-        </button>
-
-        <!-- Legacy Scenario Dropdown (Hidden by default) -->
-        <div id="legacy-scenario-dropdown" class="relative" style="display: none;">
-          <button class="neo-btn" onclick="toggleMenu(event, 'legacy-scenario-menu')">
-            <i class="fas fa-list"></i> Scenarios <span class="ml-1 text-[10px]">▼</span>
-          </button>
-          <div id="legacy-scenario-menu" class="neo-dropdown">
-            <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')">Simple Deadlock</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')">Circular Wait</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('safe_state')">Safe State</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('starvation')">Starvation</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('fcfs_test')">FCFS Test</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('sjf_test')">SJF Test</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('srtf_test')">SRTF Test</div>
-            <div class="neo-dropdown-item" onclick="loadScenario('rr_test')">Round Robin Test</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scheduler Selection -->
-    <div class="relative">
-      <button class="neo-btn" onclick="toggleMenu(event, 'scheduler-menu')">
-        <i class="fas fa-cog"></i> <span id="scheduler-label">FCFS</span> <span class="ml-1 text-[10px]">▼</span>
-      </button>
-      <div id="scheduler-menu" class="neo-dropdown">
-        <div class="neo-dropdown-item"
-          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <span onclick="selectScheduler('fcfs', 'FCFS')" style="flex: 1; cursor: pointer;">FCFS</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('fcfs')"
-            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
-            title="See how FCFS works">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-        <div class="neo-dropdown-item"
-          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <span onclick="selectScheduler('sjf', 'SJF')" style="flex: 1; cursor: pointer;">SJF</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('sjf')"
-            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
-            title="See how SJF works">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-        <div class="neo-dropdown-item"
-          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <span onclick="selectScheduler('srtf', 'SRTF')" style="flex: 1; cursor: pointer;">SRTF</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('srtf')"
-            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
-            title="See how SRTF works">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-        <div class="neo-dropdown-item"
-          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <span onclick="selectScheduler('rr', 'Round Robin')" style="flex: 1; cursor: pointer;">Round Robin</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('rr')"
-            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
-            title="See how Round Robin works">
-            <i class="fas fa-eye"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quantum Input (for Round Robin) -->
-    <div id="quantum-container" class="hidden flex items-center gap-1">
-      <label class="font-bold text-xs">Q:</label>
-      <input type="number" id="quantum-input" class="neo-input text-xs font-bold" value="20" min="5" max="100"
-        style="width: 60px; padding: 4px;">
-    </div>
-
-    <!-- Topbar Tools (hidden by default) -->
-    <div id="topbar-tools" class="flex gap-2 hidden">
-      <button id="btn-process-top" class="neo-btn active" onclick="setMode('process')">Process</button>
-      <button id="btn-resource-top" class="neo-btn" onclick="setMode('resource')">Resource</button>
-      <button id="btn-link-top" class="neo-btn" onclick="setMode('link')">Link</button>
-      <button id="btn-delete-top" class="neo-btn danger" onclick="setMode('delete')">Delete</button>
-    </div>
-    </div>
-
-    <div class="flex gap-2 items-center">
+      <div class="flex items-center gap-2">
       <!-- Settings Dropdown -->
       <div class="relative">
-        <button class="neo-btn flex items-center gap-2 h-10" onclick="toggleMenu(event, 'settings-menu')"
-          title="Settings">
+        <button class="neo-btn flex items-center gap-2" onclick="toggleMenu(event, 'settings-menu')"
+          title="Settings" style="height: 42px;">
           <i class="fas fa-cog"></i>
         </button>
         <div id="settings-menu" class="neo-dropdown" style="width: 280px; max-height: 500px; overflow-y: auto;">
@@ -267,13 +175,140 @@
         </div>
       </div>
 
-      <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i
-          class="fas fa-play"></i> Run OS</button>
-      <button onclick="detectDeadlock(false)" class="neo-btn bg-white text-black hover:bg-black hover:text-white">Check
-        Deadlock</button>
-      <button onclick="detectStarvation()" class="neo-btn" style="background: #FF9800; color: white;"
-        title="Check for Starvation"><i class="fas fa-hourglass-half"></i> Starvation</button>
-      <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera h-5"></i></button>
+      <!-- Scenario UI (Library or Legacy) -->
+      <div id="scenario-ui-container" class="relative">
+        <button class="neo-btn epic-hover" onclick="toggleMenu(event, 'explore-menu')"
+          style="height: 42px; background: white; color: black; border: 3px solid black; box-shadow: 4px 4px 0 black; font-weight: 900; letter-spacing: 1px; transition: all 0.2s;">
+          <i class="fas fa-compass" style="font-size: 1.1em;"></i> EXPLORE <span class="ml-1 text-[10px]">▼</span>
+        </button>
+        <div id="explore-menu" class="neo-dropdown" style="width: 240px; border: 4px solid black; box-shadow: 8px 8px 0 rgba(0,0,0,1);">
+          <div class="neo-dropdown-item epic-dropdown-item" onclick="openScenarioLibrary()"
+            style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
+            <div style="width: 32px; height: 32px; background: #ffe600; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <span style="font-weight: 800;">SCENARIO LIBRARY</span>
+          </div>
+          <div id="challenge-mode-item" class="neo-dropdown-item epic-dropdown-item" onclick="openChallengeModal()"
+            style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
+            <div style="width: 32px; height: 32px; background: #ff9ff3; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <span style="font-weight: 800;">CHALLENGE MODE</span>
+          </div>
+          <!-- Legacy Scenarios (Hidden by default, kept for compatibility) -->
+          <div id="legacy-scenario-options" style="display: none; border-top: 3px solid black; margin-top: 0; padding-top: 0;">
+             <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Simple Deadlock</div>
+             <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Circular Wait</div>
+             <div class="neo-dropdown-item" onclick="loadScenario('safe_state')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Safe State</div>
+             <div class="neo-dropdown-item" onclick="loadScenario('starvation')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Starvation</div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+
+
+    <!-- Quantum Input (for Round Robin) -->
+    <div id="quantum-container" class="hidden flex items-center gap-1">
+      <label class="font-bold text-xs">Q:</label>
+      <input type="number" id="quantum-input" class="neo-input text-xs font-bold" value="20" min="5" max="100"
+        style="width: 60px; padding: 4px;">
+    </div>
+
+    <!-- Topbar Tools (hidden by default) -->
+    <div id="topbar-tools" class="flex gap-2 hidden">
+      <button id="btn-process-top" class="neo-btn active" onclick="setMode('process')">Process</button>
+      <button id="btn-resource-top" class="neo-btn" onclick="setMode('resource')">Resource</button>
+      <button id="btn-link-top" class="neo-btn" onclick="setMode('link')">Link</button>
+      <button id="btn-delete-top" class="neo-btn danger" onclick="setMode('delete')">Delete</button>
+    </div>
+    </div>
+
+    <div class="flex gap-2 items-center">
+
+
+    <!-- Scheduler Selection -->
+    <div class="relative">
+      <button class="neo-btn" onclick="toggleMenu(event, 'scheduler-menu')">
+        <i class="fas fa-cog"></i> <span id="scheduler-label">FCFS</span> <span class="ml-1 text-[10px]">▼</span>
+      </button>
+      <div id="scheduler-menu" class="neo-dropdown">
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('fcfs', 'FCFS')" style="flex: 1; cursor: pointer;">FCFS</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('fcfs')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how FCFS works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('sjf', 'SJF')" style="flex: 1; cursor: pointer;">SJF</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('sjf')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how SJF works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('srtf', 'SRTF')" style="flex: 1; cursor: pointer;">SRTF</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('srtf')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how SRTF works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('rr', 'Round Robin')" style="flex: 1; cursor: pointer;">Round Robin</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('rr')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how Round Robin works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('priority_np', 'Priority (NP)')" style="flex: 1; cursor: pointer;">Priority (NP)</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('priority_np')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how Priority (Non-Preemptive) works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="neo-dropdown-item"
+          style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <span onclick="selectScheduler('priority_p', 'Priority (Preemptive)')" style="flex: 1; cursor: pointer;">Priority (P)</span>
+          <button onclick="event.stopPropagation(); showAlgorithmDemo('priority_p')"
+            style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
+            title="See how Priority (Preemptive) works">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+      <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center justify-center gap-2" style="width: 110px; height: 42px;">
+        <i class="fas fa-play"></i>
+      </button>
+      <div class="neo-tooltip-container">
+        <button onclick="detectDeadlock(false)" class="neo-btn flex items-center justify-center" style="background: #ff6b6b; color: white; width: 110px; height: 42px; border-color: black;">
+          <i class="fas fa-exclamation-triangle"></i>
+        </button>
+        <span class="neo-tooltip-text">Detect Deadlock: Checks for circular wait conditions.</span>
+      </div>
+      <div class="neo-tooltip-container">
+        <button onclick="detectStarvation()" class="neo-btn flex items-center justify-center" style="background: #FF9800; color: white; width: 110px; height: 42px;">
+          <i class="fas fa-hourglass-half"></i>
+        </button>
+        <span class="neo-tooltip-text">Detect Starvation: Checks for indefinitely blocked processes.</span>
+      </div>
+      <button onclick="takeSnapshot()" class="neo-btn flex items-center justify-center" style="background: white; color: black; width: 42px; height: 42px;" title="Save Image">
+        <i class="fas fa-camera"></i>
+      </button>
     </div>
   </header>
 
@@ -455,16 +490,16 @@
       style="position: fixed; left: 20px; bottom: 280px; z-index: 100;">
       <div class="flex gap-2 items-center">
         <button onclick="resetZoom()" class="neo-btn flex items-center justify-center text-xs" title="Reset Zoom (100%)"
-          style="width: 40px; height: 36px; padding: 0;">
-          <i class="fas fa-compress-arrows-alt text-sm"></i>
+          style="width: 32px; height: 32px; padding: 0;">
+          <i class="fas fa-compress-arrows-alt text-xs"></i>
         </button>
         <button onclick="fitToScreen()" class="neo-btn flex items-center justify-center text-xs" title="Fit to Screen"
-          style="width: 40px; height: 36px; padding: 0;">
-          <i class="fas fa-expand text-sm"></i>
+          style="width: 32px; height: 32px; padding: 0;">
+          <i class="fas fa-expand text-xs"></i>
         </button>
         <button id="btn-pan" onclick="setMode('pan')" class="neo-btn flex items-center justify-center text-xs"
-          title="Pan Mode (Space+Drag)" style="width: 40px; height: 36px; padding: 0;">
-          <i class="fas fa-arrows-alt text-sm"></i>
+          title="Pan Mode (Space+Drag)" style="width: 32px; height: 32px; padding: 0;">
+          <i class="fas fa-arrows-alt text-xs"></i>
         </button>
       </div>
     </div>
@@ -646,8 +681,7 @@
       </div>
 
       <div style="padding: 25px;">
-        <p style="margin-bottom: 20px; font-weight: bold; font-size: 14px; line-height: 1.5;">Select a difficulty level
-          to generate a random OS problem:</p>
+
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
           <button onclick="startChallenge('easy')" class="neo-btn"
@@ -889,5 +923,4 @@
   <script src="js/modules/challenge.js"></script>
   <script src="js/core/main.js"></script>
 </body>
-
 </html>

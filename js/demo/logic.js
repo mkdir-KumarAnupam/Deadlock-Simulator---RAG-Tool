@@ -22,7 +22,9 @@ function tryAlgorithm(algorithm) {
     'fcfs': 'fcfs_test',
     'sjf': 'sjf_test',
     'srtf': 'srtf_test',
-    'rr': 'rr_test'
+    'rr': 'rr_test',
+    'priority_np': 'priority_test',
+    'priority_p': 'priority_preemptive_test'
   };
 
   const scenario = scenarioMap[algorithm] || 'fcfs_test';
@@ -38,10 +40,10 @@ function startAlgoDemo(algorithm) {
       algorithm: algorithm,
       time: 0,
       processes: [
-        { id: 'P1', burst: 8, remaining: 8, color: '#ffe600', arrival: 0, status: 'ready', arrived: false },
-        { id: 'P2', burst: 4, remaining: 4, color: '#a3ffac', arrival: isSRTF ? 2 : 0, status: 'ready', arrived: false },
-        { id: 'P3', burst: 9, remaining: 9, color: '#ffa3a3', arrival: isSRTF ? 4 : 0, status: 'ready', arrived: false },
-        { id: 'P4', burst: 5, remaining: 5, color: '#d4a3ff', arrival: isSRTF ? 5 : 0, status: 'ready', arrived: false }
+        { id: 'P1', burst: 8, remaining: 8, color: '#ffe600', arrival: 0, priority: 2, status: 'ready', arrived: false },
+        { id: 'P2', burst: 4, remaining: 4, color: '#a3ffac', arrival: isSRTF ? 2 : 0, priority: 1, status: 'ready', arrived: false },
+        { id: 'P3', burst: 9, remaining: 9, color: '#ffa3a3', arrival: isSRTF ? 4 : 0, priority: 3, status: 'ready', arrived: false },
+        { id: 'P4', burst: 5, remaining: 5, color: '#d4a3ff', arrival: isSRTF ? 5 : 0, priority: 2, status: 'ready', arrived: false }
       ],
       gantt: [],
       quantum: 4,
@@ -108,6 +110,16 @@ function runDemoStep(state) {
     } else {
       selected = state.currentProcess;
     }
+  } else if (state.algorithm === 'priority_np') {
+    // Priority Non-Preemptive
+    if (!state.currentProcess || state.currentProcess.remaining === 0) {
+      selected = readyProcesses.sort((a, b) => a.priority - b.priority)[0];
+    } else {
+      selected = state.currentProcess;
+    }
+  } else if (state.algorithm === 'priority_p') {
+    // Priority Preemptive
+    selected = readyProcesses.sort((a, b) => a.priority - b.priority)[0];
   }
 
   if (selected) {

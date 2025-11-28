@@ -50,12 +50,35 @@
           printToCli("ap [burst]    : Add Process");
           printToCli("ar            : Add Resource");
           printToCli("link [u] [v]  : Link Nodes");
+          printToCli("dealloc [p] [r]: Remove Allocation");
           printToCli("run / stop    : Control Sim");
           printToCli("check         : Deadlock Check");
           printToCli("clear         : Reset");
           printToCli("load [name]   : Load Scenario");
           printToCli("sched [algo]  : Set Scheduler (fcfs/sjf/srtf/rr)");
           printToCli("quantum [n]   : Set RR Quantum");
+          break;
+        case 'dealloc':
+          if (args.length < 2) printToCli("Usage: dealloc [process] [resource]", 'error');
+          else {
+            const pName = args[0];
+            const rName = args[1];
+            const pNode = nodes.find(n => n.label.toLowerCase() === pName.toLowerCase() && n.type === 'process');
+            const rNode = nodes.find(n => n.label.toLowerCase() === rName.toLowerCase() && n.type === 'resource');
+
+            if (!pNode) printToCli(`Process '${pName}' not found`, 'error');
+            else if (!rNode) printToCli(`Resource '${rName}' not found`, 'error');
+            else {
+              // Find allocation edge (Resource -> Process)
+              const edge = edges.find(e => e.source === rNode.id && e.target === pNode.id);
+              if (edge) {
+                deleteEdge(edge);
+                printToCli(`Deallocated ${rNode.label} from ${pNode.label}`, 'success');
+              } else {
+                printToCli(`No allocation found between ${rNode.label} and ${pNode.label}`, 'error');
+              }
+            }
+          }
           break;
         case 'ap':
           addNode('process', 100 + Math.random() * 200, 100 + Math.random() * 200).burstTime = args[0] || 100;
