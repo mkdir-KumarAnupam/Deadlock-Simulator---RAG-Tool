@@ -5721,54 +5721,86 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                 showClearWarning = false;
             }
         }
+//updated reset graph function to include timeline debugger reset @anshu
 
-        function resetGraph() {
-            nodes = []; edges = []; nextId = 1;
-            deadlockSet.clear();
-            ganttData = [];
-            lastGanttEntry = null;
-            currentRunningNodeId = null;
-            quantumRemaining = timeQuantum;
-            processStartTimes = {};
-            processMetrics = {};
-            contextSwitchCount = 0;
-            simulationTime = 0;
-            simulationStartTime = 0;
-            history = [];
-            historyIndex = -1;
-            simulationHistory = []; // Clear step history
+function resetGraph() {
+    // --- 1. Standard Reset (Base System) ---
+    nodes = []; edges = []; nextId = 1;
+    deadlockSet.clear();
+    ganttData = [];
+    lastGanttEntry = null;
+    currentRunningNodeId = null;
+    quantumRemaining = timeQuantum;
+    processStartTimes = {};
+    processMetrics = {};
+    contextSwitchCount = 0;
+    simulationTime = 0;
+    simulationStartTime = 0;
+    history = [];
+    historyIndex = -1;
+    
+    // Clear v6.5 "Step Control" History
+    simulationHistory = []; 
 
-            //timeline @anshu
+    // --- 2. Timeline Debugger Reset (New Feature) ---
+    // Reset History Array
+    if (typeof simHistory !== 'undefined') simHistory = [];
+    if (typeof tickCounter !== 'undefined') tickCounter = 0;
 
-            simHistory = [];
-    tickCounter = 0;
-    document.getElementById('playback-panel').classList.add('hidden');
-    document.getElementById('history-slider').value = 0;
-    document.getElementById('tick-display').style.background = '#ffe600';
+    // Reset Slider
+    const slider = document.getElementById('history-slider');
+    if (slider) slider.value = 0;
+    
+    // Reset Tick Display
+    const tickDisplay = document.getElementById('tick-display');
+    if (tickDisplay) {
+        tickDisplay.innerText = 'TICK: 0';
+        tickDisplay.style.background = '#ffe600';
+    }
+    
+    // Hide Panel (Optional - keeping it hidden on reset is usually better UX)
+    const playbackPanel = document.getElementById('playback-panel');
+    if (playbackPanel) {
+        playbackPanel.classList.add('hidden');
+        playbackPanel.classList.remove('active');
+    }
 
-            // Hide simulation controls
-            const simControls = document.getElementById('sim-controls');
-            if (simControls) {
-                simControls.style.opacity = '0';
-                simControls.style.transform = 'translateX(-50%) translateY(20px)';
-                setTimeout(() => {
-                    simControls.style.display = 'none';
-                }, 300);
-            }
+    // Reset Toggle Button State
+    const timelineBtn = document.getElementById('btn-timeline');
+    if (timelineBtn) {
+        timelineBtn.classList.remove('active');
+        timelineBtn.style.backgroundColor = '';
+    }
 
-            document.getElementById('gantt-chart').innerHTML = '<div class="text-gray-400 text-xs italic">Start Simulation to see data...</div>';
-            const metricsDisplay = document.getElementById('metrics-display');
-            if (metricsDisplay) {
-                metricsDisplay.innerHTML = '<div style="color: #666; font-style: italic; padding: 16px; border: 2px dashed #ccc; text-align: center;">No completed processes yet. Start simulation to see metrics.</div>';
-            }
-            if(isRunning) toggleSimulation();
-            updateSystemStats();
-            updateStats();
-            draw();
-            printToCli("System Reset.");
-            saveState();
-            updateUndoRedoButtons();
-        }
+    // --- 3. UI Cleanup (Existing v6.5) ---
+    // Hide simulation controls popup
+    const simControls = document.getElementById('sim-controls');
+    if (simControls) {
+        simControls.style.opacity = '0';
+        simControls.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => {
+            simControls.style.display = 'none';
+        }, 300);
+    }
+
+    // Reset Charts
+    document.getElementById('gantt-chart').innerHTML = '<div class="text-gray-400 text-xs italic">Start Simulation to see data...</div>';
+    const metricsDisplay = document.getElementById('metrics-display');
+    if (metricsDisplay) {
+        metricsDisplay.innerHTML = '<div style="color: #666; font-style: italic; padding: 16px; border: 2px dashed #ccc; text-align: center;">No completed processes yet. Start simulation to see metrics.</div>';
+    }
+    
+    // Stop Simulation
+    if(isRunning) toggleSimulation();
+    
+    // Refresh View
+    updateSystemStats();
+    updateStats();
+    draw();
+    printToCli("System Reset.");
+    saveState();
+    updateUndoRedoButtons();
+}
 
         // --- Auto-Layout Functions ---
         function toggleLayoutMenu() {
