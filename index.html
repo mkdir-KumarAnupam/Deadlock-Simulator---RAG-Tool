@@ -2,6 +2,23 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG OS Simulator v8.0 - Crisp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Neubrutalism Design System v3.5 - Pinned Paper Edition */
+        :root {
+            --bg-color: #fffdf5;
+            --process-ready: #a3ffac;
+            --process-running: #ffe600;
+            --process-blocked: #ff9aa2;
+            --process-terminated: #e0e0e0;
+            --resource-color: #cdb4db;
+            --border-width: 3px;
+            --shadow-hard: 4px 4px 0px 0px rgba(0,0,0,1);
+        }
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RAG OS Simulator v6.5 - Crisp</title>
@@ -2233,6 +2250,44 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
           throw new Error('Failed to get AI response');
         }
 
+        /* chnages for timeline @anshu */
+
+        /* Time Travel Slider Styling */
+#history-slider { appearance:none;-webkit-appearance: none; width: 100%; height: 12px; background: #e0e0e0; border: 2px solid black; outline: none; }
+#history-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: #ff4757; border: 3px solid black; cursor: pointer; box-shadow: 2px 2px 0px black; transition: transform 0.1s; }
+#history-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* Panel Animation & Handles */
+#playback-panel { transition: opacity 0.2s, transform 0.2s; }
+#playback-panel.active { display: flex !important; animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+#resize-handle:hover { background-color: #ff4757; transform: scale(1.1); transition: background 0.1s; }
+.deadlock-marker { 
+    position: absolute; 
+    height: 100%; 
+    width: 4px; /* Visible thickness */
+    background: #FF3366; /* Deadlock Color */
+    top: 0; 
+    pointer-events: none; /* Allows clicking through the marker */
+    z-index: 0;
+    opacity: 0.7;
+}
+
+
+    </style>
+</head>
+<body class="h-screen flex flex-col" onclick="closeMenu(event)">
+
+    <!-- Header -->
+    <header class="p-3 border-b-4 border-black bg-white flex flex-wrap justify-between items-center z-20 shadow-sm relative">
+        <div class="flex items-center gap-6">
+            <!-- Dropdown Menu Container -->
+            <div class="relative">
+                <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
+                    <span>DEADLOCK_SIM</span>
+                    <span class="neo-tag">v8.0 CRISP</span>
+                    <span class="text-xs ml-1 opacity-70">▼</span>
+                </div>
+
         const answer = data.candidates[0].content.parts[0].text;
         const formatted = answer
           .replace(/\*\*(.+?)\*\*/g, '<strong class="text-black">$1</strong>')
@@ -2312,6 +2367,220 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                 <button onclick="requestAIFix()" class="neo-btn" style="width: 100%; margin-top: 12px; background: #4ecdc4; color: black; font-weight: bold; font-size: 13px;">
                     <i class="fas fa-cogs"></i> IMPLEMENT THIS SOLUTION
                 </button>
+                <div id="settings-menu" class="neo-dropdown" style="width: 280px; max-height: 500px; overflow-y: auto;">
+                    <div class="neo-dropdown-item border-b-2 border-black pb-2 mb-2">
+                        <strong>System Configuration:</strong>
+                    </div>
+                    <div class="neo-dropdown-item flex flex-col gap-2">
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Max Memory (MB):</span>
+                            <input type="number" id="config-max-memory" value="1024" min="256" max="8192" step="256"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateMaxMemory(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">CPU Cores:</span>
+                            <input type="number" id="config-cpu-cores" value="1" min="1" max="8"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateCPUCores(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Context Switch (ms):</span>
+                            <input type="number" id="config-context-switch" value="5" min="1" max="100"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateContextSwitchTime(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Sim Speed (ms):</span>
+                            <input type="number" id="config-sim-speed" value="200" min="50" max="2000" step="50"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateSimSpeed(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Step Size (cycles):</span>
+                            <input type="number" id="config-step-size" value="1" min="1" max="100"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateStepSize(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Edge Label Size:</span>
+                            <input type="number" id="config-edge-label-size" value="10" min="0" max="20"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateEdgeLabelSize(this.value)">
+                        </label>
+                        <label class="flex items-center gap-2 text-xs cursor-pointer">
+                            <input type="checkbox" id="config-show-edge-labels" checked
+                                onchange="toggleEdgeLabels(this.checked)">
+                            <span class="font-bold">Show Edge Labels</span>
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">Edge Thickness:</span>
+                            <input type="number" id="config-edge-thickness" value="3" min="1" max="10"
+                                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
+                                onchange="updateEdgeThickness(this.value)">
+                        </label>
+                        <label class="flex items-center justify-between text-xs">
+                            <span class="font-bold">UI Scale:</span>
+                            <input type="range" id="config-ui-scale" value="0.8" min="0.6" max="1.2" step="0.1"
+                                class="w-24" style="accent-color: black;"
+                                oninput="updateUIScale(this.value)">
+                            <span id="ui-scale-value" class="font-mono text-xs">80%</span>
+                        </label>
+                    </div>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Toolbar Position:</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="toolbar-position" value="sidebar" checked onchange="setToolbarPosition('sidebar')">
+                        <span>Right Sidebar</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="toolbar-position" value="topbar" onchange="setToolbarPosition('topbar')">
+                        <span>Top Bar</span>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Scenario UI:</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="config-legacy-scenarios" onchange="toggleScenarioUIMode(this.checked)">
+                        <span class="font-bold">Use Legacy Scenario Dropdown</span>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Background Pattern:</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="none" onchange="setBackgroundPattern('none')">
+                        <span>None (Clean)</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="dots" onchange="setBackgroundPattern('dots')" checked>
+                        <span>Dots</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="bg-pattern" value="grid" onchange="setBackgroundPattern('grid')">
+                        <span>Grid</span>
+                    </label>
+                    <label class="neo-dropdown-item flex items-center justify-between text-xs">
+                        <span class="font-bold">Pattern Opacity:</span>
+                        <input type="range" id="config-pattern-opacity" min="0" max="30" value="10"
+                            class="w-24"
+                            oninput="setPatternOpacity(this.value)">
+                        <span id="pattern-opacity-value" class="font-mono" style="min-width: 35px;">10%</span>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>AI Analysis (Gemini):</strong>
+                    </div>
+                    <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
+                        <span class="font-bold">API Key:</span>
+                        <input type="password" id="config-gemini-key" placeholder="Enter Gemini API key"
+                            class="w-full p-2 border-2 border-black font-mono text-xs"
+                            onchange="saveGeminiKey(this.value)">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                           class="text-blue-600 underline text-[10px]">Get API Key →</a>
+                    </label>
+                    <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+                        <strong>Theme:</strong>
+                    </div>
+                    <div class="neo-dropdown-item" onclick="changeTheme('default')">
+                        <i class="fas fa-circle" style="color: #ffe600;"></i> Default
+                    </div>
+                    <div class="neo-dropdown-item" onclick="changeTheme('ocean')">
+                        <i class="fas fa-circle" style="color: #81d4fa;"></i> Ocean
+                    </div>
+                    <div class="neo-dropdown-item" onclick="changeTheme('forest')">
+                        <i class="fas fa-circle" style="color: #aed581;"></i> Forest
+                    </div>
+                    <div class="neo-dropdown-item" onclick="changeTheme('sunset')">
+                        <i class="fas fa-circle" style="color: #ff8a65;"></i> Sunset
+                    </div>
+                    <div class="neo-dropdown-item" onclick="changeTheme('midnight')">
+                        <i class="fas fa-circle" style="color: #4db6ac;"></i> Midnight
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i class="fas fa-play"></i> Run OS</button>
+            <button onclick="toggleTimeline()" id="btn-timeline" class="neo-btn" title="Toggle Timeline Debugger (History)"><i class="fas fa-history"></i></button>
+            <button onclick="detectDeadlock(false)" class="neo-btn bg-white text-black hover:bg-black hover:text-white">Check Deadlock</button>
+            <button onclick="detectStarvation()" class="neo-btn" style="background: #FF9800; color: white;" title="Check for Starvation"><i class="fas fa-hourglass-half"></i> Starvation</button>
+            <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera h-5"></i></button>
+        </div>
+    </header>
+
+    <!-- Stats Pane -->
+    <div id="stats-pane" class="stats-pane">
+        <div class="stats-toggle-btn" onclick="toggleStatsPane()" title="Toggle Stats">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+
+        <div class="stats-section bg-black text-white">
+            <h3 class="text-center">LIVE STATISTICS</h3>
+        </div>
+
+        <div class="overflow-y-auto flex-grow">
+            <div class="stats-section">
+                <h3>System Overview</h3>
+                <div class="stat-item">
+                    <span>Total Processes:</span>
+                    <span class="stat-value" id="stat-processes">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Total Resources:</span>
+                    <span class="stat-value" id="stat-resources">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Running Process:</span>
+                    <span class="stat-value" id="stat-running">IDLE</span>
+                </div>
+                <div class="stat-item">
+                    <span>Scheduler:</span>
+                    <span class="stat-value" id="stat-scheduler">FCFS</span>
+                </div>
+                <div class="stat-item">
+                    <span>CPU Cores:</span>
+                    <span class="stat-value" id="stat-cpu-cores">1</span>
+                </div>
+                <div class="stat-item">
+                    <span>Max Memory:</span>
+                    <span class="stat-value" id="stat-max-memory">1024 MB</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>Process States</h3>
+                <div class="stat-item">
+                    <span>Ready:</span>
+                    <span class="stat-value" id="stat-ready">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Running:</span>
+                    <span class="stat-value" id="stat-state-running">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Blocked:</span>
+                    <span class="stat-value" id="stat-blocked">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Terminated:</span>
+                    <span class="stat-value" id="stat-terminated">0</span>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>Performance Metrics</h3>
+                <div class="stat-item">
+                    <span>Simulation Time:</span>
+                    <span class="stat-value" id="stat-time">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Deadlock Status:</span>
+                    <span class="stat-value" id="stat-deadlock">SAFE</span>
+                </div>
+                <div class="stat-item">
+                    <span>CPU Utilization:</span>
+                    <span class="stat-value" id="stat-cpu">0%</span>
+                </div>
+            </div>
             ` : '';
 
       content.innerHTML = `
@@ -2337,6 +2606,164 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                         <i class="fas fa-times"></i> CLOSE
                     </button>
 
+        @keyframes titleWobble {
+            0%, 100% {
+                transform: rotate(-1deg);
+            }
+            25% {
+                transform: rotate(-0.5deg);
+            }
+            50% {
+                transform: rotate(-1.5deg);
+            }
+            75% {
+                transform: rotate(-0.8deg);
+            }
+        }
+        .scenario-library-content {
+            animation: slideInFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+        .scenario-card {
+            opacity: 0;
+            transform: scale(0.85) translateY(20px);
+        }
+        .scenario-card.animate-in {
+            animation: cardPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .library-close-btn {
+            opacity: 0;
+            transform: scale(0.5) rotate(-90deg);
+            will-change: transform, opacity;
+        }
+        .library-close-btn.animate-in {
+            animation: closeButtonPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes closeButtonPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(-90deg);
+            }
+            50% {
+                transform: scale(1.05) rotate(3deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+    </style>
+
+    <!-- Simulation Control Buttons -->
+    <div id="sim-controls" style="position: fixed; bottom: 290px; left: 50%; transform: translateX(-50%) translateY(20px); display: none; z-index: 25; opacity: 0; transition: all 0.3s ease-out;">
+        <div style="background: white; border: 4px solid black; box-shadow: 8px 8px 0 black; padding: 12px 20px; display: flex; gap: 12px; align-items: center; font-family: 'Courier New', monospace;">
+            <button onclick="changeSimSpeed('slow')" class="neo-btn" style="padding: 8px 12px; font-size: 12px;" title="Slow Speed">
+                <i class="fas fa-backward"></i>
+            </button>
+            <button onclick="stepSimulation(-1)" class="neo-btn" style="padding: 8px 12px; font-size: 12px;" title="Step Backward">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button onclick="toggleSimulation()" id="sim-control-play" class="neo-btn primary" style="padding: 8px 16px; font-size: 12px;" title="Pause/Play">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button onclick="stepSimulation(1)" class="neo-btn" style="padding: 8px 12px; font-size: 12px;" title="Step Forward">
+                <i class="fas fa-step-forward"></i>
+            </button>
+            <button onclick="changeSimSpeed('fast')" class="neo-btn" style="padding: 8px 12px; font-size: 12px;" title="Fast Speed">
+                <i class="fas fa-forward"></i>
+            </button>
+            <div style="border-left: 3px solid black; height: 30px; margin: 0 8px;"></div>
+            <span id="sim-speed-indicator" style="font-size: 11px; font-weight: 900; min-width: 60px; text-align: center;">NORMAL</span>
+            <div style="border-left: 3px solid black; height: 30px; margin: 0 8px;"></div>
+            <button onclick="confirmClearBoard()" class="neo-btn danger" style="padding: 8px 12px; font-size: 12px;" title="Clear Board">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Clear Board Confirmation Modal -->
+    <div id="clear-board-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10001; font-family: 'Courier New', monospace;">
+        <div style="background: white; border: 4px solid black; box-shadow: 10px 10px 0 black; padding: 24px; max-width: 400px; margin: 150px auto; transform: rotate(-0.5deg);">
+            <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 16px; color: #ff4757; border-bottom: 3px solid black; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+                ⚠ CLEAR BOARD?
+            </h3>
+            <p style="font-size: 14px; line-height: 1.6; margin-bottom: 20px; font-weight: 600;">
+                This will remove all processes, resources, and reset the simulation. This action cannot be undone.
+            </p>
+            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; cursor: pointer; font-size: 12px; font-weight: 700;">
+                <input type="checkbox" id="dont-show-clear-warning" style="width: 16px; height: 16px; cursor: pointer;">
+                <span>Don't show this next time</span>
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="executeClearBoard()" class="neo-btn danger" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-check"></i> YES, CLEAR
+                </button>
+                <button onclick="closeClearModal()" class="neo-btn" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-times"></i> CANCEL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Algorithm Demo Modal -->
+    <div id="algo-demo-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 10005; font-family: 'Courier New', monospace; overflow-y: auto;" onclick="if(event.target===this) closeAlgorithmDemo()">
+        <style>
+            .close-btn-demo {
+                transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .close-btn-demo:hover {
+                transform: rotate(90deg) scale(1.1);
+                background: #ff4757 !important;
+                box-shadow: 6px 6px 0 black !important;
+            }
+            .close-btn-demo:active {
+                transform: rotate(90deg) scale(0.95);
+                box-shadow: 2px 2px 0 black !important;
+            }
+        </style>
+        <div id="algo-demo-panel" style="background: #faf8f3; border: 4px solid black; border-top: none; box-shadow: 0 8px 0 black, inset -8px 0 15px -10px rgba(0,0,0,0.2); width: 60%; margin: 0 auto; position: sticky; top: 0; display: flex; flex-direction: column; max-height: 95vh; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
+            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 12px; background: repeating-linear-gradient(0deg, #d4d4d4 0px, #d4d4d4 2px, #e8e8e8 2px, #e8e8e8 4px); border-right: 3px solid black;"></div>
+            <button onclick="closeAlgorithmDemo()" class="close-btn-demo" style="position: absolute; top: 16px; right: 16px; padding: 8px 16px; background: #ff6b6b; color: black; border: 3px solid black; cursor: pointer; font-weight: bold; box-shadow: 4px 4px 0 black; font-family: 'Courier New', monospace; font-size: 18px; z-index: 100;">×</button>
+            <div id="algo-demo-content" style="overflow-y: auto; max-height: calc(95vh - 0px); margin-left: 12px;"></div>
+        </div>
+        <div style="min-height: 50vh;"></div>
+    </div>
+
+    <!-- timeline debugger panel @anshu -->
+
+<div id="playback-panel" class="hidden absolute left-[20px] bottom-[100px] bg-white border-[3px] border-black p-3 shadow-[6px_6px_0px_rgba(0,0,0,1)] z-40 w-[500px] flex flex-col gap-2" style="min-width: 350px; min-height: 140px;">
+    
+    <div id="playback-header" class="flex justify-between items-center border-b-2 border-black pb-1 mb-1 cursor-move select-none active:cursor-grabbing">
+        <div class="flex items-center gap-2 pointer-events-none">
+            <i class="fas fa-history text-blue-600"></i>
+            <span class="font-black text-sm tracking-widest">TIMELINE</span>
+        </div>
+
+        <button id="btn-jump-deadlock" onclick="jumpToDeadlock()" class="hidden neo-btn" style="padding: 2px 8px; font-size: 10px; background: #ff4757; color: white; border: 2px solid black; margin-left: auto; margin-right: 10px;" title="Jump to deadlock moment">
+            <i class="fas fa-bug"></i> JUMP TO ERROR
+        </button>
+
+        <span id="tick-display" class="font-mono text-xs font-bold bg-[#ffe600] px-2 py-0.5 border-2 border-black shadow-[2px_2px_0px_black] pointer-events-none">TICK: 0</span>
+    </div>
+    
+    <div class="relative w-full h-8 flex items-center flex-shrink-0">
+        <div id="timeline-markers" class="absolute top-0 left-0 w-full h-full pointer-events-none z-0"></div>
+        <input type="range" id="history-slider" min="0" max="0" value="0" step="1" 
+            class="w-full h-3 bg-gray-200 border-2 border-black appearance-none cursor-pointer z-10 bg-transparent"
+            oninput="scrubHistory(this.value)" onchange="finishScrub()">
+    </div>
+
+    <div class="flex justify-between items-center text-[10px] font-bold mt-auto pb-1">
+        <button onclick="stepHistory(-1)" class="neo-btn" style="padding: 2px 8px;"><i class="fas fa-step-backward"></i> STEP BACK</button>
+        <div class="text-gray-500 uppercase tracking-widest pointer-events-none">Drag Header to Move</div>
+        <button onclick="stepHistory(1)" class="neo-btn" style="padding: 2px 8px;">STEP FWD <i class="fas fa-step-forward"></i></button>
+    </div>
+
+    <div id="resize-handle" class="absolute bottom-[2px] right-[2px] w-4 h-4 bg-black cursor-se-resize" style="clip-path: polygon(100% 0, 0 100%, 100% 100%);"></div>
+</div>
+
+    <!-- Footer -->
+    <footer class="h-64 border-t-4 border-black flex flex-col md:flex-row" style="z-index: 20;">
                     <div style="border: 6px solid black; box-shadow: 8px 8px 0 black; padding: 32px; margin-bottom: 32px; transform: rotate(-1deg); position: relative; transform-origin: top right; background: white; animation: titleWobble 4s ease-in-out infinite;">
                         <h1 style="font-family: 'Courier New', monospace; font-size: 3rem; font-weight: 900; border: 5px solid black; background: #ffe600; padding: 20px; box-shadow: 8px 8px 0 black; text-align: center; margin: 0 0 20px 0; letter-spacing: 2px; position: relative;">
                             <div class="title-pin" style="top: -10px; right: 2%; position: absolute; width: 26px; height: 26px; box-shadow: inset 0 0 0 4px white, 4px 4px 0 black;"></div>
@@ -2378,6 +2805,237 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                         </p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Right: CLI Terminal -->
+        <div class="w-full md:w-1/2 cli-container">
+            <div class="cli-header">System Terminal_</div>
+            <div class="cli-output" id="cli-output">
+                <div>Welcome to DEADLOCK_SIM v3.5</div>
+                <div>Type 'help' for commands.</div>
+                <div>-----------------------------------</div>
+            </div>
+            <div class="cli-input-line">
+                <span class="cli-prompt">user@sys:~$</span>
+                <input type="text" id="cli-input" class="cli-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Configuration ---
+        const config = {
+            nodeRadius: 30, // Slightly larger for paper feel
+            colors: {
+                ready: '#a3ffac',
+                running: '#FFD700',
+                blocked: '#FF6B9D',
+                terminated: '#C0C0C0',
+                resource: '#FFFFFF',
+                highlight: '#FFD700',
+                deadlock: '#FF3366',
+                starvation: '#FF9800' // Orange for starvation
+            },
+            totalMemory: 1024
+        };
+
+        // System Configuration
+        let lastDeadlockInfo = null; // Store last deadlock analysis for AI fix
+        let systemConfig = {
+            maxMemory: 1024,
+            cpuCores: 1,
+            contextSwitchTime: 5,
+            simSpeed: 200,
+            edgeLabelSize: 10,
+            showEdgeLabels: true,
+            edgeThickness: 3,
+            uiScale: 0.8
+        };
+
+        // --- State ---
+        let nodes = [];
+        let edges = [];
+        let nextId = 1;
+        let isRunning = false;
+        let simInterval = null;
+        let currentRunningNodeId = null;
+        let simSpeed = 200;
+        let mode = 'process';
+        let selectedNode = null;
+        let draggingNode = null;
+        let deadlockSet = new Set();
+        let starvingSet = new Set(); // Processes experiencing starvation
+        let processWaitTimes = {}; // Track how long each process has been waiting
+        let starvationThreshold = 50; // Cycles before considering starvation
+        let tempLinkPos = null; // Track mouse position in link mode
+
+        //time travel @anshu
+
+
+        let simHistory = [];
+        const MAX_HISTORY_STEPS = 1000;
+        let isScrubbing = false;
+        let tickCounter = 0;
+
+        // --- Auto-Pause State ---
+let consecutiveIdleTicks = 0;
+const AUTO_PAUSE_THRESHOLD = 50; // 50 ticks (~10 seconds at default speed)
+
+        // Drag-to-connect
+        let dragLinkStart = null; // Starting node for drag-to-connect
+        let dragLinkEnd = null; // Current mouse position or target node
+        let dragStartPos = null; // Initial mouse position to detect movement threshold
+
+        // Batch operations
+        let selectedNodes = new Set(); // Set of selected node IDs
+        let isSelectionMode = false;
+        let selectionBox = null; // {x1, y1, x2, y2} for box selection
+
+        // Copy/Paste
+        let clipboard = null; // Stores copied nodes and edges
+        let pasteOffset = 40; // Offset for pasted nodes
+        let lastPastePosition = null; // Track last paste position
+
+        // Zoom & Pan
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+
+        // Scheduling State
+        let schedulingAlgorithm = 'fcfs';
+        let timeQuantum = 20;
+        let quantumRemaining = 20;
+        let processStartTimes = {}; // Track when process first starts for response time
+
+        // Simulation Control
+        let stepSize = 1; // Number of cycles to step forward/backward
+        let simulationHistory = []; // Store simulation states for step back
+        let maxHistorySize = 100; // Limit history to prevent memory issues
+        let showClearWarning = true; // Show warning before clearing board
+
+        // Gantt Data
+        let ganttData = [];
+        let lastGanttEntry = null;
+
+        // Process Metrics
+        let processMetrics = {}; // Stores timing metrics for each process
+        let contextSwitchCount = 0;
+
+        // Flow Animation State
+        let flowParticles = []; // Array of {edge, progress, direction}
+        let animationFrame = 0;
+
+        // Context Switch Animation State
+        let contextSwitchAnimations = []; // Array of {nodeId, startTime, duration}
+
+        // Additional Animation States
+        let nodeCreationAnimations = []; // Node spawn animations
+        let processTerminationAnimations = []; // Process completion effects
+        let buttonClickAnimations = []; // Button press effects
+        let nodeHoverEffects = new Map(); // nodeId -> hover intensity
+        let pulseAnimations = []; // Background pulse effects
+
+        // Undo/Redo System
+        let history = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50;
+
+        // Stats tracking
+        let simulationTime = 0;
+        let simulationStartTime = 0;
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const cliOutput = document.getElementById('cli-output');
+        const cliInput = document.getElementById('cli-input');
+        const propPanel = document.getElementById('prop-panel');
+
+        function resizeCanvas() {
+            // High DPI Fix
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            // Set display size (css pixels)
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // Normalize coordinate system to use css pixels
+            ctx.scale(dpr, dpr);
+
+            draw();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- View Switching ---
+        function switchView(viewName) {
+            document.getElementById('view-queues').classList.add('hidden');
+            document.getElementById('view-gantt').classList.add('hidden');
+            document.getElementById('view-metrics').classList.add('hidden');
+            document.getElementById('tab-queues').classList.remove('active');
+            document.getElementById('tab-gantt').classList.remove('active');
+            document.getElementById('tab-metrics').classList.remove('active');
+
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`tab-${viewName}`).classList.add('active');
+        }
+
+        // --- Menu Logic ---
+        function toggleMenu(e, menuId) {
+            e.stopPropagation();
+            document.querySelectorAll('.neo-dropdown').forEach(d => {
+                if(d.id !== menuId) d.classList.remove('show');
+            });
+            document.getElementById(menuId).classList.toggle('show');
+        }
+
+        function closeMenu(e) {
+            if (!e.target.closest('.neo-title') && !e.target.closest('.neo-btn') && !e.target.closest('.neo-dropdown')) {
+                document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
+            }
+        }
+
+        // --- Scenario UI Toggle ---
+        function toggleScenarioUIMode(useLegacy) {
+            const libraryBtn = document.getElementById('scenario-library-btn');
+            const legacyDropdown = document.getElementById('legacy-scenario-dropdown');
+
+            if (useLegacy) {
+                libraryBtn.style.display = 'none';
+                legacyDropdown.style.display = 'block';
+                localStorage.setItem('useLegacyScenarios', 'true');
+            } else {
+                libraryBtn.style.display = 'block';
+                legacyDropdown.style.display = 'none';
+                localStorage.setItem('useLegacyScenarios', 'false');
+            }
+        }
+
+        // Load saved preference on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const useLegacy = localStorage.getItem('useLegacyScenarios') === 'true';
+            document.getElementById('config-legacy-scenarios').checked = useLegacy;
+            if (useLegacy) {
+                toggleScenarioUIMode(true);
+            }
+
+            // Load saved background pattern
+            const savedPattern = localStorage.getItem('backgroundPattern') || 'dots';
+            setBackgroundPattern(savedPattern);
+            const patternRadio = document.querySelector(`input[name="bg-pattern"][value="${savedPattern}"]`);
+            if (patternRadio) patternRadio.checked = true;
+
+            // Load saved pattern opacity
+            const savedOpacity = localStorage.getItem('patternOpacity') || '10';
+            document.getElementById('config-pattern-opacity').value = savedOpacity;
+            setPatternOpacity(savedOpacity);
             `;
 
       modal.innerHTML = html;
@@ -3380,6 +4038,9 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                             <h3 style="font-size: 18px; margin: 0; text-transform: uppercase; color: white; font-weight: bold;">PROBLEM SPOTLIGHT</h3>
                         </div>
                         ${info.problems.map((prob, idx) => {
+                            const problemName = prob.match(/<strong>(.*?):<\/strong>/)?.[1] || 'Problem';
+                            const problemDesc = prob.replace(/<strong>.*?<\/strong>\s*/, '');
+                            return `
           const problemName = prob.match(/<strong>(.*?):<\/strong>/)?.[1] || 'Problem';
           const problemDesc = prob.replace(/<strong>.*?<\/strong>\s*/, '');
           return `
@@ -3392,6 +4053,7 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                                     </div>
                                 </div>
                             `;
+                        }).join('')}
         }).join('')}
                     </div>
 
@@ -3410,6 +4072,10 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                         </div>
                     </div>
                 `;
+            } else if (currentAlgoTab === 'usecases') {
+                const icons = ['A', 'B', 'C', 'D'];
+                const colors = ['#e3f2fd', '#f3e5f5', '#fff9c4', '#e0f2f1'];
+                tabContent = `
       } else if (currentAlgoTab === 'usecases') {
         const icons = ['A', 'B', 'C', 'D'];
         const colors = ['#e3f2fd', '#f3e5f5', '#fff9c4', '#e0f2f1'];
@@ -3457,6 +4123,1926 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                         `).join('')}
                     </div>
                 `;
+            }
+
+
+            // ... existing if/else blocks ...
+else if (currentAlgoTab === 'compare') {
+    const allAlgos = ['fcfs', 'sjf', 'srtf', 'rr'];
+    const opponents = allAlgos.filter(a => a !== algorithm);
+    
+    const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
+    const colors = { 'fcfs': '#ffe600', 'sjf': '#a3ffac', 'srtf': '#ffa3a3', 'rr': '#d4a3ff' };
+
+    tabContent = `
+        <style>
+            /* Animation for Button Area */
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .compare-card { 
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+                border: 3px solid black;
+                box-shadow: 6px 6px 0 black;
+                opacity: 0;
+                transform: scale(0.85) translateY(20px);
+                will-change: transform, opacity;
+            }
+            .compare-card.animate-in {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            
+            /* Rotation pattern similar to scenario cards */
+            .compare-card:nth-child(even) { transform: rotate(1deg) scale(0.85) translateY(20px); }
+            .compare-card:nth-child(odd) { transform: rotate(-1deg) scale(0.85) translateY(20px); }
+            
+            .compare-card.animate-in:nth-child(even) { transform: rotate(1deg) scale(1) translateY(0); }
+            .compare-card.animate-in:nth-child(odd) { transform: rotate(-1deg) scale(1) translateY(0); }
+
+            .compare-card:hover { 
+                transform: translateY(-5px) scale(1.02) !important; 
+                box-shadow: 10px 10px 0 black; 
+                z-index: 10;
+            }
+            .compare-card:active { 
+                transform: translateY(2px) scale(1) !important; 
+                box-shadow: 2px 2px 0 black; 
+            }
+        </style>
+
+        <div style="padding: 10px; display: flex; flex-direction: column; height: 100%;">
+            
+            <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: 900; margin-bottom: 24px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2); text-transform: uppercase; font-size: 14px; align-self: flex-start;">
+                <i class="fas fa-fist-raised mr-2"></i> Select Opponent for ${names[algorithm]}
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                ${opponents.map((opp, idx) => `
+                    <div onclick="selectOpponentCard('${algorithm}', '${opp}', this)" 
+                         class="compare-card neo-box" 
+                         data-original-color="${colors[opp]}"
+                         style="background: ${colors[opp]}; padding: 24px; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        
+                        <div class="vs-badge" style="width: 50px; height: 50px; background: white; border: 3px solid black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.1); transition: all 0.2s;">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        
+                        <h3 style="font-size: 20px; font-weight: 900; border-bottom: 3px solid currentColor; margin-bottom: 12px; line-height: 1.2;">${names[opp]}</h3>
+                        
+                        <div style="font-size: 10px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">
+                            Click to Select
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div id="compare-action-area" style="display: none; margin-top: auto; padding-top: 30px; justify-content: center; align-items: center; flex-direction: column; gap: 10px;">
+                <div style="font-weight: bold; font-size: 12px; color: #555;">OPPONENT SELECTED</div>
+                <button id="btn-start-compare" class="neo-btn" style="background: #ff4757; color: white; padding: 15px 40px; font-size: 18px; font-weight: 900; border: 4px solid black; box-shadow: 6px 6px 0 black; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; transition: transform 0.1s;">
+                    <span>RUN SIMULATION</span>
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+
+            <div id="compare-placeholder" style="margin-top: 40px; text-align: center; font-style: italic; color: #999; font-size: 13px; font-weight: bold;">
+                ( Choose an algorithm above to proceed )
+            </div>
+        </div>
+    `;
+    
+    // Trigger animations
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.compare-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('animate-in');
+            }, index * 80);
+        });
+
+        const obs = new MutationObserver((mutations) => {
+            const actionArea = document.getElementById('compare-action-area');
+            const placeholder = document.getElementById('compare-placeholder');
+            if(actionArea && placeholder) {
+                placeholder.style.display = actionArea.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+        const target = document.getElementById('compare-action-area');
+        if(target) obs.observe(target, { attributes: true, attributeFilter: ['style'] });
+    }, 100);
+}
+// ...
+
+
+
+            contentArea.innerHTML = tabContent;
+        }
+
+ function renderAlgorithmModal(algorithm) {
+    const content = document.getElementById('algo-demo-content');
+
+    const algoInfo = {
+        'fcfs': {
+            name: 'First Come First Served',
+            color: '#ffe600',
+            desc: 'Non-preemptive. Processes execute in arrival order.',
+            advantages: [
+                'Simple and easy to understand',
+                'Easy to implement with FIFO queue',
+                'Fair in terms of arrival order',
+                'No starvation - every process gets CPU eventually'
+            ],
+            disadvantages: [
+                'Poor average waiting time',
+                'Convoy effect - short processes wait for long ones',
+                'Not suitable for time-sharing systems',
+                'No priority consideration'
+            ],
+            problems: [
+                '<strong>Convoy Effect:</strong> When a long process arrives first, all subsequent shorter processes must wait, leading to poor average waiting time. Like being stuck behind a slow truck on a single-lane road.'
+            ],
+            useCases: [
+                'Batch processing systems where order matters',
+                'Print queue management',
+                'Simple embedded systems with predictable workloads',
+                'First-come-first-served customer service systems'
+            ]
+        },
+        'sjf': {
+            name: 'Shortest Job First',
+            color: '#a3ffac',
+            desc: 'Non-preemptive. Selects process with shortest burst time.',
+            advantages: [
+                'Optimal average waiting time',
+                'Minimizes average turnaround time',
+                'Better throughput than FCFS',
+                'Efficient for batch systems'
+            ],
+            disadvantages: [
+                'Requires knowing burst time in advance (often impossible)',
+                'Can cause starvation of long processes',
+                'Not practical for interactive systems',
+                'Difficult to predict exact CPU burst times'
+            ],
+            problems: [
+                '<strong>Starvation:</strong> Long processes may never execute if short processes keep arriving. A process with burst time of 100 might wait indefinitely while processes with burst time 5 keep coming.'
+            ],
+            useCases: [
+                'Batch processing where execution times are known',
+                'Background task scheduling',
+                'Systems with predictable workload patterns',
+                'Non-interactive computational tasks'
+            ]
+        },
+        'srtf': {
+            name: 'Shortest Remaining Time First',
+            color: '#ffa3a3',
+            desc: 'Preemptive SJF. Can interrupt currently running process.',
+            advantages: [
+                'Better average waiting time than SJF',
+                'More responsive to new short processes',
+                'Optimal for minimizing waiting time',
+                'Good for time-sharing systems'
+            ],
+            disadvantages: [
+                'High context switching overhead',
+                'Even worse starvation than SJF',
+                'Requires continuous burst time estimation',
+                'Complex to implement efficiently'
+            ],
+            problems: [
+                '<strong>Severe Starvation:</strong> Long processes can be perpetually preempted by arriving shorter processes. A process might start execution but never finish if shorter processes keep arriving.',
+                '<strong>High Overhead:</strong> Frequent context switches when new processes arrive, consuming CPU time for switching rather than actual work.'
+            ],
+            useCases: [
+                'Real-time systems with priority on quick tasks',
+                'Interactive systems requiring responsiveness',
+                'Systems where burst times can be predicted accurately',
+                'Environments where minimizing response time is critical'
+            ]
+        },
+        'rr': {
+            name: 'Round Robin',
+            color: '#d4a3ff',
+            desc: 'Preemptive time-sharing. Each process gets fixed time quantum.',
+            advantages: [
+                'Fair allocation of CPU time',
+                'No starvation - every process gets turns',
+                'Good for time-sharing systems',
+                'Responsive for interactive processes'
+            ],
+            disadvantages: [
+                'Average waiting time often high',
+                'Performance depends heavily on quantum size',
+                'Context switching overhead',
+                'Not optimal for varying burst times'
+            ],
+            problems: [
+                '<strong>Quantum Size Dilemma:</strong> Too large quantum → behaves like FCFS with poor response time. Too small quantum → excessive context switching overhead wastes CPU cycles.',
+                '<strong>Inefficient for I/O:</strong> Processes waiting for I/O still consume quantum slices, leading to wasted CPU time.'
+            ],
+            useCases: [
+                'Time-sharing operating systems (Linux, Windows)',
+                'Interactive multi-user systems',
+                'Systems requiring fair CPU distribution',
+                'General-purpose operating systems'
+            ]
+        }
+    };
+
+    const info = algoInfo[algorithm];
+
+    const tabStyle = (tab) => `
+        padding: 14px 20px 14px 30px;
+        background: ${currentAlgoTab === tab ? info.color : '#e8e6e0'};
+        border: 3px solid black;
+        border-right: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
+        border-bottom: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
+        cursor: pointer;
+        font-weight: ${currentAlgoTab === tab ? '900' : 'bold'};
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        box-shadow: ${currentAlgoTab === tab ? 'inset 6px 0 12px rgba(0,0,0,0.15), 2px 0 4px rgba(0,0,0,0.1)' : 'none'};
+        margin-right: ${currentAlgoTab === tab ? '0' : '-3px'};
+        margin-bottom: ${currentAlgoTab === tab ? '-3px' : '0'};
+        width: 100%;
+        text-align: left;
+        position: relative;
+        z-index: ${currentAlgoTab === tab ? '10' : '1'};
+        color: ${currentAlgoTab === tab ? 'black' : '#333'};
+        text-shadow: ${currentAlgoTab === tab ? '1px 1px 0 rgba(255,255,255,0.3)' : 'none'};
+        letter-spacing: ${currentAlgoTab === tab ? '1px' : '0.5px'};
+    `;
+
+    let tabContent = '';
+
+    // --- EXISTING TABS ---
+    if (currentAlgoTab === 'demo') {
+        // [Existing Demo Code Omitted for Brevity - Keep your existing code here]
+        tabContent = `<div class="demo-section" style="padding:40px; text-align:center;">Demo Content Placeholder (Use your existing logic here)</div>`;
+    } 
+    else if (currentAlgoTab === 'advantages') {
+       // [Existing Advantages Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'disadvantages') {
+       // [Existing Disadvantages Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'problems') {
+       // [Existing Problems Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'usecases') {
+       // [Existing Use Cases Code Omitted - Keep your existing code here]
+    }
+    
+
+
+    content.innerHTML = `
+        <style>
+            /* ... (Keep your existing styles for animations/tabs here) ... */
+            @keyframes headerSlideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+            @keyframes tabPulse { 0%, 100% { box-shadow: inset 6px 0 12px rgba(0,0,0,0.15); } 50% { box-shadow: inset 8px 0 16px rgba(0,0,0,0.2); } }
+            @keyframes tabSlideIn { from { transform: translateX(-10px); opacity: 0.8; } to { transform: translateX(0); opacity: 1; } }
+            .algo-tab-button { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
+            .algo-tab-button:hover:not(.active-tab) { background: #d4d0c8 !important; padding-left: 28px !important; border-left: 6px solid black !important; box-shadow: inset 2px 0 6px rgba(0,0,0,0.15) !important; transform: translateX(3px); }
+            .algo-tab-button.active-tab { animation: tabSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), tabPulse 2s ease-in-out infinite; }
+            .algo-tab-button.active-tab::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: black; border-radius: 50%; box-shadow: 0 0 8px rgba(0,0,0,0.5); animation: dotPulse 1.5s ease-in-out infinite; }
+            @keyframes dotPulse { 0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; } 50% { transform: translateY(-50%) scale(1.3); opacity: 0.7; } }
+            .algo-tab-button.active-tab::after { content: ''; position: absolute; right: -4px; top: 0; bottom: 0; width: 12px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.05)); pointer-events: none; }
+            .try-button { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+            .try-button:hover { background: #3ab8af !important; padding: 24px !important; box-shadow: 4px 4px 0 black !important; }
+            .try-button:active { transform: translateY(2px); box-shadow: 1px 1px 0 black !important; }
+            .header-badge { animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+            .header-text { animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+        </style>
+        <div style="background: ${info.color}; padding: 40px 48px; border-bottom: 4px solid black; margin-bottom: 0; display: flex; align-items: center; gap: 32px;">
+            <div class="header-badge" style="display: inline-block; padding: 16px 32px; background: black; border: 4px solid black; box-shadow: 6px 6px 0 rgba(0,0,0,0.3);">
+                <h2 style="font-size: 48px; font-weight: bold; margin: 0; letter-spacing: 8px; color: ${info.color};">${algorithm.toUpperCase()}</h2>
+            </div>
+            <div class="header-text" style="flex: 1;">
+                <p style="font-size: 22px; margin: 0 0 10px 0; font-weight: 900; color: black; text-transform: uppercase; letter-spacing: 2px;">${info.name}</p>
+                <p style="font-size: 15px; margin: 0; color: black; font-weight: 700; max-width: 800px; line-height: 1.5;">${info.desc}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0; width: 100%; position: relative;">
+            <div style="position: absolute; left: 200px; top: 0; bottom: 0; width: 40px; background: linear-gradient(to bottom, transparent 10px, #d4d4d4 10px, #d4d4d4 20px, transparent 20px); background-size: 100% 30px; z-index: 5;">
+                ${Array(9).fill(0).map((_, i) => `
+                    <div style="position: absolute; top: ${15 + i*45}px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
+                `).join('')}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; background: linear-gradient(to right, #f5f3ed 0%, #e8e6e0 100%); border-right: 4px solid black; width: 220px; box-shadow: inset -3px 0 8px rgba(0,0,0,0.1); position: relative; z-index: 1;">
+                <div style="display: flex; flex-direction: column; gap: 0; flex: 1; padding-top: 8px;">
+                    <button onclick="switchAlgoTab('demo')" class="algo-tab-button ${currentAlgoTab === 'demo' ? 'active-tab' : ''}" style="${tabStyle('demo')}">
+                        DEMO
+                    </button>
+                    <button onclick="switchAlgoTab('advantages')" class="algo-tab-button ${currentAlgoTab === 'advantages' ? 'active-tab' : ''}" style="${tabStyle('advantages')}">
+                        ADVANTAGES
+                    </button>
+                    <button onclick="switchAlgoTab('disadvantages')" class="algo-tab-button ${currentAlgoTab === 'disadvantages' ? 'active-tab' : ''}" style="${tabStyle('disadvantages')}">
+                        DISADVANTAGES
+                    </button>
+                    <button onclick="switchAlgoTab('problems')" class="algo-tab-button ${currentAlgoTab === 'problems' ? 'active-tab' : ''}" style="${tabStyle('problems')}">
+                        PROBLEMS
+                    </button>
+                    <button onclick="switchAlgoTab('usecases')" class="algo-tab-button ${currentAlgoTab === 'usecases' ? 'active-tab' : ''}" style="${tabStyle('usecases')}">
+                        USE CASES
+                    </button>
+                    
+                    <button onclick="switchAlgoTab('compare')" class="algo-tab-button ${currentAlgoTab === 'compare' ? 'active-tab' : ''}" style="${tabStyle('compare')}">
+                        COMPARE
+                    </button>
+                </div>
+                <button onclick="tryAlgorithm('${algorithm}')" class="try-button" style="padding: 20px; background: #4ecdc4; border: 3px solid black; border-right: none; cursor: pointer; font-weight: bold; font-family: 'Courier New', monospace; font-size: 14px; box-shadow: none; margin-top: auto; text-align: center;">TRY THIS</button>
+            </div>
+
+            <div id="algo-tab-content" style="flex: 1; padding: 32px 32px 32px 72px; background: repeating-linear-gradient(transparent, transparent 29px, #e0d9ce 29px, #e0d9ce 30px), linear-gradient(to right, #fff8f0 0%, #fefdfb 20%, #fefdfb 80%, #fff8f0 100%); position: relative; box-shadow: inset 6px 0 12px rgba(0,0,0,0.08);">
+                <div style="position: absolute; left: 52px; top: 0; bottom: 0; width: 2px; background: #ff6b6b; opacity: 0.5;"></div>
+                </div>
+        </div>
+    `;
+
+    // Ensure we trigger the content update
+    // Note: If you also have an external updateTabContent function, ensure it contains the "else if (compare)" logic I added above!
+    updateTabContent(algorithm);
+}
+        let demoState = null;
+        let demoInterval = null;
+
+        function startAlgoDemo(algorithm) {
+            if (demoInterval) clearInterval(demoInterval);
+
+            if (!demoState) {
+                // Different arrival times for SRTF to show preemption
+                const isSRTF = algorithm === 'srtf';
+                demoState = {
+                    algorithm: algorithm,
+                    time: 0,
+                    processes: [
+                        { id: 'P1', burst: 8, remaining: 8, color: '#ffe600', arrival: 0, status: 'ready', arrived: false },
+                        { id: 'P2', burst: 4, remaining: 4, color: '#a3ffac', arrival: isSRTF ? 2 : 0, status: 'ready', arrived: false },
+                        { id: 'P3', burst: 9, remaining: 9, color: '#ffa3a3', arrival: isSRTF ? 4 : 0, status: 'ready', arrived: false },
+                        { id: 'P4', burst: 5, remaining: 5, color: '#d4a3ff', arrival: isSRTF ? 5 : 0, status: 'ready', arrived: false }
+                    ],
+                    gantt: [],
+                    quantum: 4,
+                    quantumRemaining: 4,
+                    currentProcess: null
+                };
+            }
+
+            demoInterval = setInterval(() => runDemoStep(demoState), 400);
+        }
+
+        function runDemoStep(state) {
+            // Mark processes as arrived and track arrivals
+            let arrivals = [];
+            state.processes.forEach(p => {
+                if (state.time >= p.arrival && !p.arrived) {
+                    p.arrived = true;
+                    p.status = 'ready';
+                    arrivals.push(p);
+                }
+            });
+
+
+
+            const readyProcesses = state.processes.filter(p => p.remaining > 0 && p.arrived);
+
+            if (readyProcesses.length === 0) {
+                // Check if all processes are done
+                const allDone = state.processes.every(p => p.remaining === 0);
+                if (allDone) {
+                    clearInterval(demoInterval);
+                    updateDemoQueue(state.processes, state.time, null);
+                    return;
+                }
+                // Wait for next process to arrive
+                state.time++;
+                state.gantt.push({ process: 'IDLE', color: '#cccccc' });
+                document.getElementById('demo-time').textContent = state.time;
+                updateDemoGantt(state.gantt);
+                updateDemoQueue(state.processes, state.time, null);
+                return;
+            }
+
+            let selected = null;
+
+            if (state.algorithm === 'fcfs') {
+                // FCFS: First arrived, first served
+                selected = readyProcesses.sort((a, b) => a.arrival - b.arrival)[0];
+            } else if (state.algorithm === 'sjf') {
+                // SJF: Non-preemptive, select shortest burst time
+                if (!state.currentProcess || state.currentProcess.remaining === 0) {
+                    selected = readyProcesses.sort((a, b) => a.burst - b.burst)[0];
+                } else {
+                    selected = state.currentProcess;
+                }
+            } else if (state.algorithm === 'srtf') {
+                // SRTF: Preemptive, always select shortest remaining time
+                selected = readyProcesses.sort((a, b) => a.remaining - b.remaining)[0];
+            } else if (state.algorithm === 'rr') {
+                if (!state.currentProcess || state.quantumRemaining <= 0 || state.currentProcess.remaining <= 0) {
+                    const idx = state.currentProcess ? readyProcesses.findIndex(p => p.id === state.currentProcess.id) : -1;
+                    selected = readyProcesses[(idx + 1) % readyProcesses.length];
+                    state.quantumRemaining = state.quantum;
+                } else {
+                    selected = state.currentProcess;
+                }
+            }
+
+            if (selected) {
+                selected.remaining--;
+                state.time++;
+                state.quantumRemaining--;
+                state.currentProcess = selected;
+
+                // Check if process just completed
+                if (selected.remaining === 0) {
+                    selected.status = 'done';
+                }
+
+                state.gantt.push({ process: selected.id, color: selected.color });
+
+                document.getElementById('demo-time').textContent = state.time;
+                if (state.algorithm === 'rr') {
+                    document.getElementById('demo-quantum').textContent = state.quantumRemaining;
+                }
+
+                updateDemoGantt(state.gantt);
+                updateDemoQueue(state.processes, state.time, selected);
+            }
+        }
+
+        function updateDemoQueue(processes, currentTime, executingProcess) {
+            const queue = document.getElementById('demo-queue');
+            queue.innerHTML = processes.map(p => {
+                const isExecuting = executingProcess && executingProcess.id === p.id && p.remaining > 0;
+                const status = p.remaining === 0 ? 'DONE' : (isExecuting ? '▶ EXECUTING' : (p.arrived ? 'READY' : `Arrives at t=${p.arrival}`));
+                const bgColor = p.remaining === 0 ? '#ddd' : (isExecuting ? '#4ecdc4' : (p.arrived ? p.color : '#f0f0f0'));
+                const fontWeight = isExecuting ? 'bold' : 'normal';
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: ${bgColor}; border: ${isExecuting ? '3px' : '2px'} solid black; box-shadow: ${isExecuting ? '4px 4px 0 black' : '2px 2px 0 black'};">
+                        <span style="font-weight: bold;">${p.id}</span>
+                        <span style="font-size: 11px; font-weight: ${fontWeight};">${status} | Burst: ${p.burst} | Remaining: ${p.remaining}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateDemoGantt(gantt) {
+            const ganttEl = document.getElementById('demo-gantt');
+            ganttEl.innerHTML = gantt.map(g => `
+                <div style="flex: 1; background: ${g.color}; border-right: 1px solid black; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px;">${g.process}</div>
+            `).join('');
+        }
+
+        function resetAlgoDemo() {
+            if (demoInterval) clearInterval(demoInterval);
+            demoState = null;
+            document.getElementById('demo-time').textContent = '0';
+            if (document.getElementById('demo-quantum')) {
+                document.getElementById('demo-quantum').textContent = '4';
+            }
+            document.getElementById('demo-gantt').innerHTML = '';
+            document.getElementById('demo-queue').innerHTML = '<div style="color: #999; text-align: center; padding: 40px;">Click START DEMO to begin</div>';
+        }
+
+        function closeAlgorithmDemo() {
+            const modal = document.getElementById('algo-demo-modal');
+            const panel = document.getElementById('algo-demo-panel');
+            panel.style.transform = 'translateY(-100%)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 400);
+            if (demoInterval) clearInterval(demoInterval);
+            demoState = null;
+        }
+
+        function selectScheduler(algo, label) {
+            schedulingAlgorithm = algo;
+            document.getElementById('scheduler-label').textContent = label;
+            const quantumContainer = document.getElementById('quantum-container');
+            if (algo === 'rr') {
+                quantumContainer.classList.remove('hidden');
+            } else {
+                quantumContainer.classList.add('hidden');
+            }
+            timeQuantum = parseInt(document.getElementById('quantum-input').value) || 20;
+            quantumRemaining = timeQuantum;
+            printToCli(`Scheduler changed to: ${label}`, 'info');
+            if (isRunning) {
+                printToCli('Note: Changes take effect on next scheduling decision', 'info');
+            }
+        }
+
+        // --- Copy/Paste/Duplicate Functions ---
+        function copyNodes() {
+            const nodesToCopy = selectedNodes.size > 0 ? Array.from(selectedNodes) : (selectedNode ? [selectedNode.id] : []);
+
+            if (nodesToCopy.length === 0) {
+                printToCli('No nodes selected to copy', 'error');
+                return;
+            }
+
+            const copiedNodes = [];
+            const copiedEdges = [];
+
+            // Copy nodes
+            nodesToCopy.forEach(nodeId => {
+                const node = getNodeById(nodeId);
+                if (node) {
+                    copiedNodes.push({
+                        id: node.id,
+                        type: node.type,
+                        label: node.label,
+                        x: node.x,
+                        y: node.y,
+                        state: node.state,
+                        burstTime: node.burstTime,
+                        maxBurst: node.maxBurst,
+                        originalBurst: node.originalBurst,
+                        instances: node.instances,
+                        customColor: node.customColor
+                    });
+                }
+            });
+
+            // Copy edges between selected nodes
+            edges.forEach(edge => {
+                if (nodesToCopy.includes(edge.source) && nodesToCopy.includes(edge.target)) {
+                    copiedEdges.push({
+                        source: edge.source,
+                        target: edge.target,
+                        label: edge.label,
+                        isAllocation: edge.isAllocation
+                    });
+                }
+            });
+
+            clipboard = { nodes: copiedNodes, edges: copiedEdges };
+            printToCli(`Copied ${copiedNodes.length} node(s) and ${copiedEdges.length} edge(s)`, 'success');
+        }
+
+        function pasteNodes(atMousePosition = false, mouseX = 0, mouseY = 0) {
+            if (!clipboard || clipboard.nodes.length === 0) {
+                printToCli('Clipboard is empty', 'error');
+                return;
+            }
+
+            saveState();
+
+            const idMapping = {}; // Map old IDs to new IDs
+            const newNodeIds = [];
+
+            // Calculate offset
+            let offsetXPaste = pasteOffset;
+            let offsetYPaste = pasteOffset;
+
+            if (atMousePosition && lastPastePosition) {
+                // Calculate center of copied nodes
+                const centerX = clipboard.nodes.reduce((sum, n) => sum + n.x, 0) / clipboard.nodes.length;
+                const centerY = clipboard.nodes.reduce((sum, n) => sum + n.y, 0) / clipboard.nodes.length;
+
+                offsetXPaste = mouseX - centerX;
+                offsetYPaste = mouseY - centerY;
+                lastPastePosition = { x: mouseX, y: mouseY };
+            } else {
+                lastPastePosition = null;
+            }
+
+            // Paste nodes
+            clipboard.nodes.forEach(nodeToCopy => {
+                const newNode = {
+                    id: nextId++,
+                    type: nodeToCopy.type,
+                    label: nodeToCopy.label + "'",
+                    x: nodeToCopy.x + offsetXPaste,
+                    y: nodeToCopy.y + offsetYPaste,
+                    state: nodeToCopy.type === 'process' ? 'READY' : undefined,
+                    burstTime: nodeToCopy.burstTime || 100,
+                    maxBurst: nodeToCopy.maxBurst || 100,
+                    originalBurst: nodeToCopy.originalBurst || 100,
+                    instances: nodeToCopy.instances || 1,
+                    customColor: nodeToCopy.customColor,
+                    rotation: (Math.random() - 0.5) * 0.25,
+                    pinColor: '#333'
+                };
+
+                nodes.push(newNode);
+                idMapping[nodeToCopy.id] = newNode.id;
+                newNodeIds.push(newNode.id);
+
+                // Add creation animation
+                nodeCreationAnimations.push({
+                    x: newNode.x,
+                    y: newNode.y,
+                    startTime: Date.now(),
+                    duration: 400
+                });
+            });
+
+            // Paste edges
+            clipboard.edges.forEach(edgeToCopy => {
+                if (idMapping[edgeToCopy.source] && idMapping[edgeToCopy.target]) {
+                    edges.push({
+                        source: idMapping[edgeToCopy.source],
+                        target: idMapping[edgeToCopy.target],
+                        label: edgeToCopy.label,
+                        isAllocation: edgeToCopy.isAllocation
+                    });
+                }
+            });
+
+            // Select pasted nodes
+            clearSelection();
+            newNodeIds.forEach(id => selectedNodes.add(id));
+            if (newNodeIds.length === 1) {
+                selectedNode = getNodeById(newNodeIds[0]);
+            }
+
+            updateSystemStats();
+            draw();
+            printToCli(`Pasted ${clipboard.nodes.length} node(s)`, 'success');
+        }
+
+        function duplicateNodes() {
+            if (selectedNodes.size === 0 && !selectedNode) {
+                printToCli('No nodes selected to duplicate', 'error');
+                return;
+            }
+
+            copyNodes();
+            pasteNodes(false);
+        }
+
+        function addNode(type, x, y) {
+            const prefix = type === 'process' ? 'P' : 'R';
+            const count = nodes.filter(n => n.type === type).length + 1;
+            const newNode = {
+                id: nextId++,
+                type: type,
+                label: `${prefix}${count}`,
+                x: x, y: y,
+                burstTime: type === 'process' ? 100 : 0,
+                maxBurst: 100,
+                originalBurst: type === 'process' ? 100 : 0,
+                memory: type === 'process' ? Math.floor(Math.random() * 224) + 32 : 0,
+                state: type === 'process' ? 'READY' : 'RESOURCE',
+                arrivalTime: 0, // Will be set when simulation starts
+                // Resource capacity (number of instances)
+                capacity: type === 'resource' ? 1 : 0,
+                allocated: type === 'resource' ? 0 : 0, // How many instances currently allocated
+                // New Visual Props
+                rotation: (Math.random() - 0.5) * 0.25, // +/- ~7 degrees
+                pinColor: ['#ff4d4d', '#2d2d2d', '#4a90e2', '#silver'][Math.floor(Math.random()*4)]
+            };
+            nodes.push(newNode);
+
+            // Mark process as created - actual arrival time will be set when simulation starts
+            if (type === 'process') {
+                processMetrics[newNode.id] = {
+                    label: newNode.label,
+                    arrivalTime: null, // Will be set when simulation starts
+                    firstRunTime: null,
+                    completionTime: null,
+                    totalExecutionTime: 0,
+                    turnaroundTime: 0,
+                    waitingTime: 0,
+                    responseTime: 0,
+                    executionSegments: [],
+                    created: true
+                };
+            }
+            // Trigger creation animation
+            nodeCreationAnimations.push({
+                x: x,
+                y: y,
+                startTime: Date.now(),
+                duration: 400
+            });
+            updateSystemStats();
+            draw();
+            saveState();
+            return newNode;
+        }
+
+        function getNodeById(id) { return nodes.find(n => n.id === id); }
+
+        function deleteNode(node) {
+            edges = edges.filter(e => e.source !== node.id && e.target !== node.id);
+            nodes = nodes.filter(n => n.id !== node.id);
+            if(currentRunningNodeId === node.id) currentRunningNodeId = null;
+            selectedNode = null;
+            closeProps();
+            updateSystemStats();
+            draw();
+            saveState();
+        }
+
+        function addEdge(source, target) {
+            if (source.type === target.type) {
+                printToCli(`Error: Cannot link ${source.type} to ${target.type}.`, 'error');
+                return;
+            }
+            if (edges.some(e => e.source === source.id && e.target === target.id)) return;
+
+            // Check resource capacity
+            if (source.type === 'resource') {
+                const allocated = edges.filter(e => e.source === source.id).length;
+                if (allocated >= source.capacity) {
+                    printToCli(`Resource ${source.label} at full capacity (${source.capacity})!`, 'error');
+                    return;
+                }
+            }
+
+            edges.push({ source: source.id, target: target.id, label: '1' });
+            // Pulse both connected nodes
+            pulseAnimations.push(
+                {
+                    nodeId: source.id,
+                    startTime: Date.now(),
+                    duration: 500
+                },
+                {
+                    nodeId: target.id,
+                    startTime: Date.now(),
+                    duration: 500
+                }
+            );
+            updateProcessStates();
+            draw();
+            saveState();
+        }
+
+        // --- Simulation & Scheduler ---
+
+        function updateProcessStates() {
+            nodes.filter(n => n.type === 'process' && n.state !== 'TERMINATED').forEach(p => {
+                const requests = edges.filter(e => e.source === p.id);
+                if (requests.length > 0) {
+                    if (p.state !== 'BLOCKED') {
+                        p.state = 'BLOCKED';
+                        if (currentRunningNodeId === p.id) currentRunningNodeId = null;
+                    }
+                } else {
+                    if (p.state === 'BLOCKED') p.state = 'READY';
+                    if (!p.state) p.state = 'READY';
+                }
+            });
+            updateSystemStats();
+        }
+
+
+        //updated scheduler to not keep cpu idle even after everything is done
+function scheduler() {
+    // --- Time Travel Recording ---
+    if (!isScrubbing) {
+        recordHistory();
+        tickCounter++;
+        const display = document.getElementById('tick-display');
+        if (display) display.innerText = `TICK: ${tickCounter}`;
+    }
+
+    let activeLabel = "IDLE";
+    let activeColor = "#eee";
+    let preempted = false;
+
+    // Update quantum input if changed
+    if (schedulingAlgorithm === 'rr') {
+        const newQuantum = parseInt(document.getElementById('quantum-input').value) || 20;
+        if (newQuantum !== timeQuantum && !currentRunningNodeId) {
+            timeQuantum = newQuantum;
+            quantumRemaining = timeQuantum;
+        }
+    }
+
+    // --- 1. HANDLE RUNNING PROCESS ---
+    if (currentRunningNodeId) {
+        // CPU IS BUSY - RESET IDLE COUNTER
+        consecutiveIdleTicks = 0;
+        
+        const p = getNodeById(currentRunningNodeId);
+        if (p && p.state === 'RUNNING') {
+            p.burstTime -= 5;
+            quantumRemaining -= 5;
+            activeLabel = p.label;
+            activeColor = config.colors.running;
+
+            // Check if process completed
+            if (p.burstTime <= 0) {
+                terminateProcess(p);
+            }
+            // Round Robin: Check quantum expiry
+            else if (schedulingAlgorithm === 'rr' && quantumRemaining <= 0) {
+                p.state = 'READY';
+                p.lastPreemptTime = Date.now();
+                triggerContextSwitch(p.id);
+                currentRunningNodeId = null;
+                quantumRemaining = timeQuantum;
+                preempted = true;
+                printToCli(`${p.label} quantum expired - context switch`, 'info');
+            }
+            // SRTF: Check for preemption
+            else if (schedulingAlgorithm === 'srtf') {
+                const readyProcesses = nodes.filter(n => n.type === 'process' && n.state === 'READY' && n.burstTime > 0);
+                const shorterProcess = readyProcesses.find(n => n.burstTime < p.burstTime);
+                if (shorterProcess) {
+                    p.state = 'READY';
+                    triggerContextSwitch(p.id);
+                    currentRunningNodeId = null;
+                    preempted = true;
+                    printToCli(`${p.label} preempted by ${shorterProcess.label} (SRTF)`, 'info');
+                }
+            }
+            // Update properties panel if open
+            else if (!propPanel.classList.contains('hidden')) {
+                const content = document.getElementById('prop-content');
+                if(content.innerText.includes(`ID: ${p.label}`)) openProps(p);
+            }
+        } else {
+            currentRunningNodeId = null;
+        }
+    }
+
+    // --- 2. SELECT NEXT PROCESS ---
+    if (!currentRunningNodeId) {
+        const candidates = nodes.filter(n => n.type === 'process' && n.state === 'READY' && n.burstTime > 0);
+
+        if (candidates.length > 0) {
+            // CPU WILL BE BUSY - RESET IDLE COUNTER
+            consecutiveIdleTicks = 0;
+            
+            let nextP = null;
+
+            switch(schedulingAlgorithm) {
+                case 'fcfs': nextP = candidates[0]; break;
+                case 'sjf': nextP = candidates.reduce((shortest, p) => p.originalBurst < shortest.originalBurst ? p : shortest); break;
+                case 'srtf': nextP = candidates.reduce((shortest, p) => p.burstTime < shortest.burstTime ? p : shortest); break;
+                case 'rr':
+                    candidates.sort((a, b) => { 
+                        const timeA = a.lastPreemptTime || a.arrivalTime || 0; 
+                        const timeB = b.lastPreemptTime || b.arrivalTime || 0; 
+                        return timeA - timeB; 
+                    });
+                    nextP = candidates[0];
+                    quantumRemaining = timeQuantum;
+                    break;
+                default: nextP = candidates[0];
+            }
+
+            if (nextP) {
+                nextP.state = 'RUNNING';
+                currentRunningNodeId = nextP.id;
+                activeLabel = nextP.label;
+                activeColor = config.colors.running;
+
+                // Metrics Initialization
+                if (!processMetrics[nextP.id]) {
+                    const arrivalTime = processMetrics[nextP.id]?.created ? 0 : (Date.now() - simulationStartTime);
+                    processMetrics[nextP.id] = { label: nextP.label, arrivalTime: arrivalTime, firstRunTime: null, completionTime: null, totalExecutionTime: 0, turnaroundTime: 0, waitingTime: 0, responseTime: 0, executionSegments: [], created: true };
+                }
+                if (processMetrics[nextP.id].arrivalTime === null) processMetrics[nextP.id].arrivalTime = 0;
+                
+                // First Run Tracking
+                if (!processStartTimes[nextP.id]) {
+                    processStartTimes[nextP.id] = Date.now();
+                    processMetrics[nextP.id].firstRunTime = Date.now() - simulationStartTime;
+                    pulseAnimations.push({ nodeId: nextP.id, startTime: Date.now(), duration: 800 });
+                }
+                
+                // Context Switch Tracking
+                if (currentRunningNodeId && currentRunningNodeId !== nextP.id) {
+                    contextSwitchCount++;
+                    const prevMetrics = processMetrics[currentRunningNodeId];
+                    if (prevMetrics && prevMetrics.executionSegments.length > 0) {
+                        const lastSeg = prevMetrics.executionSegments[prevMetrics.executionSegments.length - 1];
+                        if (lastSeg.end === null) lastSeg.end = Date.now() - simulationStartTime;
+                    }
+                }
+                processMetrics[nextP.id].executionSegments.push({ start: Date.now() - simulationStartTime, end: null });
+            }
+        } else {
+            // --- 3. CPU IS IDLE - CHECK FOR AUTO-PAUSE ---
+            consecutiveIdleTicks++;
+            
+            // Check waiting/blocked queue
+            const blockedCount = nodes.filter(n => n.type === 'process' && n.state === 'BLOCKED').length;
+            
+            // Conditions: No Ready procs (candidates=0), No Blocked procs, Timeout exceeded
+            if (blockedCount === 0 && consecutiveIdleTicks >= AUTO_PAUSE_THRESHOLD) {
+                // Ensure we don't pause on an empty board immediately (require at least 1 process to have existed OR explicit user pause)
+                // But for simulation completion:
+                toggleSimulation();
+                printToCli("Simulation completed — CPU entering final idle state.", 'success');
+                // Force Gantt update to show final idle block before stopping
+                updateGantt(activeLabel, activeColor);
+                return; // Stop execution here
+            }
+        }
+    }
+
+    updateGantt(activeLabel, activeColor);
+    detectDeadlock(true);
+    updateStarvationTracking();
+    updateSystemStats();
+    draw();
+}
+        function terminateProcess(p) {
+            p.state = 'TERMINATED';
+            p.burstTime = 0;
+            currentRunningNodeId = null;
+
+            // Complete metrics tracking
+            if (processMetrics[p.id]) {
+                const currentTime = Date.now() - simulationStartTime;
+                processMetrics[p.id].completionTime = currentTime;
+
+                // Close last execution segment
+                const segments = processMetrics[p.id].executionSegments;
+                if (segments.length > 0 && segments[segments.length - 1].end === null) {
+                    segments[segments.length - 1].end = currentTime;
+                }
+
+                // Calculate total execution time
+                const totalExecution = segments.reduce((sum, seg) => sum + ((seg.end || currentTime) - seg.start), 0);
+                processMetrics[p.id].totalExecutionTime = totalExecution;
+
+                // Calculate turnaround and waiting times
+                const arrivalTime = processMetrics[p.id].arrivalTime || 0;
+                const turnaroundTime = currentTime - arrivalTime;
+                const waitingTime = turnaroundTime - totalExecution;
+
+                processMetrics[p.id].turnaroundTime = turnaroundTime;
+                processMetrics[p.id].waitingTime = waitingTime;
+                processMetrics[p.id].responseTime = (processMetrics[p.id].firstRunTime || currentTime) - arrivalTime;
+
+                updateGanttMetrics();
+            }
+
+            // Trigger completion animation
+            processTerminationAnimations.push({
+                x: p.x,
+                y: p.y,
+                startTime: Date.now(),
+                duration: 600
+            });
+            printToCli(`Process ${p.label} FINISHED.`, 'success');
+
+            const heldEdges = edges.filter(e => e.target === p.id);
+            edges = edges.filter(e => e.target !== p.id);
+
+            heldEdges.forEach(releasedEdge => {
+                const rId = releasedEdge.source;
+                const requestEdge = edges.find(e => e.target === rId && getNodeById(e.source).type === 'process');
+
+                if (requestEdge) {
+                    const requesterId = requestEdge.source;
+                    const requester = getNodeById(requesterId);
+                    edges = edges.filter(e => e !== requestEdge);
+                    edges.push({ source: rId, target: requesterId });
+                    printToCli(`  -> Auto-Allocated ${getNodeById(rId).label} to ${requester.label}`, 'success');
+                }
+            });
+
+            updateProcessStates();
+        }
+
+        function updateGantt(label, color) {
+            const chart = document.getElementById('gantt-chart');
+            const currentTimeMs = simulationStartTime ? (Date.now() - simulationStartTime) : 0;
+            const currentTime = (currentTimeMs / 1000).toFixed(1); // Convert to seconds with 1 decimal
+
+            if (chart.children.length === 1 && chart.children[0].innerText.includes('Start')) {
+                chart.innerHTML = '';
+            }
+
+            // If switching from one process to another (not extending current block)
+            if (lastGanttEntry && lastGanttEntry.dataset.label !== label) {
+                // This is a context switch - mark the end time of previous block
+                lastGanttEntry.dataset.endTime = currentTime;
+                const container = lastGanttEntry.parentElement;
+                const timeLabel = container.querySelector('.time-label');
+                if (timeLabel) {
+                    const startTime = lastGanttEntry.dataset.startTime;
+                    timeLabel.innerHTML = `<span>${startTime}s</span><span style="margin-left: 8px;">${currentTime}s</span>`;
+                }
+            }
+
+            if (lastGanttEntry && lastGanttEntry.dataset.label === label) {
+                const w = parseInt(lastGanttEntry.style.width) || 20;
+                lastGanttEntry.style.width = (w + 2) + 'px';
+                // Update end time
+                lastGanttEntry.dataset.endTime = currentTime;
+                const container = lastGanttEntry.parentElement;
+                const timeLabel = container.querySelector('.time-label');
+                if (timeLabel) {
+                    const startTime = lastGanttEntry.dataset.startTime;
+                    timeLabel.innerHTML = `<span>${startTime}s</span><span style="margin-left: 8px;">${currentTime}s</span>`;
+                }
+            } else {
+                const container = document.createElement('div');
+                container.style.display = 'inline-block';
+                container.style.verticalAlign = 'top';
+                container.style.marginRight = '2px';
+
+                const div = document.createElement('div');
+                div.className = 'gantt-block';
+                div.style.background = color;
+                div.style.width = '20px';
+                div.innerText = label;
+                div.dataset.label = label;
+                div.dataset.startTime = currentTime;
+                div.dataset.endTime = currentTime;
+
+                const timeLabel = document.createElement('div');
+                timeLabel.className = 'time-label';
+                timeLabel.style.fontSize = '9px';
+                timeLabel.style.color = '#000';
+                timeLabel.style.fontWeight = 'bold';
+                timeLabel.style.textAlign = 'center';
+                timeLabel.style.marginTop = '2px';
+                timeLabel.innerHTML = `<span>${currentTime}s</span><span style="margin-left: 8px;">${currentTime}s</span>`;
+
+                container.appendChild(div);
+                container.appendChild(timeLabel);
+                chart.appendChild(container);
+                lastGanttEntry = div;
+                chart.scrollLeft = chart.scrollWidth;
+            }
+        }
+
+        function updateGanttMetrics() {
+            const metricsHtml = Object.values(processMetrics)
+                .filter(m => m.completionTime !== null)
+                .map(m => {
+                    const contextSwitches = Math.max(0, (m.executionSegments?.length || 1) - 1);
+                    return `
+                        <div style="border: 3px solid black; padding: 12px; background: white; font-family: 'Courier New', monospace; font-size: 11px; box-shadow: 6px 6px 0 black; margin-bottom: 12px;">
+                            <div style="font-weight: bold; border: 2px solid black; margin-bottom: 8px; background: #ffe600; padding: 8px; box-shadow: 3px 3px 0 black; font-size: 13px; text-transform: uppercase;">
+                                ${m.label} - PROCESS METRICS
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>ARRIVAL:</strong> ${m.arrivalTime}ms</div>
+                                <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>FIRST RUN:</strong> ${m.firstRunTime}ms</div>
+                                <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>COMPLETION:</strong> ${m.completionTime}ms</div>
+                                <div style="border: 2px solid black; padding: 6px; background: #ffeaa7;"><strong>BURST TIME:</strong> ${m.totalExecutionTime}ms</div>
+                                <div style="border: 3px solid black; padding: 6px; background: #a3ffac; box-shadow: 3px 3px 0 black;"><strong>TURNAROUND:</strong> ${m.turnaroundTime}ms</div>
+                                <div style="border: 3px solid black; padding: 6px; background: #ff9aa2; box-shadow: 3px 3px 0 black;"><strong>WAITING:</strong> ${m.waitingTime}ms</div>
+                                <div style="border: 2px solid black; padding: 6px; background: #e8f4f8;"><strong>RESPONSE:</strong> ${m.responseTime}ms</div>
+                                <div style="border: 2px solid black; padding: 6px; background: #d6e4ff;"><strong>CTX SWITCHES:</strong> ${contextSwitches}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            const metricsDisplay = document.getElementById('metrics-display');
+            if (metricsDisplay) {
+                metricsDisplay.innerHTML = metricsHtml || '<div style="color: #666; font-style: italic; padding: 16px; border: 2px dashed #ccc; text-align: center;">No completed processes yet. Start simulation to see metrics.</div>';
+            }
+        }
+
+        // --- Stats & CLI ---
+        function updateSystemStats() {
+            const dot = (n) => `<div class="queue-item" style="background:${config.colors[n.state.toLowerCase()] || '#fff'}">${n.label}</div>`;
+            document.getElementById('queue-ready').innerHTML = nodes.filter(n => n.type === 'process' && n.state === 'READY').map(dot).join('');
+            document.getElementById('queue-running').innerHTML = nodes.filter(n => n.type === 'process' && n.state === 'RUNNING').map(dot).join('');
+            document.getElementById('queue-blocked').innerHTML = nodes.filter(n => n.type === 'process' && n.state === 'BLOCKED').map(dot).join('');
+
+            const activeProcs = nodes.filter(n => n.type === 'process' && n.state !== 'TERMINATED');
+            const usedMem = activeProcs.reduce((acc, n) => acc + n.memory, 0);
+            const pct = Math.min((usedMem / config.totalMemory) * 100, 100);
+            document.getElementById('mem-bar').style.width = `${pct}%`;
+            document.getElementById('mem-bar').className = `h-full transition-all duration-300 ${pct > 90 ? 'bg-red-600' : 'bg-blue-500'}`;
+            document.getElementById('mem-text').innerText = `${usedMem}/${config.totalMemory} MB`;
+        }
+
+        function printToCli(text, type='normal') {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timestamp = `${hours}:${minutes}`;
+
+            const div = document.createElement('div');
+            div.textContent = `${timestamp} ${text}`;
+            if (type === 'error') div.style.color = 'red';
+            if (type === 'success') div.style.color = 'green';
+            if (type === 'info') div.style.color = 'blue';
+            cliOutput.appendChild(div);
+            cliOutput.scrollTop = cliOutput.scrollHeight;
+        }
+
+        cliInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value.trim();
+                if (cmd) {
+                    printToCli(`user@sys:~$ ${cmd}`);
+                    executeCommand(cmd);
+                }
+                this.value = '';
+            }
+        });
+
+        function executeCommand(cmdStr) {
+            const parts = cmdStr.split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1);
+
+            switch(cmd) {
+                case 'help':
+                    printToCli("ap [burst]    : Add Process");
+                    printToCli("ar            : Add Resource");
+                    printToCli("link [u] [v]  : Link Nodes");
+                    printToCli("run / stop    : Control Sim");
+                    printToCli("check         : Deadlock Check");
+                    printToCli("clear         : Reset");
+                    printToCli("load [name]   : Load Scenario");
+                    printToCli("sched [algo]  : Set Scheduler (fcfs/sjf/srtf/rr)");
+                    printToCli("quantum [n]   : Set RR Quantum");
+                    break;
+                case 'ap':
+                    addNode('process', 100 + Math.random()*200, 100 + Math.random()*200).burstTime = args[0] || 100;
+                    break;
+                case 'ar':
+                    addNode('resource', 100 + Math.random()*200, 100 + Math.random()*200);
+                    break;
+                case 'link':
+                    if(args.length<2) printToCli("Need 2 labels", 'error');
+                    else {
+                        const n1 = nodes.find(n=>n.label.toLowerCase()===args[0].toLowerCase());
+                        const n2 = nodes.find(n=>n.label.toLowerCase()===args[1].toLowerCase());
+                        if(n1 && n2) addEdge(n1, n2);
+                        else printToCli("Nodes not found", 'error');
+                    }
+                    break;
+                case 'run': if(!isRunning) toggleSimulation(); break;
+                case 'check': detectDeadlock(false); break;
+                case 'clear': resetGraph(); break;
+                case 'load':
+                    if(args[0]) loadScenario(args[0]);
+                    else printToCli("Available: simple_deadlock, circular_wait, safe_state", 'info');
+                    break;
+                case 'sched':
+                case 'scheduler':
+                    if (args[0]) {
+                        const algo = args[0].toLowerCase();
+                        const labelMap = {'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin'};
+                        if (['fcfs', 'sjf', 'srtf', 'rr'].includes(algo)) {
+                            selectScheduler(algo, labelMap[algo]);
+                        } else {
+                            printToCli("Invalid algorithm. Use: fcfs, sjf, srtf, or rr", 'error');
+                        }
+                    } else {
+                        printToCli(`Current: ${schedulingAlgorithm.toUpperCase()}`, 'info');
+                    }
+                    break;
+                case 'quantum':
+                    if (args[0]) {
+                        const q = parseInt(args[0]);
+                        if (q >= 5 && q <= 100) {
+                            document.getElementById('quantum-input').value = q;
+                            timeQuantum = q;
+                            quantumRemaining = q;
+                            printToCli(`Quantum set to: ${q}`, 'success');
+                        } else {
+                            printToCli("Quantum must be between 5 and 100", 'error');
+                        }
+                    } else {
+                        printToCli(`Current quantum: ${timeQuantum}`, 'info');
+                    }
+                    break;
+                default: printToCli("Unknown command", 'error');
+            }
+        }
+
+        // --- Settings Functions ---
+        function setToolbarPosition(position) {
+            const sidebarTools = document.getElementById('sidebar-tools');
+            const topbarTools = document.getElementById('topbar-tools');
+
+            if (position === 'sidebar') {
+                sidebarTools.classList.remove('hidden');
+                topbarTools.classList.add('hidden');
+            } else {
+                sidebarTools.classList.add('hidden');
+                topbarTools.classList.remove('hidden');
+            }
+
+            document.getElementById('settings-menu').classList.remove('show');
+            printToCli(`Toolbar moved to: ${position}`, 'info');
+        }
+
+        function changeTheme(themeName) {
+            document.body.className = document.body.className.replace(/theme-\w+/g, '');
+            if (themeName !== 'default') {
+                document.body.classList.add(`theme-${themeName}`);
+            }
+            document.getElementById('settings-menu').classList.remove('show');
+            printToCli(`Theme changed to: ${themeName}`, 'info');
+            draw();
+        }
+
+        // --- System Configuration Functions ---
+        function updateMaxMemory(value) {
+            const mem = parseInt(value);
+            if (mem >= 256 && mem <= 8192) {
+                systemConfig.maxMemory = mem;
+                config.totalMemory = mem;
+                updateSystemStats();
+                printToCli(`Max memory set to: ${mem} MB`, 'success');
+            } else {
+                printToCli('Memory must be between 256-8192 MB', 'error');
+                document.getElementById('config-max-memory').value = systemConfig.maxMemory;
+            }
+        }
+
+        function updateCPUCores(value) {
+            const cores = parseInt(value);
+            if (cores >= 1 && cores <= 8) {
+                systemConfig.cpuCores = cores;
+                printToCli(`CPU cores set to: ${cores}`, 'success');
+                updateStats();
+            } else {
+                printToCli('CPU cores must be between 1-8', 'error');
+                document.getElementById('config-cpu-cores').value = systemConfig.cpuCores;
+            }
+        }
+
+        function updateContextSwitchTime(value) {
+            const time = parseInt(value);
+            if (time >= 1 && time <= 100) {
+                systemConfig.contextSwitchTime = time;
+                printToCli(`Context switch time set to: ${time} ms`, 'success');
+            } else {
+                printToCli('Context switch time must be between 1-100 ms', 'error');
+                document.getElementById('config-context-switch').value = systemConfig.contextSwitchTime;
+            }
+        }
+
+        function updateSimSpeed(value) {
+            const speed = parseInt(value);
+            if (speed >= 50 && speed <= 2000) {
+                systemConfig.simSpeed = speed;
+                simSpeed = speed;
+                if (isRunning) {
+                    clearInterval(simInterval);
+                    simInterval = setInterval(scheduler, simSpeed);
+                }
+                printToCli(`Simulation speed set to: ${speed} ms`, 'success');
+            } else {
+                printToCli('Sim speed must be between 50-2000 ms', 'error');
+                document.getElementById('config-sim-speed').value = systemConfig.simSpeed;
+            }
+        }
+
+        function updateEdgeLabelSize(value) {
+            const size = parseInt(value);
+            if (size >= 0 && size <= 20) {
+                systemConfig.edgeLabelSize = size;
+                draw();
+                printToCli(`Edge label size set to: ${size}px`, 'success');
+            } else {
+                printToCli('Edge label size must be between 0-20', 'error');
+                document.getElementById('config-edge-label-size').value = systemConfig.edgeLabelSize;
+            }
+        }
+
+        function toggleEdgeLabels(show) {
+            systemConfig.showEdgeLabels = show;
+            draw();
+            printToCli(`Edge labels ${show ? 'shown' : 'hidden'}`, 'info');
+        }
+
+        function updateEdgeThickness(value) {
+            const thickness = parseInt(value);
+            if (thickness >= 1 && thickness <= 10) {
+                systemConfig.edgeThickness = thickness;
+                draw();
+                printToCli(`Edge thickness set to: ${thickness}px`, 'success');
+            } else {
+                printToCli('Edge thickness must be between 1-10', 'error');
+                document.getElementById('config-edge-thickness').value = systemConfig.edgeThickness;
+            }
+        }
+
+        function updateUIScale(value) {
+            const scale = parseFloat(value);
+            systemConfig.uiScale = scale;
+
+            // Update the display value
+            document.getElementById('ui-scale-value').textContent = Math.round(scale * 100) + '%';
+
+            // Update toolbar elements
+            const undoRedoBox = document.getElementById('undo-redo-box');
+            const toolsBox = document.getElementById('tools-box');
+            const batchOps = document.getElementById('batch-ops');
+
+            // Calculate sizes based on scale
+            const undoRedoWidth = Math.round(23 * scale);
+            const undoRedoHeight = Math.round(35 * scale);
+            const toolButtonSize = Math.round(40 * scale);
+            const batchButtonWidth = Math.round(40 * scale);
+            const batchButtonHeight = Math.round(32 * scale);
+            const iconSizeTool = Math.round(14 * scale);
+            const iconSizeUndo = Math.round(11 * scale);
+            const iconSizeBatch = Math.round(12 * scale);
+
+            // Update undo/redo buttons
+            const undoBtn = document.getElementById('btn-undo');
+            const redoBtn = document.getElementById('btn-redo');
+            undoBtn.style.width = undoRedoWidth + 'px';
+            undoBtn.style.height = undoRedoHeight + 'px';
+            redoBtn.style.width = undoRedoWidth + 'px';
+            redoBtn.style.height = undoRedoHeight + 'px';
+            undoBtn.querySelector('i').style.fontSize = iconSizeUndo + 'px';
+            redoBtn.querySelector('i').style.fontSize = iconSizeUndo + 'px';
+
+            // Update tool buttons
+            const toolButtons = ['btn-process', 'btn-resource', 'btn-link', 'btn-delete', 'btn-select'];
+            toolButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.style.width = toolButtonSize + 'px';
+                    btn.style.height = toolButtonSize + 'px';
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.style.fontSize = iconSizeTool + 'px';
+                }
+            });
+
+            // Update batch buttons
+            const batchButtons = batchOps.querySelectorAll('button');
+            batchButtons.forEach(btn => {
+                btn.style.width = batchButtonWidth + 'px';
+                btn.style.height = batchButtonHeight + 'px';
+                const icon = btn.querySelector('i');
+                if (icon) icon.style.fontSize = iconSizeBatch + 'px';
+            });
+
+            printToCli(`UI scale set to: ${Math.round(scale * 100)}%`, 'success');
+        }
+
+        // --- Zoom & Pan Functions ---
+        function resetZoom() {
+            scale = 1;
+            offsetX = 0;
+            offsetY = 0;
+            draw();
+            printToCli('Zoom reset to 100%', 'info');
+        }
+
+        function fitToScreen() {
+            if (nodes.length === 0) return;
+
+            // Find bounds
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            nodes.forEach(n => {
+                minX = Math.min(minX, n.x - config.nodeRadius);
+                maxX = Math.max(maxX, n.x + config.nodeRadius);
+                minY = Math.min(minY, n.y - config.nodeRadius);
+                maxY = Math.max(maxY, n.y + config.nodeRadius);
+            });
+
+            const padding = 50;
+            const graphWidth = maxX - minX + padding * 2;
+            const graphHeight = maxY - minY + padding * 2;
+
+            const scaleX = canvas.width / graphWidth;
+            const scaleY = canvas.height / graphHeight;
+            scale = Math.min(scaleX, scaleY, 2); // Max 2x zoom
+
+            // Center the graph
+            const graphCenterX = (minX + maxX) / 2;
+            const graphCenterY = (minY + maxY) / 2;
+            offsetX = canvas.width / 2 - graphCenterX * scale;
+            offsetY = canvas.height / 2 - graphCenterY * scale;
+
+            draw();
+            printToCli('Fitted to screen', 'info');
+        }
+
+        // --- Legend Functions ---
+        function toggleLegend() {
+            const legendBox = document.getElementById('legend-box');
+            const toggleBtn = document.getElementById('legend-toggle-btn');
+
+            legendBox.classList.toggle('minimized');
+            toggleBtn.classList.toggle('visible');
+        }
+
+        // --- Stats Pane Functions ---
+        function toggleStatsPane() {
+            const pane = document.getElementById('stats-pane');
+            const toolsPanel = document.getElementById('sidebar-tools');
+            pane.classList.toggle('open');
+            toolsPanel.classList.toggle('shift-left');
+            updateStats();
+        }
+
+        function updateStats() {
+            // System Overview
+            document.getElementById('stat-processes').textContent = nodes.filter(n => n.type === 'process').length;
+            document.getElementById('stat-resources').textContent = nodes.filter(n => n.type === 'resource').length;
+            const runningNode = getNodeById(currentRunningNodeId);
+            document.getElementById('stat-running').textContent = runningNode ? runningNode.label : 'IDLE';
+            document.getElementById('stat-scheduler').textContent = document.getElementById('scheduler-label').textContent;
+            document.getElementById('stat-cpu-cores').textContent = systemConfig.cpuCores;
+            document.getElementById('stat-max-memory').textContent = systemConfig.maxMemory + ' MB';
+
+            // Process States
+            const processes = nodes.filter(n => n.type === 'process');
+            document.getElementById('stat-ready').textContent = processes.filter(p => p.state === 'READY').length;
+            document.getElementById('stat-state-running').textContent = processes.filter(p => p.state === 'RUNNING').length;
+            document.getElementById('stat-blocked').textContent = processes.filter(p => p.state === 'BLOCKED').length;
+            document.getElementById('stat-terminated').textContent = processes.filter(p => p.state === 'TERMINATED').length;
+
+            // Performance Metrics
+            if (isRunning && simulationStartTime) {
+                simulationTime = Math.floor((Date.now() - simulationStartTime) / 1000);
+            }
+            document.getElementById('stat-time').textContent = simulationTime + 's';
+            document.getElementById('stat-deadlock').textContent = deadlockSet.size > 0 ? 'DEADLOCK!' : 'SAFE';
+
+            // CPU Utilization
+            const totalProcesses = processes.length;
+            const runningCount = processes.filter(p => p.state === 'RUNNING').length;
+            const cpuUtil = totalProcesses > 0 ? Math.round((runningCount / 1) * 100) : 0;
+            document.getElementById('stat-cpu').textContent = cpuUtil + '%';
+
+            // Resource Allocation
+            const resourceStats = document.getElementById('resource-stats-container');
+            const resources = nodes.filter(n => n.type === 'resource');
+            if (resources.length === 0) {
+                resourceStats.innerHTML = '<div class="text-gray-500 italic">No resources</div>';
+            } else {
+                resourceStats.innerHTML = resources.map(r => {
+                    const holders = edges.filter(e => e.source === r.id).map(e => getNodeById(e.target));
+                    const allocated = holders.length;
+                    return `
+                        <div class="stat-item">
+                            <span>${r.label} (${allocated}/${r.capacity}):</span>
+                            <span class="text-[10px]">${holders.length > 0 ? holders.map(h => h.label).join(', ') : 'Free'}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // --- Undo/Redo Functions ---
+        function saveState() {
+            const state = {
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                edges: JSON.parse(JSON.stringify(edges)),
+                nextId: nextId
+            };
+
+            // Remove future history if we're not at the end
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+
+            history.push(state);
+
+            // Limit history size
+            if (history.length > MAX_HISTORY) {
+                history.shift();
+            } else {
+                historyIndex++;
+            }
+
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(history[historyIndex]);
+                printToCli('Undo', 'info');
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(history[historyIndex]);
+                printToCli('Redo', 'info');
+            }
+        }
+
+        function restoreState(state) {
+            nodes = JSON.parse(JSON.stringify(state.nodes));
+            edges = JSON.parse(JSON.stringify(state.edges));
+            nextId = state.nextId;
+            selectedNode = null;
+            currentRunningNodeId = null;
+            updateSystemStats();
+            updateStats();
+            draw();
+            updateUndoRedoButtons();
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('btn-undo');
+            const redoBtn = document.getElementById('btn-redo');
+
+            if (undoBtn) {
+                undoBtn.disabled = historyIndex <= 0;
+                undoBtn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+                undoBtn.style.cursor = historyIndex <= 0 ? 'not-allowed' : 'pointer';
+            }
+
+            if (redoBtn) {
+                redoBtn.disabled = historyIndex >= history.length - 1;
+                redoBtn.style.opacity = historyIndex >= history.length - 1 ? '0.5' : '1';
+                redoBtn.style.cursor = historyIndex >= history.length - 1 ? 'not-allowed' : 'pointer';
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ignore if typing in input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    undo();
+                } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+                    e.preventDefault();
+                    redo();
+                } else if (e.key === 'c') {
+                    e.preventDefault();
+                    copyNodes();
+                } else if (e.key === 'v') {
+                    e.preventDefault();
+                    pasteNodes(false);
+                } else if (e.key === 'd') {
+                    e.preventDefault();
+                    duplicateNodes();
+                } else if (e.key === 'a') {
+                    e.preventDefault();
+                    // Select all nodes
+                    clearSelection();
+                    nodes.forEach(n => selectedNodes.add(n.id));
+                    printToCli(`Selected all ${nodes.length} nodes`, 'info');
+                    draw();
+                }
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                if (selectedNodes.size > 0) {
+                    batchDelete();
+                } else if (selectedNode) {
+                    deleteNode(selectedNode.id);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                clearSelection();
+                selectedNode = null;
+                dragLinkStart = null;
+                dragLinkEnd = null;
+                printToCli('Selection cleared', 'info');
+                draw();
+            }
+        });
+
+        // --- Canvas Interactions ---
+        function setMode(m) {
+            mode = m;
+            selectedNode = null;
+            dragLinkStart = null;
+            dragLinkEnd = null;
+            if (m !== 'select') {
+                clearSelection();
+            }
+            // Change cursor for pan mode
+            if (m === 'pan') {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'default';
+            }
+            document.querySelectorAll('.neo-btn').forEach(b => b.classList.remove('active'));
+            const map = {
+                process: 'btn-process',
+                resource: 'btn-resource',
+                link: 'btn-link',
+                delete: 'btn-delete',
+                select: 'btn-select',
+                pan: 'btn-pan'
+            };
+            const topMap = {
+                process: 'btn-process-top',
+                resource: 'btn-resource-top',
+                link: 'btn-link-top',
+                delete: 'btn-delete-top'
+            };
+            if(map[m]) {
+                const btn = document.getElementById(map[m]);
+                if(btn) btn.classList.add('active');
+            }
+            if(topMap[m]) {
+                const btn = document.getElementById(topMap[m]);
+                if(btn) btn.classList.add('active');
+            }
+        }
+
+        function getMousePos(e) {
+            const r = canvas.getBoundingClientRect();
+            const x = (e.clientX - r.left - offsetX) / scale;
+            const y = (e.clientY - r.top - offsetY) / scale;
+            return { x, y };
+        }
+
+        function getNodeAt(x, y) {
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                const n = nodes[i];
+                const dist = Math.sqrt((x - n.x)**2 + (y - n.y)**2);
+                if (dist < config.nodeRadius + 5) return n;
+            }
+            return null;
+        }
+
+        function updateBatchOpsPosition() {
+            const batchOps = document.getElementById('batch-ops');
+            const sidebar = document.getElementById('sidebar-tools');
+            if (sidebar) {
+                const rect = sidebar.getBoundingClientRect();
+                batchOps.style.top = (rect.bottom + 10) + 'px';
+            }
+        }
+
+        function clearSelection() {
+            selectedNodes.clear();
+            document.getElementById('batch-ops').style.display = 'none';
+            draw();
+        }
+
+        function batchDelete() {
+            selectedNodes.forEach(nodeId => {
+                const node = getNodeById(nodeId);
+                if (node) deleteNode(node);
+            });
+            clearSelection();
+            saveState();
+        }
+
+        canvas.addEventListener('mousedown', e => {
+            const pos = getMousePos(e);
+            const node = getNodeAt(pos.x, pos.y);
+
+            // Pan mode: left-click to pan
+            if (mode === 'pan' && e.button === 0) {
+                isPanning = true;
+                panStartX = e.clientX - offsetX;
+                panStartY = e.clientY - offsetY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+
+            // Middle mouse button or Ctrl+Click for panning
+            if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+                isPanning = true;
+                panStartX = e.clientX - offsetX;
+                panStartY = e.clientY - offsetY;
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+
+            // Handle selection mode
+            if (mode === 'select') {
+                if (node) {
+                    if (e.shiftKey) {
+                        // Shift+Click: toggle selection
+                        if (selectedNodes.has(node.id)) selectedNodes.delete(node.id);
+                        else selectedNodes.add(node.id);
+                    } else {
+                        // Regular click: select only this node
+                        selectedNodes.clear();
+                        selectedNodes.add(node.id);
+                    }
+                    // Show batch ops if nodes selected
+                    document.getElementById('batch-ops').style.display = selectedNodes.size > 0 ? 'block' : 'none';
+                    if (selectedNodes.size > 0) updateBatchOpsPosition();
+                } else {
+                    // Start selection box
+                    if (!e.shiftKey) clearSelection();
+                    selectionBox = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
+                }
+                draw();
+                return;
+            }
+
+            // Drag-to-connect: detect if starting a drag from a node
+            if (node && mode !== 'delete' && mode !== 'link' && mode !== 'select') {
+                dragLinkStart = node;
+                dragStartPos = { x: pos.x, y: pos.y };
+            }
+
+            if (mode === 'process' || mode === 'resource') {
+                if (!node) addNode(mode, pos.x, pos.y);
+                else draggingNode = node;
+            }
+            else if (mode === 'link') {
+                if (node) {
+                    if (!selectedNode) selectedNode = node;
+                    else {
+                        if (selectedNode.id !== node.id) addEdge(selectedNode, node);
+                        selectedNode = null;
+                    }
+                } else selectedNode = null;
+            }
+            else if (mode === 'delete') {
+                if (node) deleteNode(node);
+            }
+
+            if(node && mode !== 'delete' && mode !== 'link') openProps(node);
+            else if (!node) closeProps();
+
+            draw();
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            // Handle panning
+            if (isPanning) {
+                offsetX = e.clientX - panStartX;
+                offsetY = e.clientY - panStartY;
+                draw();
+                return;
+            }
+
+            const pos = getMousePos(e);
+
+            // Update selection box
+            if (selectionBox) {
+                selectionBox.x2 = pos.x;
+                selectionBox.y2 = pos.y;
+                draw();
+                return;
+            }
+
+            // Drag-to-connect preview (only after movement threshold)
+            if (dragLinkStart && !draggingNode && dragStartPos) {
+                const dx = pos.x - dragStartPos.x;
+                const dy = pos.y - dragStartPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Activate drag-to-connect only if moved more than 10 pixels
+                if (distance > 10) {
+                    const hoveredNode = getNodeAt(pos.x, pos.y);
+                    if (hoveredNode && hoveredNode.id !== dragLinkStart.id) {
+                        dragLinkEnd = hoveredNode;
+                    } else {
+                        dragLinkEnd = pos; // Just mouse position for preview
+                    }
+                    draw();
+                    return;
+                }
+            }
+
+            // Track position for link mode preview
+            if (mode === 'link' && selectedNode) {
+                tempLinkPos = pos;
+            } else {
+                tempLinkPos = null;
+            }
+
+            // Update hover effects
+            const hoveredNode = getNodeAt(pos.x, pos.y);
+            nodeHoverEffects.clear();
+            if (hoveredNode && !draggingNode) {
+                applyNodeHoverEffect(hoveredNode.id, 1);
+                canvas.style.cursor = 'pointer';
+            } else {
+                canvas.style.cursor = draggingNode ? 'grabbing' : (mode === 'link' && selectedNode ? 'crosshair' : 'default');
+            }
+
+            if (draggingNode) {
+                draggingNode.x = pos.x;
+                draggingNode.y = pos.y;
+            }
+            draw();
+        });
+
+        canvas.addEventListener('mouseup', e => {
+            if (isPanning) {
+                isPanning = false;
+                // Restore cursor based on current mode
+                canvas.style.cursor = (mode === 'pan') ? 'grab' : 'default';
+                return;
+            }
+
+            const pos = getMousePos(e);
+
+            // Complete drag-to-connect
+            if (dragLinkStart && dragLinkEnd) {
+                if (typeof dragLinkEnd === 'object' && dragLinkEnd.id) {
+                    // dragLinkEnd is a node
+                    if (dragLinkStart.id !== dragLinkEnd.id) {
+                        addEdge(dragLinkStart, dragLinkEnd);
+                        saveState();
+                    }
+                }
+            }
+
+            // Reset drag-to-connect state
+            dragLinkStart = null;
+            dragLinkEnd = null;
+            dragStartPos = null;
+
+            // Complete selection box
+            if (selectionBox) {
+                const { x1, y1, x2, y2 } = selectionBox;
+                const minX = Math.min(x1, x2);
+                const maxX = Math.max(x1, x2);
+                const minY = Math.min(y1, y2);
+                const maxY = Math.max(y1, y2);
+
+                nodes.forEach(node => {
+                    if (node.x >= minX && node.x <= maxX && node.y >= minY && node.y <= maxY) {
+                        selectedNodes.add(node.id);
+                    }
+                });
+
+                selectionBox = null;
+                document.getElementById('batch-ops').style.display = selectedNodes.size > 0 ? 'block' : 'none';
+                if (selectedNodes.size > 0) updateBatchOpsPosition();
+            }
+
+            draggingNode = null;
+            draw();
+        });
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Calculate mouse position in world coordinates before zoom
+            const worldX = (mouseX - offsetX) / scale;
+            const worldY = (mouseY - offsetY) / scale;
+
+            // Update scale
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            scale = Math.max(0.1, Math.min(5, scale * delta));
+
+            // Adjust offset to zoom toward mouse position
+            offsetX = mouseX - worldX * scale;
+            offsetY = mouseY - worldY * scale;
+
+            draw();
+        }, { passive: false });
+
+        canvas.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const clickedNode = getNodeAt(pos.x, pos.y);
+            if (clickedNode) {
+                selectedNode = clickedNode;
+                openProps(clickedNode);
+                draw();
+            }
+        });
+
+        // --- Props Panel ---
+        function openProps(node) {
+            propPanel.style.right = '120px';
+            const content = document.getElementById('prop-content');
+
+            let html = `
+                <div class="mt-3">
+                    <label class="block text-xs font-bold mb-1">LABEL:</label>
+                    <input type="text" class="neo-input" value="${node.label}"
+                        onchange="updateLabel(${node.id}, this.value)">
+                </div>
+                <div class="text-sm mt-2"><strong>Type:</strong> ${node.type}</div>
+                <div class="mt-3">
+                    <label class="block text-xs font-bold mb-1">COLOR (HEX):</label>
+                    <div class="flex gap-2">
+                        <input type="text" class="neo-input" value="${node.customColor || ''}" placeholder="#RRGGBB"
+                            onchange="updateNodeColor(${node.id}, this.value)" style="flex: 1;">
+                        <input type="color" value="${node.customColor || (node.type === 'process' ? config.colors.ready : config.colors.resource)}"
+                            onchange="updateNodeColor(${node.id}, this.value)" style="width: 40px; height: 30px; border: 2px solid black;">
+                    </div>
+                </div>
+            `;
+
+            if (node.type === 'process') {
+                html += `
+                    <div class="mt-3">
+                        <label class="block text-xs font-bold mb-1">BURST TIME:</label>
+                        <input type="number" class="neo-input" value="${node.burstTime}"
+                            onchange="updateBurst(${node.id}, this.value)">
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs font-bold mb-1">RAM (MB):</label>
+                        <input type="number" class="neo-input" value="${node.memory}"
+                            onchange="updateMemory(${node.id}, this.value)">
       }
 
       contentArea.innerHTML = tabContent;
@@ -3839,6 +6425,405 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                 `;
       }
 
+        // --- Core Functions ---
+// --- Updated Core Function ---
+function toggleSimulation() {
+    const btn = document.getElementById('btn-play');
+    const simControlBtn = document.getElementById('sim-control-play');
+    const simControls = document.getElementById('sim-controls');
+
+    if (isRunning) {
+        // --- PAUSE LOGIC ---
+        clearInterval(simInterval);
+        isRunning = false;
+        
+        // Update Buttons
+        btn.innerHTML = '<i class="fas fa-play"></i> Run OS';
+        btn.classList.remove('danger');
+        btn.classList.add('primary');
+        if (simControlBtn) {
+            simControlBtn.innerHTML = '<i class="fas fa-play"></i>';
+            simControlBtn.classList.remove('danger');
+            simControlBtn.classList.add('primary');
+        }
+        printToCli("Simulation Paused.");
+        
+    } else {
+        // --- RESUME LOGIC ---
+        
+        // [FIX] Check for Timeline Rewind
+        const slider = document.getElementById('history-slider');
+        const currentSliderPos = parseInt(slider.value);
+        
+        // If we are resuming from a point in the past
+        if (simHistory.length > 0 && currentSliderPos < simHistory.length - 1) {
+            // 1. Truncate history (Branching Time)
+            // Keep history only up to the current slider position
+            simHistory = simHistory.slice(0, currentSliderPos + 1);
+            
+
+            const stillHasDeadlock = simHistory.some(s => s.deadlockDetected);
+            if (!stillHasDeadlock) {
+                document.getElementById('btn-jump-deadlock').classList.add('hidden');
+            }
+
+
+            // 2. Sync internal tick counter to this restored state
+            if (simHistory.length > 0) {
+                tickCounter = simHistory[simHistory.length - 1].tick;
+            }
+            
+            // 3. Reset UI from "History Mode" to "Live Mode"
+            isScrubbing = false;
+            slider.max = simHistory.length - 1;
+            document.getElementById('tick-display').style.background = '#ffe600'; // Yellow (Live)
+            document.getElementById('tick-display').innerText = `TICK: ${tickCounter}`;
+            
+            printToCli(`Timeline branch created at Tick ${tickCounter}. Future overwritten.`, 'info');
+        }
+
+        // Initialize start time if this is the very first run
+        if (simulationStartTime === 0) {
+            simulationStartTime = Date.now();
+            simulationTime = 0;
+            // Initialize metrics if needed...
+            nodes.filter(n => n.type === 'process').forEach(p => {
+                if (!processMetrics[p.id]) {
+                    processMetrics[p.id] = { label: p.label, arrivalTime: 0, firstRunTime: null, completionTime: null, totalExecutionTime: 0, turnaroundTime: 0, waitingTime: 0, responseTime: 0, executionSegments: [], created: true };
+                }
+            });
+            // Show controls
+            if (simControls) {
+                simControls.style.display = 'block';
+                setTimeout(() => { simControls.style.opacity = '1'; simControls.style.transform = 'translateX(-50%) translateY(0)'; }, 10);
+            }
+        }
+
+        simInterval = setInterval(scheduler, simSpeed);
+        isRunning = true;
+        
+        // Update Buttons
+        btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        btn.classList.remove('primary');
+        btn.classList.add('danger');
+        if (simControlBtn) {
+            simControlBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            simControlBtn.classList.remove('primary');
+            simControlBtn.classList.add('danger');
+        }
+        
+        const algoName = {'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin'}[schedulingAlgorithm];
+        printToCli(`Simulation Running... [${algoName}]`);
+    }
+}
+
+        // Save current state to history
+        function saveSimulationState() {
+            const state = {
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                edges: JSON.parse(JSON.stringify(edges)),
+                simulationTime: simulationTime,
+                ganttData: JSON.parse(JSON.stringify(ganttData)),
+                processMetrics: JSON.parse(JSON.stringify(processMetrics)),
+                processWaitTimes: JSON.parse(JSON.stringify(processWaitTimes)),
+                quantumRemaining: quantumRemaining
+            };
+
+            simulationHistory.push(state);
+
+            // Limit history size
+            if (simulationHistory.length > maxHistorySize) {
+                simulationHistory.shift();
+            }
+        }
+
+        // Restore state from history
+        function restoreSimulationState(state) {
+            nodes = JSON.parse(JSON.stringify(state.nodes));
+            edges = JSON.parse(JSON.stringify(state.edges));
+            simulationTime = state.simulationTime;
+            ganttData = JSON.parse(JSON.stringify(state.ganttData));
+            processMetrics = JSON.parse(JSON.stringify(state.processMetrics));
+            processWaitTimes = JSON.parse(JSON.stringify(state.processWaitTimes));
+            quantumRemaining = state.quantumRemaining;
+
+            updateDisplay();
+            draw();
+        }
+
+        // Step simulation forward or backward
+        function stepSimulation(direction) {
+            if (direction > 0) {
+                // Step forward
+                const wasRunning = isRunning;
+                if (wasRunning) {
+                    toggleSimulation(); // Pause
+                }
+
+                for (let i = 0; i < stepSize; i++) {
+                    saveSimulationState();
+                    scheduler();
+                }
+
+                printToCli(`Stepped forward ${stepSize} cycle(s). Time: ${simulationTime}`);
+            } else if (direction < 0) {
+                // Step backward
+                if (simulationHistory.length === 0) {
+                    printToCli('Cannot step back: No history available', 'error');
+                    return;
+                }
+
+                const wasRunning = isRunning;
+                if (wasRunning) {
+                    toggleSimulation(); // Pause
+                }
+
+                // Go back by stepSize or available history
+                const stepsBack = Math.min(stepSize, simulationHistory.length);
+                for (let i = 0; i < stepsBack; i++) {
+                    if (simulationHistory.length > 0) {
+                        simulationHistory.pop(); // Remove current state
+                    }
+                }
+
+                if (simulationHistory.length > 0) {
+                    const previousState = simulationHistory[simulationHistory.length - 1];
+                    restoreSimulationState(previousState);
+                    printToCli(`Stepped back ${stepsBack} cycle(s). Time: ${simulationTime}`);
+                } else {
+                    printToCli('Cannot step back further', 'error');
+                }
+            }
+        }
+
+        // Change simulation speed
+        function changeSimSpeed(mode) {
+            const speedIndicator = document.getElementById('sim-speed-indicator');
+
+            if (mode === 'slow') {
+                simSpeed = Math.min(simSpeed * 2, 2000); // Slower = higher interval
+                systemConfig.simSpeed = simSpeed;
+                document.getElementById('config-sim-speed').value = simSpeed;
+            } else if (mode === 'fast') {
+                simSpeed = Math.max(simSpeed / 2, 50); // Faster = lower interval
+                systemConfig.simSpeed = simSpeed;
+                document.getElementById('config-sim-speed').value = simSpeed;
+            }
+
+            // Update speed indicator
+            if (simSpeed <= 100) {
+                speedIndicator.textContent = 'FAST';
+                speedIndicator.style.color = '#00ff00';
+            } else if (simSpeed <= 200) {
+                speedIndicator.textContent = 'NORMAL';
+                speedIndicator.style.color = '#000';
+            } else if (simSpeed <= 500) {
+                speedIndicator.textContent = 'SLOW';
+                speedIndicator.style.color = '#ff9800';
+            } else {
+                speedIndicator.textContent = 'VERY SLOW';
+                speedIndicator.style.color = '#ff0000';
+            }
+
+            // Restart interval if running
+            if (isRunning) {
+                clearInterval(simInterval);
+                simInterval = setInterval(scheduler, simSpeed);
+            }
+
+            printToCli(`Simulation speed: ${simSpeed}ms`);
+        }
+
+        // Update step size from settings
+        function updateStepSize(value) {
+            stepSize = parseInt(value) || 1;
+            printToCli(`Step size set to ${stepSize} cycle(s)`);
+        }
+
+        // Confirm clear board
+        function confirmClearBoard() {
+            if (!showClearWarning) {
+                executeClearBoard();
+                return;
+            }
+
+            const modal = document.getElementById('clear-board-modal');
+            modal.style.display = 'block';
+            // Reset checkbox state
+            document.getElementById('dont-show-clear-warning').checked = false;
+        }
+
+        // Execute clear board
+        function executeClearBoard() {
+            // Check if user wants to hide warning
+            const dontShowAgain = document.getElementById('dont-show-clear-warning').checked;
+            if (dontShowAgain) {
+                showClearWarning = false;
+                localStorage.setItem('showClearWarning', 'false');
+            }
+
+            closeClearModal();
+            resetGraph();
+        }
+
+        // Close clear modal
+        function closeClearModal() {
+            const modal = document.getElementById('clear-board-modal');
+            modal.style.display = 'none';
+        }
+
+        // Load clear warning preference on startup
+        function loadClearWarningPreference() {
+            const stored = localStorage.getItem('showClearWarning');
+            if (stored === 'false') {
+                showClearWarning = false;
+            }
+        }
+//updated reset graph function to include timeline debugger reset @anshu
+
+function resetGraph() {
+    // --- 1. Standard Reset (Base System) ---
+    nodes = []; edges = []; nextId = 1;
+    deadlockSet.clear();
+    ganttData = [];
+    lastGanttEntry = null;
+    currentRunningNodeId = null;
+    quantumRemaining = timeQuantum;
+    processStartTimes = {};
+    processMetrics = {};
+    contextSwitchCount = 0;
+    simulationTime = 0;
+    simulationStartTime = 0;
+    history = [];
+    historyIndex = -1;
+    
+    // Clear v6.5 "Step Control" History
+    simulationHistory = []; 
+
+    // --- 2. Timeline Debugger Reset (New Feature) ---
+    // Reset History Array
+    if (typeof simHistory !== 'undefined') simHistory = [];
+    if (typeof tickCounter !== 'undefined') tickCounter = 0;
+
+    // [ADD THIS LINE] Reset Auto-Pause Counter
+    consecutiveIdleTicks = 0;
+
+    // Reset Slider
+    const slider = document.getElementById('history-slider');
+    if (slider) slider.value = 0;
+    
+    // [NEW] Clear visual markers
+    const markerContainer = document.getElementById('timeline-markers');
+    if (markerContainer) markerContainer.innerHTML = '';
+
+    // Reset Tick Display
+    const tickDisplay = document.getElementById('tick-display');
+    if (tickDisplay) {
+        tickDisplay.innerText = 'TICK: 0';
+        tickDisplay.style.background = '#ffe600';
+    }
+    
+    // Hide Panel (Optional - keeping it hidden on reset is usually better UX)
+    const playbackPanel = document.getElementById('playback-panel');
+    if (playbackPanel) {
+        playbackPanel.classList.add('hidden');
+        playbackPanel.classList.remove('active');
+    }
+
+    // Reset Toggle Button State
+    const timelineBtn = document.getElementById('btn-timeline');
+    if (timelineBtn) {
+        timelineBtn.classList.remove('active');
+        timelineBtn.style.backgroundColor = '';
+    }
+
+    // [ADD THIS]: Hide Jump Button
+    document.getElementById('btn-jump-deadlock').classList.add('hidden');
+
+    // --- 3. UI Cleanup (Existing v6.5) ---
+    // Hide simulation controls popup
+    const simControls = document.getElementById('sim-controls');
+    if (simControls) {
+        simControls.style.opacity = '0';
+        simControls.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => {
+            simControls.style.display = 'none';
+        }, 300);
+    }
+
+    // Reset Charts
+    document.getElementById('gantt-chart').innerHTML = '<div class="text-gray-400 text-xs italic">Start Simulation to see data...</div>';
+    const metricsDisplay = document.getElementById('metrics-display');
+    if (metricsDisplay) {
+        metricsDisplay.innerHTML = '<div style="color: #666; font-style: italic; padding: 16px; border: 2px dashed #ccc; text-align: center;">No completed processes yet. Start simulation to see metrics.</div>';
+    }
+    
+    // Stop Simulation
+    if(isRunning) toggleSimulation();
+    
+    // Refresh View
+    updateSystemStats();
+    updateStats();
+    draw();
+    printToCli("System Reset.");
+    saveState();
+    updateUndoRedoButtons();
+}
+
+        // --- Auto-Layout Functions ---
+        function toggleLayoutMenu() {
+            const menu = document.getElementById('layout-menu');
+            const isVisible = menu.style.display !== 'none';
+            menu.style.display = isVisible ? 'none' : 'block';
+
+            if (!isVisible) {
+                const layoutBtn = document.getElementById('btn-layout');
+                const rect = layoutBtn.getBoundingClientRect();
+                menu.style.top = `${rect.top + window.scrollY}px`;
+                menu.style.right = `${window.innerWidth - rect.left + 10}px`;
+            }
+        }
+
+        function applyLayout(type) {
+            if (nodes.length === 0) {
+                printToCli('No nodes to layout', 'error');
+                return;
+            }
+
+            saveState();
+
+            switch(type) {
+                case 'force':
+                    applyForceDirectedLayout();
+                    break;
+                case 'tree':
+                    applyTreeLayout();
+                    break;
+                case 'circular':
+                    applyCircularLayout();
+                    break;
+            }
+
+            draw();
+            printToCli(`Applied ${type} layout`, 'success');
+        }
+
+        function applyForceDirectedLayout() {
+            const rect = canvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const iterations = 100;
+            const k = Math.sqrt((rect.width * rect.height) / nodes.length);
+            const repulsionStrength = k * k;
+            const attractionStrength = 0.1;
+
+            // Initialize random positions if needed
+            nodes.forEach(node => {
+                if (!node.x || !node.y) {
+                    node.x = centerX + (Math.random() - 0.5) * 100;
+                    node.y = centerY + (Math.random() - 0.5) * 100;
+                }
+            });
       content.innerHTML = `
                 <style>
                     @keyframes headerSlideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
@@ -7063,6 +10048,573 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
             ctx.fill();
             ctx.stroke();
 
+        // Initialize first state for undo/redo
+        saveState();
+        updateUndoRedoButtons();
+
+        // Continuous animation loop for smooth flow
+        function animate() {
+            if (isRunning) {
+                draw();
+                // Update stats if pane is open
+                const statsPane = document.getElementById('stats-pane');
+                if (statsPane && statsPane.classList.contains('open')) {
+                    updateStats();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+
+        // --- Time Travel Logic ---@anshu
+
+
+function recordHistory() {
+    const snapshot = {
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges)),
+        tick: tickCounter,
+        currentRunningNodeId: currentRunningNodeId,
+        quantumRemaining: quantumRemaining,
+        deadlockDetected: deadlockSet.size > 0
+    };
+
+    if (snapshot.deadlockDetected) {
+        document.getElementById('btn-jump-deadlock').classList.remove('hidden');
+    }
+
+
+    simHistory.push(snapshot);
+    if (simHistory.length > MAX_HISTORY_STEPS) simHistory.shift();
+    
+    const slider = document.getElementById('history-slider');
+    if (slider && !isScrubbing) {
+        slider.max = simHistory.length - 1;
+        slider.value = simHistory.length - 1;
+    }
+
+    // [NEW] Update visual markers on the slider track
+    updateTimelineMarkers();
+}
+
+function toggleTimeline() {
+    const panel = document.getElementById('playback-panel');
+    const btn = document.getElementById('btn-timeline');
+    if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        panel.classList.add('active');
+        if(btn) { btn.classList.add('active'); btn.style.backgroundColor = '#ff9aa2'; }
+    } else {
+        panel.classList.remove('active');
+        panel.classList.add('hidden');
+        if(btn) { btn.classList.remove('active'); btn.style.backgroundColor = ''; }
+    }
+}
+
+// --- Updated Time Travel Logic ---
+function scrubHistory(index) {
+    if (simHistory.length === 0) return;
+    
+    // Auto-pause if user grabs the slider while running
+    if (isRunning) toggleSimulation(); 
+    
+    isScrubbing = true;
+    index = parseInt(index);
+    if (index >= simHistory.length) index = simHistory.length - 1;
+    
+    const snapshot = simHistory[index];
+    
+    // Restore State
+    nodes = JSON.parse(JSON.stringify(snapshot.nodes));
+    edges = JSON.parse(JSON.stringify(snapshot.edges));
+    currentRunningNodeId = snapshot.currentRunningNodeId;
+    quantumRemaining = snapshot.quantumRemaining;
+    
+    // [FIX] Sync Global Tick Counter to Snapshot
+    tickCounter = snapshot.tick;
+    
+    // Visual Updates
+    const tickDisplay = document.getElementById('tick-display');
+    tickDisplay.innerText = `TICK: ${snapshot.tick} (HISTORY)`;
+    tickDisplay.style.background = '#ff9aa2'; // Red (History Mode)
+    
+    detectDeadlock(true); 
+    updateSystemStats(); 
+    draw();
+}
+function finishScrub() { isScrubbing = false; document.getElementById('tick-display').style.background = '#ffe600'; }
+
+function stepHistory(direction) {
+    const slider = document.getElementById('history-slider');
+    let newVal = parseInt(slider.value) + direction;
+    if(newVal >= 0 && newVal <= slider.max) { slider.value = newVal; scrubHistory(newVal); }
+}
+
+// --- Drag & Resize Logic (IIFE) ---
+(function initDraggablePanel() {
+    const panel = document.getElementById('playback-panel');
+    const header = document.getElementById('playback-header');
+    const resizeHandle = document.getElementById('resize-handle');
+    let isDragging = false, isResizing = false;
+    let dragOffsetX = 0, dragOffsetY = 0, startW, startH, startX, startY;
+
+    if(!header || !resizeHandle) return;
+
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragOffsetX = e.clientX - panel.offsetLeft;
+        dragOffsetY = e.clientY - panel.offsetTop;
+        panel.style.zIndex = '50';
+    });
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        e.stopPropagation();
+        startW = parseInt(document.defaultView.getComputedStyle(panel).width, 10);
+        startH = parseInt(document.defaultView.getComputedStyle(panel).height, 10);
+        startX = e.clientX; startY = e.clientY;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            e.preventDefault();
+            panel.style.left = `${e.clientX - dragOffsetX}px`;
+            panel.style.top = `${e.clientY - dragOffsetY}px`;
+            panel.style.bottom = 'auto';
+        }
+        if (isResizing) {
+            e.preventDefault();
+            const width = startW + (e.clientX - startX);
+            const height = startH + (e.clientY - startY);
+            if (width > 350) panel.style.width = `${width}px`;
+            if (height > 140) panel.style.height = `${height}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; isResizing = false; if(panel) panel.style.zIndex = '40'; });
+})();
+
+// function to update timeline markers and display the point where deadlock is happening
+function updateTimelineMarkers() {
+    const container = document.getElementById('timeline-markers');
+    if (!container) return;
+
+    const totalSteps = simHistory.length - 1;
+    if (totalSteps <= 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    // Optimization: Build HTML string first instead of appending DOM nodes one by one
+    let markersHtml = '';
+    
+    simHistory.forEach((snapshot, index) => {
+        if (snapshot.deadlockDetected) {
+            // Calculate percentage position on the slider
+            const pct = (index / totalSteps) * 100;
+            
+            // Note: We use the CSS class .deadlock-marker defined in your styles
+            markersHtml += `<div class="deadlock-marker" style="left: ${pct}%;" title="Deadlock at Tick ${snapshot.tick}"></div>`;
+        }
+    });
+
+    container.innerHTML = markersHtml;
+}
+
+
+// --- Jump to Deadlock Logic ---
+function jumpToDeadlock() {
+    // 1. Find the first tick where deadlock was detected
+    const deadlockIndex = simHistory.findIndex(snap => snap.deadlockDetected);
+    
+    if (deadlockIndex !== -1) {
+        // 2. Scrub to that point (this handles pausing and state restoration)
+        scrubHistory(deadlockIndex);
+        
+        // 3. Optional: Visual feedback
+        printToCli(`Jumped to deadlock at Tick ${simHistory[deadlockIndex].tick}`, 'info');
+        
+        // Flash the tick display to draw attention
+        const display = document.getElementById('tick-display');
+        display.style.transform = 'scale(1.2)';
+        setTimeout(() => display.style.transform = 'scale(1)', 200);
+    } else {
+        printToCli("No deadlock record found in history.", 'error');
+    }
+}
+
+// --- COMPARISON ENGINE ---
+
+let compInterval = null;
+let compState = {
+    running: false,
+    algoA: null,
+    algoB: null,
+    processesA: [],
+    processesB: [],
+    time: 0,
+    doneA: false,
+    doneB: false
+};
+
+function initCompareMode(algoA, algoB) {
+    const modal = document.getElementById('compare-modal');
+    modal.style.display = 'block';
+    
+    // Setup Names
+    const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
+    document.getElementById('comp-title-a').textContent = names[algoA];
+    document.getElementById('comp-title-b').textContent = names[algoB];
+    
+    compState.algoA = algoA;
+    compState.algoB = algoB;
+    
+    resetComparison();
+}
+
+
+// Function to handle card selection visual state
+function selectOpponentCard(algoA, algoB, cardElement) {
+    // 1. Remove 'selected' style from all cards
+    document.querySelectorAll('.compare-card').forEach(card => {
+        card.classList.remove('ring-4', 'ring-black', 'scale-105');
+        card.style.transform = ''; // Reset transform
+        card.style.background = card.dataset.originalColor; // Restore color
+        card.style.color = 'black';
+        
+        // Reset the badge inside
+        const badge = card.querySelector('.vs-badge');
+        if(badge) {
+            badge.style.background = 'black'; 
+            badge.style.color = 'white';
+        }
+    });
+
+    // 2. Add 'selected' style to clicked card
+    // Neobrutalism active state: Black background, White text
+    cardElement.dataset.originalColor = cardElement.style.background; // Save original color if not saved
+    cardElement.style.background = 'black';
+    cardElement.style.color = 'white';
+    cardElement.style.transform = 'scale(1.05) translateY(-5px)';
+    
+    // Invert badge colors
+    const badge = cardElement.querySelector('.vs-badge');
+    if(badge) {
+        badge.style.background = 'white'; 
+        badge.style.color = 'black';
+    }
+
+    // 3. Show the Start Button
+    const btnContainer = document.getElementById('compare-action-area');
+    const startBtn = document.getElementById('btn-start-compare');
+    
+    btnContainer.style.display = 'flex';
+    // Small animation for button appearance
+    btnContainer.style.animation = 'slideUp 0.3s ease-out forwards';
+    
+    // 4. Update Button Action
+    startBtn.onclick = function() {
+        // Hide the notebook modal
+        document.getElementById('algo-demo-modal').style.display = 'none';
+        // Start the comparison
+        initCompareMode(algoA, algoB);
+    };
+}
+
+
+function closeCompareModal() {
+    document.getElementById('compare-modal').style.display = 'none';
+    if(compInterval) clearInterval(compInterval);
+}
+
+function generateCompData() {
+    // Generate 5 random processes with SAME data for both sides
+    const procs = [];
+    const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#1a535c', '#ff9f43'];
+    
+    for(let i=1; i<=5; i++) {
+        procs.push({
+            id: 'P'+i,
+            burst: Math.floor(Math.random() * 10) + 4, // 4-14 burst
+            arrival: Math.floor(Math.random() * 8),    // 0-8 arrival
+            color: colors[i-1],
+            remaining: 0, // Set later
+            wait: 0,
+            turnaround: 0,
+            completed: false,
+            started: -1
+        });
+    }
+    return procs;
+}
+
+function resetComparison() {
+    if(compInterval) clearInterval(compInterval);
+    
+    const data = generateCompData();
+    
+    // Sort by Arrival Time
+    data.sort((a,b) => a.arrival - b.arrival);
+    
+    // Deep copy for isolation
+    compState.processesA = JSON.parse(JSON.stringify(data));
+    compState.processesB = JSON.parse(JSON.stringify(data));
+    
+    // Init remaining times
+    compState.processesA.forEach(p => p.remaining = p.burst);
+    compState.processesB.forEach(p => p.remaining = p.burst);
+    
+    compState.time = 0;
+    compState.running = false;
+    compState.paused = false; // Reset paused state
+    compState.doneA = false;
+    compState.doneB = false;
+    
+    // Reset Button
+    const btn = document.getElementById('btn-compare-toggle');
+    if(btn) {
+        btn.innerHTML = '<i class="fas fa-play"></i> START FIGHT';
+        btn.style.background = '#a3ffac';
+    }
+    
+    // Clear Visuals
+    document.getElementById('comp-gantt-a').innerHTML = '';
+    document.getElementById('comp-gantt-b').innerHTML = '';
+    updateCompQueue('a');
+    updateCompQueue('b');
+    updateCompStats('a');
+    updateCompStats('b');
+}
+
+function startComparison() {
+    const btn = document.getElementById('btn-compare-toggle');
+    
+    // If already running, PAUSE it
+    if(compState.running) {
+        clearInterval(compInterval);
+        compState.running = false;
+        compState.paused = true;
+        
+        // Update Button to RESUME
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-play"></i> RESUME FIGHT';
+            btn.style.background = '#fff68f'; // Yellowish for resume
+        }
+        return;
+    }
+
+    // If not running, START or RESUME
+    compState.running = true;
+    compState.paused = false;
+    
+    // Update Button to PAUSE
+    if(btn) {
+        btn.innerHTML = '<i class="fas fa-pause"></i> PAUSE FIGHT';
+        btn.style.background = '#ffcccb'; // Reddish for pause
+    }
+
+    compInterval = setInterval(runDualStep, 500); // 0.5s per tick
+}
+
+function runDualStep() {
+    // Stop if both done
+    if(compState.doneA && compState.doneB) {
+        clearInterval(compInterval);
+        compState.running = false;
+        
+        // Reset Button
+        const btn = document.getElementById('btn-compare-toggle');
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-play"></i> START FIGHT';
+            btn.style.background = '#a3ffac';
+        }
+        return;
+    }
+
+    // --- STEP ALGO A ---
+    if(!compState.doneA) {
+        stepSingleAlgo(compState.algoA, compState.processesA, 'a');
+    }
+
+    // --- STEP ALGO B ---
+    if(!compState.doneB) {
+        stepSingleAlgo(compState.algoB, compState.processesB, 'b');
+    }
+    
+    compState.time++;
+}
+
+function stepSingleAlgo(algo, processes, side) {
+    // 1. Filter arrived processes
+    let available = processes.filter(p => p.arrival <= compState.time && !p.completed);
+    
+    if(available.length === 0) {
+        // Idle
+        if(processes.every(p => p.completed)) {
+            compState['done'+side.toUpperCase()] = true;
+        } else {
+            renderGanttBlock(side, 'IDLE', '#eee', 20);
+        }
+        return;
+    }
+
+    // 2. Select Process based on Algo
+    let selected = null;
+    
+    if (algo === 'fcfs') {
+        available.sort((a,b) => a.arrival - b.arrival);
+        selected = available[0];
+    } 
+    else if (algo === 'sjf') {
+        // Non-preemptive: if we were running someone and they aren't done, keep running them
+        // Note: For simple demo, we can re-evaluate every tick (SRTF style) or lock (SJF style).
+        // Let's do simplified Logic: Sort by burst.
+        available.sort((a,b) => a.burst - b.burst);
+        selected = available[0];
+    }
+    else if (algo === 'srtf') {
+        available.sort((a,b) => a.remaining - b.remaining);
+        selected = available[0];
+    }
+    else if (algo === 'rr') {
+        // Simplified RR: Just rotate through available based on index + time
+        // A real RR needs a queue. For this visual demo, we pick based on (time % count)
+        const index = compState.time % available.length;
+        selected = available[index];
+    }
+
+    // 3. Process Logic
+    if(selected) {
+        if(selected.started === -1) selected.started = compState.time;
+        
+        selected.remaining--;
+        renderGanttBlock(side, selected.id, selected.color, 20);
+        
+        // Update Stats for others (Waiting time)
+        available.forEach(p => {
+            if(p.id !== selected.id) p.wait++;
+        });
+
+        if(selected.remaining === 0) {
+            selected.completed = true;
+            selected.turnaround = (compState.time + 1) - selected.arrival;
+        }
+        
+        updateCompQueue(side);
+        updateCompStats(side);
+    }
+}
+
+// --- VISUAL HELPERS ---
+
+function renderGanttBlock(side, label, color, width) {
+    const container = document.getElementById(`comp-gantt-${side}`);
+    const div = document.createElement('div');
+    div.style.backgroundColor = color;
+    div.style.width = width + 'px';
+    div.style.height = '100%';
+    div.style.borderRight = '1px solid rgba(0,0,0,0.1)';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'center';
+    div.style.fontSize = '10px';
+    div.style.fontWeight = 'bold';
+    div.innerText = label === 'IDLE' ? 'I' : label;
+    container.appendChild(div);
+    // Auto scroll
+    container.parentElement.scrollLeft = container.parentElement.scrollWidth;
+}
+
+function updateCompQueue(side) {
+    const container = document.getElementById(`comp-queue-${side}`);
+    const procs = compState[`processes${side.toUpperCase()}`];
+    
+    container.innerHTML = procs.map(p => {
+        let statusColor = '#fff'; // Not arrived
+        if(p.completed) statusColor = '#e0e0e0'; // Done
+        else if(p.arrival <= compState.time) statusColor = p.color; // Ready/Running
+        
+        const opacity = p.completed ? 0.5 : 1;
+        
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:${statusColor}; opacity:${opacity}; padding:6px; border:2px solid black; font-size:11px; font-weight:bold;">
+                <span>${p.id} (AT:${p.arrival})</span>
+                <span>Rem: ${p.remaining}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateCompStats(side) {
+    const procs = compState[`processes${side.toUpperCase()}`];
+    const completed = procs.filter(p => p.completed);
+    
+    if(completed.length === 0) return;
+    
+    const avgWait = (completed.reduce((a,b) => a + b.wait, 0) / completed.length).toFixed(1);
+    const avgTat = (completed.reduce((a,b) => a + b.turnaround, 0) / completed.length).toFixed(1);
+    
+    document.getElementById(`stats-${side}`).innerText = `WT: ${avgWait} | TAT: ${avgTat}`;
+}
+
+    </script>
+
+
+
+<div id="compare-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10002; font-family: 'Courier New', monospace;">
+    <div class="neo-box bg-white p-4" style="width: 90%; height: 90vh; margin: 5vh auto; display: flex; flex-direction: column; position: relative; box-shadow: 12px 12px 0 black;">
+        
+        <div class="flex justify-between items-center border-b-4 border-black pb-4 mb-4">
+            <h2 class="text-2xl font-black uppercase flex items-center gap-3">
+                <i class="fas fa-balance-scale"></i> Algorithm Showdown
+            </h2>
+            <button onclick="closeCompareModal()" class="neo-btn" style="background: #ff4757; color: white;">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+
+        <div class="flex-grow flex gap-4 overflow-hidden">
+            
+            <div class="flex-1 flex flex-col border-4 border-black p-2 bg-[#f0f0f0] relative">
+                <div class="absolute top-0 left-0 bg-black text-white px-3 py-1 font-bold text-sm">CHALLENGER A</div>
+                <div class="mt-8 mb-2 flex justify-between items-center">
+                    <h3 id="comp-title-a" class="text-xl font-black">ALGORITHM A</h3>
+                    <div id="stats-a" class="text-xs font-bold bg-white border-2 border-black px-2 py-1">WT: 0 | TAT: 0</div>
+                </div>
+                <div id="comp-queue-a" class="flex flex-col gap-2 overflow-y-auto flex-grow mb-2 p-2 border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,0.1)]"></div>
+                <div class="h-16 border-2 border-black bg-white relative overflow-hidden">
+                    <div id="comp-gantt-a" class="absolute top-0 left-0 h-full flex"></div>
+                </div>
+            </div>
+
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                <div class="bg-[#ffe600] border-4 border-black rounded-full w-16 h-16 flex items-center justify-center font-black text-2xl shadow-[6px_6px_0_black]">VS</div>
+            </div>
+
+            <div class="flex-1 flex flex-col border-4 border-black p-2 bg-[#e6f7ff] relative">
+                <div class="absolute top-0 right-0 bg-black text-white px-3 py-1 font-bold text-sm">CHALLENGER B</div>
+                <div class="mt-8 mb-2 flex justify-between items-center">
+                    <h3 id="comp-title-b" class="text-xl font-black">ALGORITHM B</h3>
+                    <div id="stats-b" class="text-xs font-bold bg-white border-2 border-black px-2 py-1">WT: 0 | TAT: 0</div>
+                </div>
+                <div id="comp-queue-b" class="flex flex-col gap-2 overflow-y-auto flex-grow mb-2 p-2 border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,0.1)]"></div>
+                <div class="h-16 border-2 border-black bg-white relative overflow-hidden">
+                    <div id="comp-gantt-b" class="absolute top-0 left-0 h-full flex"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t-4 border-black flex justify-center gap-4">
+            <button id="btn-compare-toggle" onclick="startComparison()" class="neo-btn" style="background: #a3ffac; font-size: 1.2rem; padding: 10px 30px;">
+                <i class="fas fa-play"></i> START FIGHT
+            </button>
+            <button onclick="resetComparison()" class="neo-btn">
+                <i class="fas fa-redo"></i> RESET
+            </button>
+        </div>
+    </div>
+</div>
             // Count text
             ctx.fillStyle = 'white';
             ctx.font = 'bold 11px Courier New';
