@@ -3295,31 +3295,109 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
             // ... existing if/else blocks ...
 else if (currentAlgoTab === 'compare') {
     const allAlgos = ['fcfs', 'sjf', 'srtf', 'rr'];
-    // Filter out current algorithm
     const opponents = allAlgos.filter(a => a !== algorithm);
     
-    // Map nice names
     const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
     const colors = { 'fcfs': '#ffe600', 'sjf': '#a3ffac', 'srtf': '#ffa3a3', 'rr': '#d4a3ff' };
 
     tabContent = `
-        <div style="padding: 20px;">
-            <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: bold; margin-bottom: 20px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2);">
-                SELECT AN OPPONENT FOR ${names[algorithm].toUpperCase()}
+        <style>
+            /* Animation for Button Area */
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .compare-card { 
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+                border: 3px solid black;
+                box-shadow: 6px 6px 0 black;
+                opacity: 0;
+                transform: scale(0.85) translateY(20px);
+                will-change: transform, opacity;
+            }
+            .compare-card.animate-in {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            
+            /* Rotation pattern similar to scenario cards */
+            .compare-card:nth-child(even) { transform: rotate(1deg) scale(0.85) translateY(20px); }
+            .compare-card:nth-child(odd) { transform: rotate(-1deg) scale(0.85) translateY(20px); }
+            
+            .compare-card.animate-in:nth-child(even) { transform: rotate(1deg) scale(1) translateY(0); }
+            .compare-card.animate-in:nth-child(odd) { transform: rotate(-1deg) scale(1) translateY(0); }
+
+            .compare-card:hover { 
+                transform: translateY(-5px) scale(1.02) !important; 
+                box-shadow: 10px 10px 0 black; 
+                z-index: 10;
+            }
+            .compare-card:active { 
+                transform: translateY(2px) scale(1) !important; 
+                box-shadow: 2px 2px 0 black; 
+            }
+        </style>
+
+        <div style="padding: 10px; display: flex; flex-direction: column; height: 100%;">
+            
+            <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: 900; margin-bottom: 24px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2); text-transform: uppercase; font-size: 14px; align-self: flex-start;">
+                <i class="fas fa-fist-raised mr-2"></i> Select Opponent for ${names[algorithm]}
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                ${opponents.map(opp => `
-                    <div onclick="initCompareMode('${algorithm}', '${opp}')" 
-                         class="neo-box" 
-                         style="background: ${colors[opp]}; padding: 20px; cursor: pointer; transition: transform 0.2s; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                        <div style="font-size: 40px; margin-bottom: 10px;"><i class="fas fa-fist-raised"></i></div>
-                        <h3 style="font-size: 20px; font-weight: 900; border-bottom: 3px solid black; margin-bottom: 10px;">${names[opp]}</h3>
-                        <p style="font-size: 12px; font-weight: bold;">Click to simulate VS match</p>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                ${opponents.map((opp, idx) => `
+                    <div onclick="selectOpponentCard('${algorithm}', '${opp}', this)" 
+                         class="compare-card neo-box" 
+                         data-original-color="${colors[opp]}"
+                         style="background: ${colors[opp]}; padding: 24px; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        
+                        <div class="vs-badge" style="width: 50px; height: 50px; background: white; border: 3px solid black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.1); transition: all 0.2s;">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        
+                        <h3 style="font-size: 20px; font-weight: 900; border-bottom: 3px solid currentColor; margin-bottom: 12px; line-height: 1.2;">${names[opp]}</h3>
+                        
+                        <div style="font-size: 10px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">
+                            Click to Select
+                        </div>
                     </div>
                 `).join('')}
             </div>
+
+            <div id="compare-action-area" style="display: none; margin-top: auto; padding-top: 30px; justify-content: center; align-items: center; flex-direction: column; gap: 10px;">
+                <div style="font-weight: bold; font-size: 12px; color: #555;">OPPONENT SELECTED</div>
+                <button id="btn-start-compare" class="neo-btn" style="background: #ff4757; color: white; padding: 15px 40px; font-size: 18px; font-weight: 900; border: 4px solid black; box-shadow: 6px 6px 0 black; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; transition: transform 0.1s;">
+                    <span>RUN SIMULATION</span>
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+
+            <div id="compare-placeholder" style="margin-top: 40px; text-align: center; font-style: italic; color: #999; font-size: 13px; font-weight: bold;">
+                ( Choose an algorithm above to proceed )
+            </div>
         </div>
     `;
+    
+    // Trigger animations
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.compare-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('animate-in');
+            }, index * 80);
+        });
+
+        const obs = new MutationObserver((mutations) => {
+            const actionArea = document.getElementById('compare-action-area');
+            const placeholder = document.getElementById('compare-placeholder');
+            if(actionArea && placeholder) {
+                placeholder.style.display = actionArea.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+        const target = document.getElementById('compare-action-area');
+        if(target) obs.observe(target, { attributes: true, attributeFilter: ['style'] });
+    }, 100);
 }
 // ...
 
@@ -3328,8 +3406,9 @@ else if (currentAlgoTab === 'compare') {
             contentArea.innerHTML = tabContent;
         }
 
-    function renderAlgorithmModal(algorithm) {
+ function renderAlgorithmModal(algorithm) {
     const content = document.getElementById('algo-demo-content');
+
     const algoInfo = {
         'fcfs': {
             name: 'First Come First Served',
@@ -3483,51 +3562,7 @@ else if (currentAlgoTab === 'compare') {
        // [Existing Use Cases Code Omitted - Keep your existing code here]
     }
     
-    // --- NEW COMPARE TAB ---
-    else if (currentAlgoTab === 'compare') {
-        const allAlgos = ['fcfs', 'sjf', 'srtf', 'rr'];
-        // Filter out the current algorithm so we only compare against others
-        const opponents = allAlgos.filter(a => a !== algorithm);
-        
-        // Define display names and colors for the cards
-        const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
-        const colors = { 'fcfs': '#ffe600', 'sjf': '#a3ffac', 'srtf': '#ffa3a3', 'rr': '#d4a3ff' };
 
-        tabContent = `
-            <style>
-                .compare-card { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-                .compare-card:hover { transform: translateY(-5px); box-shadow: 8px 8px 0 black !important; }
-                .compare-card:active { transform: translateY(2px); box-shadow: 2px 2px 0 black !important; }
-                @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-            </style>
-            <div style="padding: 10px; animation: slideIn 0.4s ease-out;">
-                <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: 900; margin-bottom: 24px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2); text-transform: uppercase; font-size: 14px;">
-                    <i class="fas fa-balance-scale mr-2"></i> Select Opponent for ${names[algorithm]}
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                    ${opponents.map((opp, idx) => `
-                        <div onclick="initCompareMode('${algorithm}', '${opp}')" 
-                             class="compare-card neo-box" 
-                             style="background: ${colors[opp]}; padding: 24px; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 3px solid black; box-shadow: 4px 4px 0 black; animation: slideIn 0.5s ease-out ${idx * 0.1}s backwards;">
-                            
-                            <div style="width: 50px; height: 50px; background: white; border: 3px solid black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.1);">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-                            
-                            <h3 style="font-size: 24px; font-weight: 900; border-bottom: 3px solid black; margin-bottom: 12px; line-height: 1.2;">${names[opp]}</h3>
-                            
-                            <div style="font-size: 11px; font-weight: bold; background: black; color: white; padding: 4px 12px; text-transform: uppercase;">
-                                VS
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="margin-top: 30px; text-align: center; font-style: italic; color: #666; font-size: 12px; font-weight: bold;">
-                    Click a card to launch side-by-side simulation
-                </div>
-            </div>
-        `;
-    }
 
     content.innerHTML = `
         <style>
@@ -7166,6 +7201,56 @@ function initCompareMode(algoA, algoB) {
     resetComparison();
 }
 
+
+// Function to handle card selection visual state
+function selectOpponentCard(algoA, algoB, cardElement) {
+    // 1. Remove 'selected' style from all cards
+    document.querySelectorAll('.compare-card').forEach(card => {
+        card.classList.remove('ring-4', 'ring-black', 'scale-105');
+        card.style.transform = ''; // Reset transform
+        card.style.background = card.dataset.originalColor; // Restore color
+        card.style.color = 'black';
+        
+        // Reset the badge inside
+        const badge = card.querySelector('.vs-badge');
+        if(badge) {
+            badge.style.background = 'black'; 
+            badge.style.color = 'white';
+        }
+    });
+
+    // 2. Add 'selected' style to clicked card
+    // Neobrutalism active state: Black background, White text
+    cardElement.dataset.originalColor = cardElement.style.background; // Save original color if not saved
+    cardElement.style.background = 'black';
+    cardElement.style.color = 'white';
+    cardElement.style.transform = 'scale(1.05) translateY(-5px)';
+    
+    // Invert badge colors
+    const badge = cardElement.querySelector('.vs-badge');
+    if(badge) {
+        badge.style.background = 'white'; 
+        badge.style.color = 'black';
+    }
+
+    // 3. Show the Start Button
+    const btnContainer = document.getElementById('compare-action-area');
+    const startBtn = document.getElementById('btn-start-compare');
+    
+    btnContainer.style.display = 'flex';
+    // Small animation for button appearance
+    btnContainer.style.animation = 'slideUp 0.3s ease-out forwards';
+    
+    // 4. Update Button Action
+    startBtn.onclick = function() {
+        // Hide the notebook modal
+        document.getElementById('algo-demo-modal').style.display = 'none';
+        // Start the comparison
+        initCompareMode(algoA, algoB);
+    };
+}
+
+
 function closeCompareModal() {
     document.getElementById('compare-modal').style.display = 'none';
     if(compInterval) clearInterval(compInterval);
@@ -7197,6 +7282,9 @@ function resetComparison() {
     
     const data = generateCompData();
     
+    // Sort by Arrival Time
+    data.sort((a,b) => a.arrival - b.arrival);
+    
     // Deep copy for isolation
     compState.processesA = JSON.parse(JSON.stringify(data));
     compState.processesB = JSON.parse(JSON.stringify(data));
@@ -7207,8 +7295,16 @@ function resetComparison() {
     
     compState.time = 0;
     compState.running = false;
+    compState.paused = false; // Reset paused state
     compState.doneA = false;
     compState.doneB = false;
+    
+    // Reset Button
+    const btn = document.getElementById('btn-compare-toggle');
+    if(btn) {
+        btn.innerHTML = '<i class="fas fa-play"></i> START FIGHT';
+        btn.style.background = '#a3ffac';
+    }
     
     // Clear Visuals
     document.getElementById('comp-gantt-a').innerHTML = '';
@@ -7220,8 +7316,32 @@ function resetComparison() {
 }
 
 function startComparison() {
-    if(compState.running) return;
+    const btn = document.getElementById('btn-compare-toggle');
+    
+    // If already running, PAUSE it
+    if(compState.running) {
+        clearInterval(compInterval);
+        compState.running = false;
+        compState.paused = true;
+        
+        // Update Button to RESUME
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-play"></i> RESUME FIGHT';
+            btn.style.background = '#fff68f'; // Yellowish for resume
+        }
+        return;
+    }
+
+    // If not running, START or RESUME
     compState.running = true;
+    compState.paused = false;
+    
+    // Update Button to PAUSE
+    if(btn) {
+        btn.innerHTML = '<i class="fas fa-pause"></i> PAUSE FIGHT';
+        btn.style.background = '#ffcccb'; // Reddish for pause
+    }
+
     compInterval = setInterval(runDualStep, 500); // 0.5s per tick
 }
 
@@ -7230,6 +7350,13 @@ function runDualStep() {
     if(compState.doneA && compState.doneB) {
         clearInterval(compInterval);
         compState.running = false;
+        
+        // Reset Button
+        const btn = document.getElementById('btn-compare-toggle');
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-play"></i> START FIGHT';
+            btn.style.background = '#a3ffac';
+        }
         return;
     }
 
@@ -7340,7 +7467,7 @@ function updateCompQueue(side) {
         
         return `
             <div style="display:flex; justify-content:space-between; align-items:center; background:${statusColor}; opacity:${opacity}; padding:6px; border:2px solid black; font-size:11px; font-weight:bold;">
-                <span>${p.id}</span>
+                <span>${p.id} (AT:${p.arrival})</span>
                 <span>Rem: ${p.remaining}</span>
             </div>
         `;
@@ -7407,7 +7534,7 @@ function updateCompStats(side) {
         </div>
 
         <div class="mt-4 pt-4 border-t-4 border-black flex justify-center gap-4">
-            <button onclick="startComparison()" class="neo-btn" style="background: #a3ffac; font-size: 1.2rem; padding: 10px 30px;">
+            <button id="btn-compare-toggle" onclick="startComparison()" class="neo-btn" style="background: #a3ffac; font-size: 1.2rem; padding: 10px 30px;">
                 <i class="fas fa-play"></i> START FIGHT
             </button>
             <button onclick="resetComparison()" class="neo-btn">
