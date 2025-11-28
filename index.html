@@ -5490,74 +5490,89 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
         };
 
         // --- Core Functions ---
-        function toggleSimulation() {
-            const btn = document.getElementById('btn-play');
-            const simControlBtn = document.getElementById('sim-control-play');
-            const simControls = document.getElementById('sim-controls');
+// --- Updated Core Function ---
+function toggleSimulation() {
+    const btn = document.getElementById('btn-play');
+    const simControlBtn = document.getElementById('sim-control-play');
+    const simControls = document.getElementById('sim-controls');
 
-            if (isRunning) {
-                clearInterval(simInterval);
-                isRunning = false;
-                btn.innerHTML = '<i class="fas fa-play"></i> Run OS';
-                btn.classList.remove('danger');
-                btn.classList.add('primary');
-                if (simControlBtn) {
-                    simControlBtn.innerHTML = '<i class="fas fa-play"></i>';
-                    simControlBtn.classList.remove('danger');
-                    simControlBtn.classList.add('primary');
+    if (isRunning) {
+        // --- PAUSE LOGIC ---
+        clearInterval(simInterval);
+        isRunning = false;
+        
+        // Update Buttons
+        btn.innerHTML = '<i class="fas fa-play"></i> Run OS';
+        btn.classList.remove('danger');
+        btn.classList.add('primary');
+        if (simControlBtn) {
+            simControlBtn.innerHTML = '<i class="fas fa-play"></i>';
+            simControlBtn.classList.remove('danger');
+            simControlBtn.classList.add('primary');
+        }
+        printToCli("Simulation Paused.");
+        
+    } else {
+        // --- RESUME LOGIC ---
+        
+        // [FIX] Check for Timeline Rewind
+        const slider = document.getElementById('history-slider');
+        const currentSliderPos = parseInt(slider.value);
+        
+        // If we are resuming from a point in the past
+        if (simHistory.length > 0 && currentSliderPos < simHistory.length - 1) {
+            // 1. Truncate history (Branching Time)
+            // Keep history only up to the current slider position
+            simHistory = simHistory.slice(0, currentSliderPos + 1);
+            
+            // 2. Sync internal tick counter to this restored state
+            if (simHistory.length > 0) {
+                tickCounter = simHistory[simHistory.length - 1].tick;
+            }
+            
+            // 3. Reset UI from "History Mode" to "Live Mode"
+            isScrubbing = false;
+            slider.max = simHistory.length - 1;
+            document.getElementById('tick-display').style.background = '#ffe600'; // Yellow (Live)
+            document.getElementById('tick-display').innerText = `TICK: ${tickCounter}`;
+            
+            printToCli(`Timeline branch created at Tick ${tickCounter}. Future overwritten.`, 'info');
+        }
+
+        // Initialize start time if this is the very first run
+        if (simulationStartTime === 0) {
+            simulationStartTime = Date.now();
+            simulationTime = 0;
+            // Initialize metrics if needed...
+            nodes.filter(n => n.type === 'process').forEach(p => {
+                if (!processMetrics[p.id]) {
+                    processMetrics[p.id] = { label: p.label, arrivalTime: 0, firstRunTime: null, completionTime: null, totalExecutionTime: 0, turnaroundTime: 0, waitingTime: 0, responseTime: 0, executionSegments: [], created: true };
                 }
-                printToCli("Simulation Paused.");
-            } else {
-                // Only set simulationStartTime on first start, not on resume
-                if (simulationStartTime === 0) {
-                    simulationStartTime = Date.now();
-                    simulationTime = 0;
-
-                    // Initialize arrival time for all existing processes at simulation start
-                    nodes.filter(n => n.type === 'process').forEach(p => {
-                        if (!processMetrics[p.id]) {
-                            processMetrics[p.id] = {
-                                label: p.label,
-                                arrivalTime: 0,
-                                firstRunTime: null,
-                                completionTime: null,
-                                totalExecutionTime: 0,
-                                turnaroundTime: 0,
-                                waitingTime: 0,
-                                responseTime: 0,
-                                executionSegments: [],
-                                created: true
-                            };
-                        } else if (processMetrics[p.id].arrivalTime === null) {
-                            processMetrics[p.id].arrivalTime = 0;
-                        }
-                    });
-
-                    // Show simulation controls with animation
-                    if (simControls) {
-                        simControls.style.display = 'block';
-                        setTimeout(() => {
-                            simControls.style.opacity = '1';
-                            simControls.style.transform = 'translateX(-50%) translateY(0)';
-                        }, 10);
-                    }
-                }
-
-                simInterval = setInterval(scheduler, simSpeed);
-                isRunning = true;
-                btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-                btn.classList.remove('primary');
-                btn.classList.add('danger');
-                if (simControlBtn) {
-                    simControlBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    simControlBtn.classList.remove('primary');
-                    simControlBtn.classList.add('danger');
-                }
-                const algoName = {'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin'}[schedulingAlgorithm];
-                const quantumInfo = schedulingAlgorithm === 'rr' ? ` (Q=${timeQuantum})` : '';
-                printToCli(`Simulation Running... [${algoName}${quantumInfo}]`);
+            });
+            // Show controls
+            if (simControls) {
+                simControls.style.display = 'block';
+                setTimeout(() => { simControls.style.opacity = '1'; simControls.style.transform = 'translateX(-50%) translateY(0)'; }, 10);
             }
         }
+
+        simInterval = setInterval(scheduler, simSpeed);
+        isRunning = true;
+        
+        // Update Buttons
+        btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        btn.classList.remove('primary');
+        btn.classList.add('danger');
+        if (simControlBtn) {
+            simControlBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            simControlBtn.classList.remove('primary');
+            simControlBtn.classList.add('danger');
+        }
+        
+        const algoName = {'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin'}[schedulingAlgorithm];
+        printToCli(`Simulation Running... [${algoName}]`);
+    }
+}
 
         // Save current state to history
         function saveSimulationState() {
@@ -7209,26 +7224,37 @@ function toggleTimeline() {
     }
 }
 
+// --- Updated Time Travel Logic ---
 function scrubHistory(index) {
     if (simHistory.length === 0) return;
+    
+    // Auto-pause if user grabs the slider while running
     if (isRunning) toggleSimulation(); 
+    
     isScrubbing = true;
     index = parseInt(index);
     if (index >= simHistory.length) index = simHistory.length - 1;
     
     const snapshot = simHistory[index];
+    
+    // Restore State
     nodes = JSON.parse(JSON.stringify(snapshot.nodes));
     edges = JSON.parse(JSON.stringify(snapshot.edges));
     currentRunningNodeId = snapshot.currentRunningNodeId;
     quantumRemaining = snapshot.quantumRemaining;
     
+    // [FIX] Sync Global Tick Counter to Snapshot
+    tickCounter = snapshot.tick;
+    
+    // Visual Updates
     const tickDisplay = document.getElementById('tick-display');
     tickDisplay.innerText = `TICK: ${snapshot.tick} (HISTORY)`;
-    tickDisplay.style.background = '#ff9aa2';
+    tickDisplay.style.background = '#ff9aa2'; // Red (History Mode)
     
-    detectDeadlock(true); updateSystemStats(); draw();
+    detectDeadlock(true); 
+    updateSystemStats(); 
+    draw();
 }
-
 function finishScrub() { isScrubbing = false; document.getElementById('tick-display').style.background = '#ffe600'; }
 
 function stepHistory(direction) {
