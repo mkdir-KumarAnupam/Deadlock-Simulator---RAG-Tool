@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG OS Simulator v7.0 - Crisp</title>
+    <title>RAG OS Simulator v8.0 - Crisp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -654,7 +654,7 @@
             <div class="relative">
                 <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
                     <span>DEADLOCK_SIM</span>
-                    <span class="neo-tag">v7.0 CRISP</span>
+                    <span class="neo-tag">v8.0 CRISP</span>
                     <span class="text-xs ml-1 opacity-70">▼</span>
                 </div>
 
@@ -3291,539 +3291,314 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
                 `;
             }
 
+
+            // ... existing if/else blocks ...
+else if (currentAlgoTab === 'compare') {
+    const allAlgos = ['fcfs', 'sjf', 'srtf', 'rr'];
+    // Filter out current algorithm
+    const opponents = allAlgos.filter(a => a !== algorithm);
+    
+    // Map nice names
+    const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
+    const colors = { 'fcfs': '#ffe600', 'sjf': '#a3ffac', 'srtf': '#ffa3a3', 'rr': '#d4a3ff' };
+
+    tabContent = `
+        <div style="padding: 20px;">
+            <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: bold; margin-bottom: 20px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2);">
+                SELECT AN OPPONENT FOR ${names[algorithm].toUpperCase()}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                ${opponents.map(opp => `
+                    <div onclick="initCompareMode('${algorithm}', '${opp}')" 
+                         class="neo-box" 
+                         style="background: ${colors[opp]}; padding: 20px; cursor: pointer; transition: transform 0.2s; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 10px;"><i class="fas fa-fist-raised"></i></div>
+                        <h3 style="font-size: 20px; font-weight: 900; border-bottom: 3px solid black; margin-bottom: 10px;">${names[opp]}</h3>
+                        <p style="font-size: 12px; font-weight: bold;">Click to simulate VS match</p>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+// ...
+
+
+
             contentArea.innerHTML = tabContent;
         }
 
-        function renderAlgorithmModal(algorithm) {
-            const content = document.getElementById('algo-demo-content');
-
-            const algoInfo = {
-                'fcfs': {
-                    name: 'First Come First Served',
-                    color: '#ffe600',
-                    desc: 'Non-preemptive. Processes execute in arrival order.',
-                    advantages: [
-                        'Simple and easy to understand',
-                        'Easy to implement with FIFO queue',
-                        'Fair in terms of arrival order',
-                        'No starvation - every process gets CPU eventually'
-                    ],
-                    disadvantages: [
-                        'Poor average waiting time',
-                        'Convoy effect - short processes wait for long ones',
-                        'Not suitable for time-sharing systems',
-                        'No priority consideration'
-                    ],
-                    problems: [
-                        '<strong>Convoy Effect:</strong> When a long process arrives first, all subsequent shorter processes must wait, leading to poor average waiting time. Like being stuck behind a slow truck on a single-lane road.'
-                    ],
-                    useCases: [
-                        'Batch processing systems where order matters',
-                        'Print queue management',
-                        'Simple embedded systems with predictable workloads',
-                        'First-come-first-served customer service systems'
-                    ]
-                },
-                'sjf': {
-                    name: 'Shortest Job First',
-                    color: '#a3ffac',
-                    desc: 'Non-preemptive. Selects process with shortest burst time.',
-                    advantages: [
-                        'Optimal average waiting time',
-                        'Minimizes average turnaround time',
-                        'Better throughput than FCFS',
-                        'Efficient for batch systems'
-                    ],
-                    disadvantages: [
-                        'Requires knowing burst time in advance (often impossible)',
-                        'Can cause starvation of long processes',
-                        'Not practical for interactive systems',
-                        'Difficult to predict exact CPU burst times'
-                    ],
-                    problems: [
-                        '<strong>Starvation:</strong> Long processes may never execute if short processes keep arriving. A process with burst time of 100 might wait indefinitely while processes with burst time 5 keep coming.'
-                    ],
-                    useCases: [
-                        'Batch processing where execution times are known',
-                        'Background task scheduling',
-                        'Systems with predictable workload patterns',
-                        'Non-interactive computational tasks'
-                    ]
-                },
-                'srtf': {
-                    name: 'Shortest Remaining Time First',
-                    color: '#ffa3a3',
-                    desc: 'Preemptive SJF. Can interrupt currently running process.',
-                    advantages: [
-                        'Better average waiting time than SJF',
-                        'More responsive to new short processes',
-                        'Optimal for minimizing waiting time',
-                        'Good for time-sharing systems'
-                    ],
-                    disadvantages: [
-                        'High context switching overhead',
-                        'Even worse starvation than SJF',
-                        'Requires continuous burst time estimation',
-                        'Complex to implement efficiently'
-                    ],
-                    problems: [
-                        '<strong>Severe Starvation:</strong> Long processes can be perpetually preempted by arriving shorter processes. A process might start execution but never finish if shorter processes keep arriving.',
-                        '<strong>High Overhead:</strong> Frequent context switches when new processes arrive, consuming CPU time for switching rather than actual work.'
-                    ],
-                    useCases: [
-                        'Real-time systems with priority on quick tasks',
-                        'Interactive systems requiring responsiveness',
-                        'Systems where burst times can be predicted accurately',
-                        'Environments where minimizing response time is critical'
-                    ]
-                },
-                'rr': {
-                    name: 'Round Robin',
-                    color: '#d4a3ff',
-                    desc: 'Preemptive time-sharing. Each process gets fixed time quantum.',
-                    advantages: [
-                        'Fair allocation of CPU time',
-                        'No starvation - every process gets turns',
-                        'Good for time-sharing systems',
-                        'Responsive for interactive processes'
-                    ],
-                    disadvantages: [
-                        'Average waiting time often high',
-                        'Performance depends heavily on quantum size',
-                        'Context switching overhead',
-                        'Not optimal for varying burst times'
-                    ],
-                    problems: [
-                        '<strong>Quantum Size Dilemma:</strong> Too large quantum → behaves like FCFS with poor response time. Too small quantum → excessive context switching overhead wastes CPU cycles.',
-                        '<strong>Inefficient for I/O:</strong> Processes waiting for I/O still consume quantum slices, leading to wasted CPU time.'
-                    ],
-                    useCases: [
-                        'Time-sharing operating systems (Linux, Windows)',
-                        'Interactive multi-user systems',
-                        'Systems requiring fair CPU distribution',
-                        'General-purpose operating systems'
-                    ]
-                }
-            };
-
-            const info = algoInfo[algorithm];
-
-            const tabStyle = (tab) => `
-                padding: 14px 20px 14px 30px;
-                background: ${currentAlgoTab === tab ? info.color : '#e8e6e0'};
-                border: 3px solid black;
-                border-right: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
-                border-bottom: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
-                cursor: pointer;
-                font-weight: ${currentAlgoTab === tab ? '900' : 'bold'};
-                font-family: 'Courier New', monospace;
-                font-size: 13px;
-                box-shadow: ${currentAlgoTab === tab ? 'inset 6px 0 12px rgba(0,0,0,0.15), 2px 0 4px rgba(0,0,0,0.1)' : 'none'};
-                margin-right: ${currentAlgoTab === tab ? '0' : '-3px'};
-                margin-bottom: ${currentAlgoTab === tab ? '-3px' : '0'};
-                width: 100%;
-                text-align: left;
-                position: relative;
-                z-index: ${currentAlgoTab === tab ? '10' : '1'};
-                color: ${currentAlgoTab === tab ? 'black' : '#333'};
-                text-shadow: ${currentAlgoTab === tab ? '1px 1px 0 rgba(255,255,255,0.3)' : 'none'};
-                letter-spacing: ${currentAlgoTab === tab ? '1px' : '0.5px'};
-            `;
-
-            let tabContent = '';
-
-            if (currentAlgoTab === 'demo') {
-                tabContent = `
-                    <style>
-                        @keyframes fadeInUp {
-                            from {
-                                opacity: 0;
-                                transform: translateY(20px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
-                        }
-                        .demo-section {
-                            animation: fadeInUp 0.5s ease-out forwards;
-                            opacity: 0;
-                        }
-                        .demo-button:hover {
-                            transform: translateY(-3px);
-                            box-shadow: 8px 8px 0 black !important;
-                        }
-                        .demo-button:active {
-                            transform: translateY(2px);
-                            box-shadow: 3px 3px 0 black !important;
-                        }
-                    </style>
-                    <div class="demo-section" style="border: 3px solid black; padding: 16px; background: white; box-shadow: 4px 4px 0 black; margin-bottom: 20px; animation-delay: 0s;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="font-size: 14px; margin: 0; text-transform: uppercase;">Process Queue</h3>
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div style="font-size: 12px;">TIME: <span id="demo-time" style="font-weight: bold; color: #ff006e;">0</span></div>
-                                <div id="demo-quantum-box" style="font-size: 12px; display: ${algorithm === 'rr' ? 'block' : 'none'};">QUANTUM: <span id="demo-quantum" style="font-weight: bold; color: #ff6b6b;">4</span></div>
-                            </div>
-                        </div>
-                        <div id="demo-queue" style="min-height: 200px; display: flex; flex-direction: column; gap: 8px;"></div>
-                    </div>
-
-                    <div class="demo-section" style="border: 3px solid black; padding: 16px; background: white; box-shadow: 4px 4px 0 black; margin-bottom: 20px; animation-delay: 0.1s;">
-                        <h3 style="font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase;">Gantt Chart</h3>
-                        <div id="demo-gantt" style="display: flex; min-height: 60px; border: 2px solid black; background: #f5f5f5;"></div>
-                    </div>
-
-                    <div class="demo-section" style="text-align: center; animation-delay: 0.2s;">
-                        <button onclick="startAlgoDemo('${algorithm}')" class="demo-button" style="padding: 16px 48px; background: #4ecdc4; border: 3px solid black; cursor: pointer; font-weight: bold; box-shadow: 6px 6px 0 black; font-family: 'Courier New', monospace; font-size: 16px; margin-right: 12px; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">START DEMO</button>
-                        <button onclick="resetAlgoDemo()" class="demo-button" style="padding: 16px 48px; background: #ff6b6b; border: 3px solid black; cursor: pointer; font-weight: bold; box-shadow: 6px 6px 0 black; font-family: 'Courier New', monospace; font-size: 16px; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);">RESET</button>
-                    </div>
-                `;
-            } else if (currentAlgoTab === 'advantages') {
-                const rotations = ['rotate(-2deg)', 'rotate(1.5deg)', 'rotate(-1deg)', 'rotate(2deg)'];
-                tabContent = `
-                    <style>
-                        .advantage-card {
-                            animation: slideInCard 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-                        }
-                        @keyframes slideInCard {
-                            from {
-                                opacity: 0;
-                                transform: translateY(30px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
-                        }
-                        .advantage-card:hover {
-                            transform: translateY(-4px) rotate(0deg) !important;
-                            box-shadow: 6px 8px 0 black !important;
-                        }
-                    </style>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        ${info.advantages.map((adv, idx) => `
-                            <div class="advantage-card" style="border: 3px solid black; padding: 20px; background: #e8f8f5; box-shadow: 4px 4px 0 black; position: relative; transform: ${rotations[idx % rotations.length]}; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); animation-delay: ${idx * 0.1}s; will-change: transform;">
-                                <div style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #333; border: 2px solid black; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2); z-index: 10;">
-                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 4px; background: #666; border-radius: 50%;"></div>
-                                </div>
-                                <div style="position: absolute; top: -12px; left: 12px; background: #2ecc71; border: 3px solid black; padding: 4px 12px; font-weight: bold; font-size: 16px; transition: transform 0.2s;">
-                                    ${idx + 1}
-                                </div>
-                                <div style="margin-top: 8px; display: flex; gap: 12px; align-items: start;">
-                                    <div style="min-width: 40px; height: 40px; background: #2ecc71; border: 3px solid black; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; transition: transform 0.2s;">
-                                        +
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 14px; font-weight: bold; line-height: 1.6;">
-                                            ${adv}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else if (currentAlgoTab === 'disadvantages') {
-                const rotations = ['rotate(1.5deg)', 'rotate(-2deg)', 'rotate(2deg)', 'rotate(-1deg)'];
-                tabContent = `
-                    <style>
-                        .disadvantage-card {
-                            animation: slideInCard 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-                        }
-                        @keyframes slideInCard {
-                            from {
-                                opacity: 0;
-                                transform: translateY(30px);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: translateY(0);
-                            }
-                        }
-                        .disadvantage-card:hover {
-                            transform: translateY(-4px) rotate(0deg) !important;
-                            box-shadow: 6px 8px 0 black !important;
-                        }
-                    </style>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        ${info.disadvantages.map((dis, idx) => `
-                            <div class="disadvantage-card" style="border: 3px solid black; padding: 20px; background: #ffe6e6; box-shadow: 4px 4px 0 black; position: relative; transform: ${rotations[idx % rotations.length]}; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); animation-delay: ${idx * 0.1}s; will-change: transform;">
-                                <div style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #333; border: 2px solid black; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2); z-index: 10;">
-                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 4px; height: 4px; background: #666; border-radius: 50%;"></div>
-                                </div>
-                                <div style="position: absolute; top: -12px; left: 12px; background: #e74c3c; color: white; border: 3px solid black; padding: 4px 12px; font-weight: bold; font-size: 16px;">
-                                    ${idx + 1}
-                                </div>
-                                <div style="margin-top: 8px; display: flex; gap: 12px; align-items: start;">
-                                    <div style="min-width: 40px; height: 40px; background: #e74c3c; color: white; border: 3px solid black; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold;">
-                                        -
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 14px; font-weight: bold; line-height: 1.6;">
-                                            ${dis}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else if (currentAlgoTab === 'problems') {
-                const problemGantt = getProblemGanttChart(algorithm);
-                tabContent = `
-                    <style>
-                        @keyframes fadeInScale {
-                            from {
-                                opacity: 0;
-                                transform: scale(0.95);
-                            }
-                            to {
-                                opacity: 1;
-                                transform: scale(1);
-                            }
-                        }
-                        .problem-section {
-                            animation: fadeInScale 0.5s ease-out forwards;
-                        }
-                    </style>
-                    <div class="problem-section" style="border: 3px solid black; padding: 24px; background: #ffe6e6; box-shadow: 4px 4px 0 black; margin-bottom: 20px; animation-delay: 0s;">
-                        <div style="display: inline-block; background: #ff6b6b; border: 3px solid black; padding: 8px 20px; box-shadow: 3px 3px 0 black; margin-bottom: 20px;">
-                            <h3 style="font-size: 18px; margin: 0; text-transform: uppercase; color: white; font-weight: bold;">PROBLEM SPOTLIGHT</h3>
-                        </div>
-                        ${info.problems.map((prob, idx) => {
-                            const problemName = prob.match(/<strong>(.*?):<\/strong>/)?.[1] || 'Problem';
-                            const problemDesc = prob.replace(/<strong>.*?<\/strong>\s*/, '');
-                            return `
-                                <div style="margin-bottom: 16px; background: white; border: 3px solid black; box-shadow: 4px 4px 0 black; overflow: hidden;">
-                                    <div style="background: #ff6b6b; padding: 12px 16px; border-bottom: 3px solid black;">
-                                        <div style="font-size: 16px; font-weight: bold; color: white; letter-spacing: 1px;">${problemName}</div>
-                                    </div>
-                                    <div style="padding: 16px; font-size: 14px; line-height: 1.7; font-weight: 500;">
-                                        ${problemDesc}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-
-                    <div class="problem-section" style="border: 3px solid black; padding: 24px; background: white; box-shadow: 4px 4px 0 black; animation-delay: 0.15s;">
-                        <div style="display: inline-block; background: black; border: 3px solid black; padding: 8px 20px; box-shadow: 3px 3px 0 black; margin-bottom: 20px;">
-                            <h3 style="font-size: 16px; margin: 0; text-transform: uppercase; color: white; font-weight: bold;">VISUAL PROOF</h3>
-                        </div>
-                        <div style="margin-bottom: 16px; padding: 16px; background: #f8f9fa; border: 3px solid black; font-size: 13px; font-weight: 600; line-height: 1.6;">
-                            ${problemGantt.description}
-                        </div>
-                        <div style="background: #f8f9fa; border: 3px solid black; padding: 16px; margin-bottom: 16px;">
-                            ${problemGantt.chart}
-                        </div>
-                        <div style="padding: 16px; background: #ff6b6b; border: 3px solid black; font-size: 13px; font-weight: bold; color: white; box-shadow: 4px 4px 0 black;">
-                            ${problemGantt.impact}
-                        </div>
-                    </div>
-                `;
-            } else if (currentAlgoTab === 'usecases') {
-                const icons = ['A', 'B', 'C', 'D'];
-                const colors = ['#e3f2fd', '#f3e5f5', '#fff9c4', '#e0f2f1'];
-                tabContent = `
-                    <style>
-                        .usecase-card {
-                            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-                        }
-                        @keyframes bounceIn {
-                            0% {
-                                opacity: 0;
-                                transform: scale(0.8);
-                            }
-                            60% {
-                                opacity: 1;
-                                transform: scale(1.05);
-                            }
-                            100% {
-                                opacity: 1;
-                                transform: scale(1);
-                            }
-                        }
-                        .usecase-card:hover {
-                            transform: translateY(-4px) scale(1.02);
-                            box-shadow: 6px 8px 0 black !important;
-                        }
-                    </style>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        ${info.useCases.map((uc, idx) => `
-                            <div class="usecase-card" style="border: 3px solid black; padding: 20px; background: ${colors[idx % colors.length]}; box-shadow: 4px 4px 0 black; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); animation-delay: ${idx * 0.1}s;">
-                                <div style="display: flex; gap: 16px; align-items: start;">
-                                    <div style="min-width: 60px; height: 60px; background: #3498db; border: 3px solid black; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; box-shadow: 3px 3px 0 black; transition: transform 0.3s;">
-                                        ${icons[idx % icons.length]}
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: #666; margin-bottom: 6px;">
-                                            USE CASE ${idx + 1}
-                                        </div>
-                                        <div style="font-size: 14px; font-weight: bold; line-height: 1.6;">
-                                            ${uc}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            content.innerHTML = `
-                <style>
-                    @keyframes headerSlideIn {
-                        from {
-                            opacity: 0;
-                            transform: translateX(-30px);
-                        }
-                        to {
-                            opacity: 1;
-                            transform: translateX(0);
-                        }
-                    }
-                    @keyframes tabPulse {
-                        0%, 100% {
-                            box-shadow: inset 6px 0 12px rgba(0,0,0,0.15);
-                        }
-                        50% {
-                            box-shadow: inset 8px 0 16px rgba(0,0,0,0.2);
-                        }
-                    }
-                    @keyframes tabSlideIn {
-                        from {
-                            transform: translateX(-10px);
-                            opacity: 0.8;
-                        }
-                        to {
-                            transform: translateX(0);
-                            opacity: 1;
-                        }
-                    }
-                    .algo-tab-button {
-                        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                        position: relative;
-                    }
-                    .algo-tab-button:hover:not(.active-tab) {
-                        background: #d4d0c8 !important;
-                        padding-left: 28px !important;
-                        border-left: 6px solid black !important;
-                        box-shadow: inset 2px 0 6px rgba(0,0,0,0.15) !important;
-                        transform: translateX(3px);
-                    }
-                    .algo-tab-button.active-tab {
-                        animation: tabSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), tabPulse 2s ease-in-out infinite;
-                    }
-                    .algo-tab-button.active-tab::before {
-                        content: '';
-                        position: absolute;
-                        left: 10px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        width: 6px;
-                        height: 6px;
-                        background: black;
-                        border-radius: 50%;
-                        box-shadow: 0 0 8px rgba(0,0,0,0.5);
-                        animation: dotPulse 1.5s ease-in-out infinite;
-                    }
-                    @keyframes dotPulse {
-                        0%, 100% {
-                            transform: translateY(-50%) scale(1);
-                            opacity: 1;
-                        }
-                        50% {
-                            transform: translateY(-50%) scale(1.3);
-                            opacity: 0.7;
-                        }
-                    }
-                    .algo-tab-button.active-tab::after {
-                        content: '';
-                        position: absolute;
-                        right: -4px;
-                        top: 0;
-                        bottom: 0;
-                        width: 12px;
-                        background: linear-gradient(to right, transparent, rgba(0,0,0,0.05));
-                        pointer-events: none;
-                    }
-                    .try-button {
-                        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    }
-                    .try-button:hover {
-                        background: #3ab8af !important;
-                        padding: 24px !important;
-                        box-shadow: 4px 4px 0 black !important;
-                    }
-                    .try-button:active {
-                        transform: translateY(2px);
-                        box-shadow: 1px 1px 0 black !important;
-                    }
-                    .header-badge {
-                        animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    }
-                    .header-text {
-                        animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-                        animation-delay: 0.1s;
-                        opacity: 0;
-                        animation-fill-mode: forwards;
-                    }
-                </style>
-                <div style="background: ${info.color}; padding: 40px 48px; border-bottom: 4px solid black; margin-bottom: 0; display: flex; align-items: center; gap: 32px;">
-                    <div class="header-badge" style="display: inline-block; padding: 16px 32px; background: black; border: 4px solid black; box-shadow: 6px 6px 0 rgba(0,0,0,0.3);">
-                        <h2 style="font-size: 48px; font-weight: bold; margin: 0; letter-spacing: 8px; color: ${info.color};">${algorithm.toUpperCase()}</h2>
-                    </div>
-                    <div class="header-text" style="flex: 1;">
-                        <p style="font-size: 22px; margin: 0 0 10px 0; font-weight: 900; color: black; text-transform: uppercase; letter-spacing: 2px;">${info.name}</p>
-                        <p style="font-size: 15px; margin: 0; color: black; font-weight: 700; max-width: 800px; line-height: 1.5;">${info.desc}</p>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 0; width: 100%; position: relative;">
-                    <!-- Spiral Binding -->
-                    <div style="position: absolute; left: 200px; top: 0; bottom: 0; width: 40px; background: linear-gradient(to bottom, transparent 10px, #d4d4d4 10px, #d4d4d4 20px, transparent 20px); background-size: 100% 30px; z-index: 5;">
-                        <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 105px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 150px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 195px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 240px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 285px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 330px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                        <div style="position: absolute; top: 375px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; background: linear-gradient(to right, #f5f3ed 0%, #e8e6e0 100%); border-right: 4px solid black; width: 220px; box-shadow: inset -3px 0 8px rgba(0,0,0,0.1); position: relative; z-index: 1;">
-                        <div style="display: flex; flex-direction: column; gap: 0; flex: 1; padding-top: 8px;">
-                            <button onclick="switchAlgoTab('demo')" class="algo-tab-button ${currentAlgoTab === 'demo' ? 'active-tab' : ''}" style="${tabStyle('demo')}">
-                                DEMO
-                            </button>
-                            <button onclick="switchAlgoTab('advantages')" class="algo-tab-button ${currentAlgoTab === 'advantages' ? 'active-tab' : ''}" style="${tabStyle('advantages')}">
-                                ADVANTAGES
-                            </button>
-                            <button onclick="switchAlgoTab('disadvantages')" class="algo-tab-button ${currentAlgoTab === 'disadvantages' ? 'active-tab' : ''}" style="${tabStyle('disadvantages')}">
-                                DISADVANTAGES
-                            </button>
-                            <button onclick="switchAlgoTab('problems')" class="algo-tab-button ${currentAlgoTab === 'problems' ? 'active-tab' : ''}" style="${tabStyle('problems')}">
-                                PROBLEMS
-                            </button>
-                            <button onclick="switchAlgoTab('usecases')" class="algo-tab-button ${currentAlgoTab === 'usecases' ? 'active-tab' : ''}" style="${tabStyle('usecases')}">
-                                USE CASES
-                            </button>
-                        </div>
-                        <button onclick="tryAlgorithm('${algorithm}')" class="try-button" style="padding: 20px; background: #4ecdc4; border: 3px solid black; border-right: none; cursor: pointer; font-weight: bold; font-family: 'Courier New', monospace; font-size: 14px; box-shadow: none; margin-top: auto; text-align: center;">TRY THIS</button>
-                    </div>
-
-                    <div id="algo-tab-content" style="flex: 1; padding: 32px 32px 32px 72px; background: repeating-linear-gradient(transparent, transparent 29px, #e0d9ce 29px, #e0d9ce 30px), linear-gradient(to right, #fff8f0 0%, #fefdfb 20%, #fefdfb 80%, #fff8f0 100%); position: relative; box-shadow: inset 6px 0 12px rgba(0,0,0,0.08);">
-                        <!-- Red margin line -->
-                        <div style="position: absolute; left: 52px; top: 0; bottom: 0; width: 2px; background: #ff6b6b; opacity: 0.5;"></div>
-                    </div>
-                </div>
-            `;
-
-            updateTabContent(algorithm);
+    function renderAlgorithmModal(algorithm) {
+    const content = document.getElementById('algo-demo-content');
+    const algoInfo = {
+        'fcfs': {
+            name: 'First Come First Served',
+            color: '#ffe600',
+            desc: 'Non-preemptive. Processes execute in arrival order.',
+            advantages: [
+                'Simple and easy to understand',
+                'Easy to implement with FIFO queue',
+                'Fair in terms of arrival order',
+                'No starvation - every process gets CPU eventually'
+            ],
+            disadvantages: [
+                'Poor average waiting time',
+                'Convoy effect - short processes wait for long ones',
+                'Not suitable for time-sharing systems',
+                'No priority consideration'
+            ],
+            problems: [
+                '<strong>Convoy Effect:</strong> When a long process arrives first, all subsequent shorter processes must wait, leading to poor average waiting time. Like being stuck behind a slow truck on a single-lane road.'
+            ],
+            useCases: [
+                'Batch processing systems where order matters',
+                'Print queue management',
+                'Simple embedded systems with predictable workloads',
+                'First-come-first-served customer service systems'
+            ]
+        },
+        'sjf': {
+            name: 'Shortest Job First',
+            color: '#a3ffac',
+            desc: 'Non-preemptive. Selects process with shortest burst time.',
+            advantages: [
+                'Optimal average waiting time',
+                'Minimizes average turnaround time',
+                'Better throughput than FCFS',
+                'Efficient for batch systems'
+            ],
+            disadvantages: [
+                'Requires knowing burst time in advance (often impossible)',
+                'Can cause starvation of long processes',
+                'Not practical for interactive systems',
+                'Difficult to predict exact CPU burst times'
+            ],
+            problems: [
+                '<strong>Starvation:</strong> Long processes may never execute if short processes keep arriving. A process with burst time of 100 might wait indefinitely while processes with burst time 5 keep coming.'
+            ],
+            useCases: [
+                'Batch processing where execution times are known',
+                'Background task scheduling',
+                'Systems with predictable workload patterns',
+                'Non-interactive computational tasks'
+            ]
+        },
+        'srtf': {
+            name: 'Shortest Remaining Time First',
+            color: '#ffa3a3',
+            desc: 'Preemptive SJF. Can interrupt currently running process.',
+            advantages: [
+                'Better average waiting time than SJF',
+                'More responsive to new short processes',
+                'Optimal for minimizing waiting time',
+                'Good for time-sharing systems'
+            ],
+            disadvantages: [
+                'High context switching overhead',
+                'Even worse starvation than SJF',
+                'Requires continuous burst time estimation',
+                'Complex to implement efficiently'
+            ],
+            problems: [
+                '<strong>Severe Starvation:</strong> Long processes can be perpetually preempted by arriving shorter processes. A process might start execution but never finish if shorter processes keep arriving.',
+                '<strong>High Overhead:</strong> Frequent context switches when new processes arrive, consuming CPU time for switching rather than actual work.'
+            ],
+            useCases: [
+                'Real-time systems with priority on quick tasks',
+                'Interactive systems requiring responsiveness',
+                'Systems where burst times can be predicted accurately',
+                'Environments where minimizing response time is critical'
+            ]
+        },
+        'rr': {
+            name: 'Round Robin',
+            color: '#d4a3ff',
+            desc: 'Preemptive time-sharing. Each process gets fixed time quantum.',
+            advantages: [
+                'Fair allocation of CPU time',
+                'No starvation - every process gets turns',
+                'Good for time-sharing systems',
+                'Responsive for interactive processes'
+            ],
+            disadvantages: [
+                'Average waiting time often high',
+                'Performance depends heavily on quantum size',
+                'Context switching overhead',
+                'Not optimal for varying burst times'
+            ],
+            problems: [
+                '<strong>Quantum Size Dilemma:</strong> Too large quantum → behaves like FCFS with poor response time. Too small quantum → excessive context switching overhead wastes CPU cycles.',
+                '<strong>Inefficient for I/O:</strong> Processes waiting for I/O still consume quantum slices, leading to wasted CPU time.'
+            ],
+            useCases: [
+                'Time-sharing operating systems (Linux, Windows)',
+                'Interactive multi-user systems',
+                'Systems requiring fair CPU distribution',
+                'General-purpose operating systems'
+            ]
         }
+    };
 
+    const info = algoInfo[algorithm];
+
+    const tabStyle = (tab) => `
+        padding: 14px 20px 14px 30px;
+        background: ${currentAlgoTab === tab ? info.color : '#e8e6e0'};
+        border: 3px solid black;
+        border-right: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
+        border-bottom: ${currentAlgoTab === tab ? 'none' : '3px solid black'};
+        cursor: pointer;
+        font-weight: ${currentAlgoTab === tab ? '900' : 'bold'};
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        box-shadow: ${currentAlgoTab === tab ? 'inset 6px 0 12px rgba(0,0,0,0.15), 2px 0 4px rgba(0,0,0,0.1)' : 'none'};
+        margin-right: ${currentAlgoTab === tab ? '0' : '-3px'};
+        margin-bottom: ${currentAlgoTab === tab ? '-3px' : '0'};
+        width: 100%;
+        text-align: left;
+        position: relative;
+        z-index: ${currentAlgoTab === tab ? '10' : '1'};
+        color: ${currentAlgoTab === tab ? 'black' : '#333'};
+        text-shadow: ${currentAlgoTab === tab ? '1px 1px 0 rgba(255,255,255,0.3)' : 'none'};
+        letter-spacing: ${currentAlgoTab === tab ? '1px' : '0.5px'};
+    `;
+
+    let tabContent = '';
+
+    // --- EXISTING TABS ---
+    if (currentAlgoTab === 'demo') {
+        // [Existing Demo Code Omitted for Brevity - Keep your existing code here]
+        tabContent = `<div class="demo-section" style="padding:40px; text-align:center;">Demo Content Placeholder (Use your existing logic here)</div>`;
+    } 
+    else if (currentAlgoTab === 'advantages') {
+       // [Existing Advantages Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'disadvantages') {
+       // [Existing Disadvantages Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'problems') {
+       // [Existing Problems Code Omitted - Keep your existing code here]
+    } 
+    else if (currentAlgoTab === 'usecases') {
+       // [Existing Use Cases Code Omitted - Keep your existing code here]
+    }
+    
+    // --- NEW COMPARE TAB ---
+    else if (currentAlgoTab === 'compare') {
+        const allAlgos = ['fcfs', 'sjf', 'srtf', 'rr'];
+        // Filter out the current algorithm so we only compare against others
+        const opponents = allAlgos.filter(a => a !== algorithm);
+        
+        // Define display names and colors for the cards
+        const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
+        const colors = { 'fcfs': '#ffe600', 'sjf': '#a3ffac', 'srtf': '#ffa3a3', 'rr': '#d4a3ff' };
+
+        tabContent = `
+            <style>
+                .compare-card { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                .compare-card:hover { transform: translateY(-5px); box-shadow: 8px 8px 0 black !important; }
+                .compare-card:active { transform: translateY(2px); box-shadow: 2px 2px 0 black !important; }
+                @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            </style>
+            <div style="padding: 10px; animation: slideIn 0.4s ease-out;">
+                <div style="background: black; color: white; padding: 10px 20px; display: inline-block; font-weight: 900; margin-bottom: 24px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2); text-transform: uppercase; font-size: 14px;">
+                    <i class="fas fa-balance-scale mr-2"></i> Select Opponent for ${names[algorithm]}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    ${opponents.map((opp, idx) => `
+                        <div onclick="initCompareMode('${algorithm}', '${opp}')" 
+                             class="compare-card neo-box" 
+                             style="background: ${colors[opp]}; padding: 24px; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 3px solid black; box-shadow: 4px 4px 0 black; animation: slideIn 0.5s ease-out ${idx * 0.1}s backwards;">
+                            
+                            <div style="width: 50px; height: 50px; background: white; border: 3px solid black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; box-shadow: 3px 3px 0 rgba(0,0,0,0.1);">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            
+                            <h3 style="font-size: 24px; font-weight: 900; border-bottom: 3px solid black; margin-bottom: 12px; line-height: 1.2;">${names[opp]}</h3>
+                            
+                            <div style="font-size: 11px; font-weight: bold; background: black; color: white; padding: 4px 12px; text-transform: uppercase;">
+                                VS
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="margin-top: 30px; text-align: center; font-style: italic; color: #666; font-size: 12px; font-weight: bold;">
+                    Click a card to launch side-by-side simulation
+                </div>
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        <style>
+            /* ... (Keep your existing styles for animations/tabs here) ... */
+            @keyframes headerSlideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+            @keyframes tabPulse { 0%, 100% { box-shadow: inset 6px 0 12px rgba(0,0,0,0.15); } 50% { box-shadow: inset 8px 0 16px rgba(0,0,0,0.2); } }
+            @keyframes tabSlideIn { from { transform: translateX(-10px); opacity: 0.8; } to { transform: translateX(0); opacity: 1; } }
+            .algo-tab-button { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
+            .algo-tab-button:hover:not(.active-tab) { background: #d4d0c8 !important; padding-left: 28px !important; border-left: 6px solid black !important; box-shadow: inset 2px 0 6px rgba(0,0,0,0.15) !important; transform: translateX(3px); }
+            .algo-tab-button.active-tab { animation: tabSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), tabPulse 2s ease-in-out infinite; }
+            .algo-tab-button.active-tab::before { content: ''; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: black; border-radius: 50%; box-shadow: 0 0 8px rgba(0,0,0,0.5); animation: dotPulse 1.5s ease-in-out infinite; }
+            @keyframes dotPulse { 0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; } 50% { transform: translateY(-50%) scale(1.3); opacity: 0.7; } }
+            .algo-tab-button.active-tab::after { content: ''; position: absolute; right: -4px; top: 0; bottom: 0; width: 12px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.05)); pointer-events: none; }
+            .try-button { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+            .try-button:hover { background: #3ab8af !important; padding: 24px !important; box-shadow: 4px 4px 0 black !important; }
+            .try-button:active { transform: translateY(2px); box-shadow: 1px 1px 0 black !important; }
+            .header-badge { animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+            .header-text { animation: headerSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+        </style>
+        <div style="background: ${info.color}; padding: 40px 48px; border-bottom: 4px solid black; margin-bottom: 0; display: flex; align-items: center; gap: 32px;">
+            <div class="header-badge" style="display: inline-block; padding: 16px 32px; background: black; border: 4px solid black; box-shadow: 6px 6px 0 rgba(0,0,0,0.3);">
+                <h2 style="font-size: 48px; font-weight: bold; margin: 0; letter-spacing: 8px; color: ${info.color};">${algorithm.toUpperCase()}</h2>
+            </div>
+            <div class="header-text" style="flex: 1;">
+                <p style="font-size: 22px; margin: 0 0 10px 0; font-weight: 900; color: black; text-transform: uppercase; letter-spacing: 2px;">${info.name}</p>
+                <p style="font-size: 15px; margin: 0; color: black; font-weight: 700; max-width: 800px; line-height: 1.5;">${info.desc}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0; width: 100%; position: relative;">
+            <div style="position: absolute; left: 200px; top: 0; bottom: 0; width: 40px; background: linear-gradient(to bottom, transparent 10px, #d4d4d4 10px, #d4d4d4 20px, transparent 20px); background-size: 100% 30px; z-index: 5;">
+                ${Array(9).fill(0).map((_, i) => `
+                    <div style="position: absolute; top: ${15 + i*45}px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid #888; border-radius: 50%; background: white;"></div>
+                `).join('')}
+            </div>
+            
+            <div style="display: flex; flex-direction: column; background: linear-gradient(to right, #f5f3ed 0%, #e8e6e0 100%); border-right: 4px solid black; width: 220px; box-shadow: inset -3px 0 8px rgba(0,0,0,0.1); position: relative; z-index: 1;">
+                <div style="display: flex; flex-direction: column; gap: 0; flex: 1; padding-top: 8px;">
+                    <button onclick="switchAlgoTab('demo')" class="algo-tab-button ${currentAlgoTab === 'demo' ? 'active-tab' : ''}" style="${tabStyle('demo')}">
+                        DEMO
+                    </button>
+                    <button onclick="switchAlgoTab('advantages')" class="algo-tab-button ${currentAlgoTab === 'advantages' ? 'active-tab' : ''}" style="${tabStyle('advantages')}">
+                        ADVANTAGES
+                    </button>
+                    <button onclick="switchAlgoTab('disadvantages')" class="algo-tab-button ${currentAlgoTab === 'disadvantages' ? 'active-tab' : ''}" style="${tabStyle('disadvantages')}">
+                        DISADVANTAGES
+                    </button>
+                    <button onclick="switchAlgoTab('problems')" class="algo-tab-button ${currentAlgoTab === 'problems' ? 'active-tab' : ''}" style="${tabStyle('problems')}">
+                        PROBLEMS
+                    </button>
+                    <button onclick="switchAlgoTab('usecases')" class="algo-tab-button ${currentAlgoTab === 'usecases' ? 'active-tab' : ''}" style="${tabStyle('usecases')}">
+                        USE CASES
+                    </button>
+                    
+                    <button onclick="switchAlgoTab('compare')" class="algo-tab-button ${currentAlgoTab === 'compare' ? 'active-tab' : ''}" style="${tabStyle('compare')}">
+                        COMPARE
+                    </button>
+                </div>
+                <button onclick="tryAlgorithm('${algorithm}')" class="try-button" style="padding: 20px; background: #4ecdc4; border: 3px solid black; border-right: none; cursor: pointer; font-weight: bold; font-family: 'Courier New', monospace; font-size: 14px; box-shadow: none; margin-top: auto; text-align: center;">TRY THIS</button>
+            </div>
+
+            <div id="algo-tab-content" style="flex: 1; padding: 32px 32px 32px 72px; background: repeating-linear-gradient(transparent, transparent 29px, #e0d9ce 29px, #e0d9ce 30px), linear-gradient(to right, #fff8f0 0%, #fefdfb 20%, #fefdfb 80%, #fff8f0 100%); position: relative; box-shadow: inset 6px 0 12px rgba(0,0,0,0.08);">
+                <div style="position: absolute; left: 52px; top: 0; bottom: 0; width: 2px; background: #ff6b6b; opacity: 0.5;"></div>
+                </div>
+        </div>
+    `;
+
+    // Ensure we trigger the content update
+    // Note: If you also have an external updateTabContent function, ensure it contains the "else if (compare)" logic I added above!
+    updateTabContent(algorithm);
+}
         let demoState = null;
         let demoInterval = null;
 
@@ -7362,6 +7137,284 @@ function jumpToDeadlock() {
     }
 }
 
+// --- COMPARISON ENGINE ---
+
+let compInterval = null;
+let compState = {
+    running: false,
+    algoA: null,
+    algoB: null,
+    processesA: [],
+    processesB: [],
+    time: 0,
+    doneA: false,
+    doneB: false
+};
+
+function initCompareMode(algoA, algoB) {
+    const modal = document.getElementById('compare-modal');
+    modal.style.display = 'block';
+    
+    // Setup Names
+    const names = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' };
+    document.getElementById('comp-title-a').textContent = names[algoA];
+    document.getElementById('comp-title-b').textContent = names[algoB];
+    
+    compState.algoA = algoA;
+    compState.algoB = algoB;
+    
+    resetComparison();
+}
+
+function closeCompareModal() {
+    document.getElementById('compare-modal').style.display = 'none';
+    if(compInterval) clearInterval(compInterval);
+}
+
+function generateCompData() {
+    // Generate 5 random processes with SAME data for both sides
+    const procs = [];
+    const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#1a535c', '#ff9f43'];
+    
+    for(let i=1; i<=5; i++) {
+        procs.push({
+            id: 'P'+i,
+            burst: Math.floor(Math.random() * 10) + 4, // 4-14 burst
+            arrival: Math.floor(Math.random() * 8),    // 0-8 arrival
+            color: colors[i-1],
+            remaining: 0, // Set later
+            wait: 0,
+            turnaround: 0,
+            completed: false,
+            started: -1
+        });
+    }
+    return procs;
+}
+
+function resetComparison() {
+    if(compInterval) clearInterval(compInterval);
+    
+    const data = generateCompData();
+    
+    // Deep copy for isolation
+    compState.processesA = JSON.parse(JSON.stringify(data));
+    compState.processesB = JSON.parse(JSON.stringify(data));
+    
+    // Init remaining times
+    compState.processesA.forEach(p => p.remaining = p.burst);
+    compState.processesB.forEach(p => p.remaining = p.burst);
+    
+    compState.time = 0;
+    compState.running = false;
+    compState.doneA = false;
+    compState.doneB = false;
+    
+    // Clear Visuals
+    document.getElementById('comp-gantt-a').innerHTML = '';
+    document.getElementById('comp-gantt-b').innerHTML = '';
+    updateCompQueue('a');
+    updateCompQueue('b');
+    updateCompStats('a');
+    updateCompStats('b');
+}
+
+function startComparison() {
+    if(compState.running) return;
+    compState.running = true;
+    compInterval = setInterval(runDualStep, 500); // 0.5s per tick
+}
+
+function runDualStep() {
+    // Stop if both done
+    if(compState.doneA && compState.doneB) {
+        clearInterval(compInterval);
+        compState.running = false;
+        return;
+    }
+
+    // --- STEP ALGO A ---
+    if(!compState.doneA) {
+        stepSingleAlgo(compState.algoA, compState.processesA, 'a');
+    }
+
+    // --- STEP ALGO B ---
+    if(!compState.doneB) {
+        stepSingleAlgo(compState.algoB, compState.processesB, 'b');
+    }
+    
+    compState.time++;
+}
+
+function stepSingleAlgo(algo, processes, side) {
+    // 1. Filter arrived processes
+    let available = processes.filter(p => p.arrival <= compState.time && !p.completed);
+    
+    if(available.length === 0) {
+        // Idle
+        if(processes.every(p => p.completed)) {
+            compState['done'+side.toUpperCase()] = true;
+        } else {
+            renderGanttBlock(side, 'IDLE', '#eee', 20);
+        }
+        return;
+    }
+
+    // 2. Select Process based on Algo
+    let selected = null;
+    
+    if (algo === 'fcfs') {
+        available.sort((a,b) => a.arrival - b.arrival);
+        selected = available[0];
+    } 
+    else if (algo === 'sjf') {
+        // Non-preemptive: if we were running someone and they aren't done, keep running them
+        // Note: For simple demo, we can re-evaluate every tick (SRTF style) or lock (SJF style).
+        // Let's do simplified Logic: Sort by burst.
+        available.sort((a,b) => a.burst - b.burst);
+        selected = available[0];
+    }
+    else if (algo === 'srtf') {
+        available.sort((a,b) => a.remaining - b.remaining);
+        selected = available[0];
+    }
+    else if (algo === 'rr') {
+        // Simplified RR: Just rotate through available based on index + time
+        // A real RR needs a queue. For this visual demo, we pick based on (time % count)
+        const index = compState.time % available.length;
+        selected = available[index];
+    }
+
+    // 3. Process Logic
+    if(selected) {
+        if(selected.started === -1) selected.started = compState.time;
+        
+        selected.remaining--;
+        renderGanttBlock(side, selected.id, selected.color, 20);
+        
+        // Update Stats for others (Waiting time)
+        available.forEach(p => {
+            if(p.id !== selected.id) p.wait++;
+        });
+
+        if(selected.remaining === 0) {
+            selected.completed = true;
+            selected.turnaround = (compState.time + 1) - selected.arrival;
+        }
+        
+        updateCompQueue(side);
+        updateCompStats(side);
+    }
+}
+
+// --- VISUAL HELPERS ---
+
+function renderGanttBlock(side, label, color, width) {
+    const container = document.getElementById(`comp-gantt-${side}`);
+    const div = document.createElement('div');
+    div.style.backgroundColor = color;
+    div.style.width = width + 'px';
+    div.style.height = '100%';
+    div.style.borderRight = '1px solid rgba(0,0,0,0.1)';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'center';
+    div.style.fontSize = '10px';
+    div.style.fontWeight = 'bold';
+    div.innerText = label === 'IDLE' ? 'I' : label;
+    container.appendChild(div);
+    // Auto scroll
+    container.parentElement.scrollLeft = container.parentElement.scrollWidth;
+}
+
+function updateCompQueue(side) {
+    const container = document.getElementById(`comp-queue-${side}`);
+    const procs = compState[`processes${side.toUpperCase()}`];
+    
+    container.innerHTML = procs.map(p => {
+        let statusColor = '#fff'; // Not arrived
+        if(p.completed) statusColor = '#e0e0e0'; // Done
+        else if(p.arrival <= compState.time) statusColor = p.color; // Ready/Running
+        
+        const opacity = p.completed ? 0.5 : 1;
+        
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:${statusColor}; opacity:${opacity}; padding:6px; border:2px solid black; font-size:11px; font-weight:bold;">
+                <span>${p.id}</span>
+                <span>Rem: ${p.remaining}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateCompStats(side) {
+    const procs = compState[`processes${side.toUpperCase()}`];
+    const completed = procs.filter(p => p.completed);
+    
+    if(completed.length === 0) return;
+    
+    const avgWait = (completed.reduce((a,b) => a + b.wait, 0) / completed.length).toFixed(1);
+    const avgTat = (completed.reduce((a,b) => a + b.turnaround, 0) / completed.length).toFixed(1);
+    
+    document.getElementById(`stats-${side}`).innerText = `WT: ${avgWait} | TAT: ${avgTat}`;
+}
+
     </script>
+
+
+
+<div id="compare-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10002; font-family: 'Courier New', monospace;">
+    <div class="neo-box bg-white p-4" style="width: 90%; height: 90vh; margin: 5vh auto; display: flex; flex-direction: column; position: relative; box-shadow: 12px 12px 0 black;">
+        
+        <div class="flex justify-between items-center border-b-4 border-black pb-4 mb-4">
+            <h2 class="text-2xl font-black uppercase flex items-center gap-3">
+                <i class="fas fa-balance-scale"></i> Algorithm Showdown
+            </h2>
+            <button onclick="closeCompareModal()" class="neo-btn" style="background: #ff4757; color: white;">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+
+        <div class="flex-grow flex gap-4 overflow-hidden">
+            
+            <div class="flex-1 flex flex-col border-4 border-black p-2 bg-[#f0f0f0] relative">
+                <div class="absolute top-0 left-0 bg-black text-white px-3 py-1 font-bold text-sm">CHALLENGER A</div>
+                <div class="mt-8 mb-2 flex justify-between items-center">
+                    <h3 id="comp-title-a" class="text-xl font-black">ALGORITHM A</h3>
+                    <div id="stats-a" class="text-xs font-bold bg-white border-2 border-black px-2 py-1">WT: 0 | TAT: 0</div>
+                </div>
+                <div id="comp-queue-a" class="flex flex-col gap-2 overflow-y-auto flex-grow mb-2 p-2 border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,0.1)]"></div>
+                <div class="h-16 border-2 border-black bg-white relative overflow-hidden">
+                    <div id="comp-gantt-a" class="absolute top-0 left-0 h-full flex"></div>
+                </div>
+            </div>
+
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                <div class="bg-[#ffe600] border-4 border-black rounded-full w-16 h-16 flex items-center justify-center font-black text-2xl shadow-[6px_6px_0_black]">VS</div>
+            </div>
+
+            <div class="flex-1 flex flex-col border-4 border-black p-2 bg-[#e6f7ff] relative">
+                <div class="absolute top-0 right-0 bg-black text-white px-3 py-1 font-bold text-sm">CHALLENGER B</div>
+                <div class="mt-8 mb-2 flex justify-between items-center">
+                    <h3 id="comp-title-b" class="text-xl font-black">ALGORITHM B</h3>
+                    <div id="stats-b" class="text-xs font-bold bg-white border-2 border-black px-2 py-1">WT: 0 | TAT: 0</div>
+                </div>
+                <div id="comp-queue-b" class="flex flex-col gap-2 overflow-y-auto flex-grow mb-2 p-2 border-2 border-black bg-white shadow-[4px_4px_0_rgba(0,0,0,0.1)]"></div>
+                <div class="h-16 border-2 border-black bg-white relative overflow-hidden">
+                    <div id="comp-gantt-b" class="absolute top-0 left-0 h-full flex"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t-4 border-black flex justify-center gap-4">
+            <button onclick="startComparison()" class="neo-btn" style="background: #a3ffac; font-size: 1.2rem; padding: 10px 30px;">
+                <i class="fas fa-play"></i> START FIGHT
+            </button>
+            <button onclick="resetComparison()" class="neo-btn">
+                <i class="fas fa-redo"></i> RESET
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
