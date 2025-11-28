@@ -631,7 +631,16 @@
 #playback-panel { transition: opacity 0.2s, transform 0.2s; }
 #playback-panel.active { display: flex !important; animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 #resize-handle:hover { background-color: #ff4757; transform: scale(1.1); transition: background 0.1s; }
-.deadlock-marker { position: absolute; height: 100%; width: 4px; background: red; top: 0; pointer-events: none; }
+.deadlock-marker { 
+    position: absolute; 
+    height: 100%; 
+    width: 4px; /* Visible thickness */
+    background: #FF3366; /* Deadlock Color */
+    top: 0; 
+    pointer-events: none; /* Allows clicking through the marker */
+    z-index: 0;
+    opacity: 0.7;
+}
 
 
     </style>
@@ -5737,6 +5746,10 @@ function resetGraph() {
     const slider = document.getElementById('history-slider');
     if (slider) slider.value = 0;
     
+    // [NEW] Clear visual markers
+    const markerContainer = document.getElementById('timeline-markers');
+    if (markerContainer) markerContainer.innerHTML = '';
+
     // Reset Tick Display
     const tickDisplay = document.getElementById('tick-display');
     if (tickDisplay) {
@@ -7173,12 +7186,14 @@ function recordHistory() {
     simHistory.push(snapshot);
     if (simHistory.length > MAX_HISTORY_STEPS) simHistory.shift();
     
-    // Update slider max, but DO NOT auto-show panel
     const slider = document.getElementById('history-slider');
     if (slider && !isScrubbing) {
         slider.max = simHistory.length - 1;
         slider.value = simHistory.length - 1;
     }
+
+    // [NEW] Update visual markers on the slider track
+    updateTimelineMarkers();
 }
 
 function toggleTimeline() {
@@ -7277,6 +7292,33 @@ function stepHistory(direction) {
 
     document.addEventListener('mouseup', () => { isDragging = false; isResizing = false; if(panel) panel.style.zIndex = '40'; });
 })();
+
+// function to update timeline markers and display the point where deadlock is happening
+function updateTimelineMarkers() {
+    const container = document.getElementById('timeline-markers');
+    if (!container) return;
+
+    const totalSteps = simHistory.length - 1;
+    if (totalSteps <= 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    // Optimization: Build HTML string first instead of appending DOM nodes one by one
+    let markersHtml = '';
+    
+    simHistory.forEach((snapshot, index) => {
+        if (snapshot.deadlockDetected) {
+            // Calculate percentage position on the slider
+            const pct = (index / totalSteps) * 100;
+            
+            // Note: We use the CSS class .deadlock-marker defined in your styles
+            markersHtml += `<div class="deadlock-marker" style="left: ${pct}%;" title="Deadlock at Tick ${snapshot.tick}"></div>`;
+        }
+    });
+
+    container.innerHTML = markersHtml;
+}
     </script>
 </body>
 </html>
