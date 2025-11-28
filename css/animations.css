@@ -1,0 +1,180 @@
+/* Animations */
+@keyframes btn-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes deadlock-shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px) rotate(-1deg);
+  }
+
+  75% {
+    transform: translateX(5px) rotate(1deg);
+  }
+}
+
+@keyframes snap-in {
+  0% {
+    transform: scale(0.8) rotate(-5deg);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1) rotate(2deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.snap-effect {
+  animation: snap-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.shake-effect {
+  animation: deadlock-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+  }
+
+  60% {
+    transform: translate(-50%, 10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes slideFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+
+  60% {
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideToTop {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes cardPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+
+  60% {
+    transform: scale(1.02) translateY(-5px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes moveDots {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 24px 24px;
+  }
+}
+
+@keyframes titleWobble {
+
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+
+  25% {
+    transform: rotate(-0.5deg);
+  }
+
+  50% {
+    transform: rotate(-1.5deg);
+  }
+
+  75% {
+    transform: rotate(-0.8deg);
+  }
+}
+
+@keyframes closeButtonPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-90deg);
+  }
+
+  50% {
+    transform: scale(1.05) rotate(3deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}

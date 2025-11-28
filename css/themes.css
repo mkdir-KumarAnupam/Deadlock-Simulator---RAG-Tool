@@ -1,0 +1,64 @@
+/* Themes */
+body.theme-ocean {
+  --bg-color: #e3f2fd;
+  --process-ready: #81d4fa;
+  --process-running: #ffb74d;
+  --process-blocked: #ef5350;
+  --process-terminated: #bdbdbd;
+  --resource-color: #9fa8da;
+}
+
+body.theme-forest {
+  --bg-color: #f1f8e9;
+  --process-ready: #aed581;
+  --process-running: #ffca28;
+  --process-blocked: #e57373;
+  --process-terminated: #d7ccc8;
+  --resource-color: #a1887f;
+}
+
+body.theme-sunset {
+  --bg-color: #fff3e0;
+  --process-ready: #ffcc80;
+  --process-running: #ff8a65;
+  --process-blocked: #f06292;
+  --process-terminated: #d0d0d0;
+  --resource-color: #ce93d8;
+}
+
+body.theme-midnight {
+  --bg-color: #263238;
+  --process-ready: #4db6ac;
+  --process-running: #ffa726;
+  --process-blocked: #ef5350;
+  --process-terminated: #607d8b;
+  --resource-color: #7e57c2;
+  color: #eceff1;
+}
+
+body.theme-midnight .neo-box,
+body.theme-midnight .neo-dropdown,
+body.theme-midnight header,
+body.theme-midnight .cli-container {
+  background: #37474f !important;
+  color: #eceff1;
+}
+
+/* Background Pattern Styles */
+body.bg-pattern-none .flex-grow.flex {
+  background: var(--bg-color);
+}
+
+body.bg-pattern-dots .flex-grow.flex {
+  background: var(--bg-color);
+  background-image: radial-gradient(circle, rgba(0, 0, 0, var(--pattern-opacity)) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+body.bg-pattern-grid .flex-grow.flex {
+  background: var(--bg-color);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--pattern-opacity)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, var(--pattern-opacity)) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
