@@ -1438,13 +1438,18 @@
 
     <!-- timeline debugger panel @anshu -->
 
-    <div id="playback-panel" class="hidden absolute left-[20px] bottom-[100px] bg-white border-[3px] border-black p-3 shadow-[6px_6px_0px_rgba(0,0,0,1)] z-40 w-[500px] flex flex-col gap-2" style="min-width: 350px; min-height: 140px;">
+<div id="playback-panel" class="hidden absolute left-[20px] bottom-[100px] bg-white border-[3px] border-black p-3 shadow-[6px_6px_0px_rgba(0,0,0,1)] z-40 w-[500px] flex flex-col gap-2" style="min-width: 350px; min-height: 140px;">
     
     <div id="playback-header" class="flex justify-between items-center border-b-2 border-black pb-1 mb-1 cursor-move select-none active:cursor-grabbing">
         <div class="flex items-center gap-2 pointer-events-none">
             <i class="fas fa-history text-blue-600"></i>
-            <span class="font-black text-sm tracking-widest">TIMELINE DEBUGGER</span>
+            <span class="font-black text-sm tracking-widest">TIMELINE</span>
         </div>
+
+        <button id="btn-jump-deadlock" onclick="jumpToDeadlock()" class="hidden neo-btn" style="padding: 2px 8px; font-size: 10px; background: #ff4757; color: white; border: 2px solid black; margin-left: auto; margin-right: 10px;" title="Jump to deadlock moment">
+            <i class="fas fa-bug"></i> JUMP TO ERROR
+        </button>
+
         <span id="tick-display" class="font-mono text-xs font-bold bg-[#ffe600] px-2 py-0.5 border-2 border-black shadow-[2px_2px_0px_black] pointer-events-none">TICK: 0</span>
     </div>
     
@@ -1463,7 +1468,6 @@
 
     <div id="resize-handle" class="absolute bottom-[2px] right-[2px] w-4 h-4 bg-black cursor-se-resize" style="clip-path: polygon(100% 0, 0 100%, 100% 100%);"></div>
 </div>
-
 
     <!-- Footer -->
     <footer class="h-64 border-t-4 border-black flex flex-col md:flex-row" style="z-index: 20;">
@@ -5502,6 +5506,13 @@ function toggleSimulation() {
             // Keep history only up to the current slider position
             simHistory = simHistory.slice(0, currentSliderPos + 1);
             
+
+            const stillHasDeadlock = simHistory.some(s => s.deadlockDetected);
+            if (!stillHasDeadlock) {
+                document.getElementById('btn-jump-deadlock').classList.add('hidden');
+            }
+
+
             // 2. Sync internal tick counter to this restored state
             if (simHistory.length > 0) {
                 tickCounter = simHistory[simHistory.length - 1].tick;
@@ -5770,6 +5781,9 @@ function resetGraph() {
         timelineBtn.classList.remove('active');
         timelineBtn.style.backgroundColor = '';
     }
+
+    // [ADD THIS]: Hide Jump Button
+    document.getElementById('btn-jump-deadlock').classList.add('hidden');
 
     // --- 3. UI Cleanup (Existing v6.5) ---
     // Hide simulation controls popup
@@ -7183,6 +7197,12 @@ function recordHistory() {
         quantumRemaining: quantumRemaining,
         deadlockDetected: deadlockSet.size > 0
     };
+
+    if (snapshot.deadlockDetected) {
+        document.getElementById('btn-jump-deadlock').classList.remove('hidden');
+    }
+
+
     simHistory.push(snapshot);
     if (simHistory.length > MAX_HISTORY_STEPS) simHistory.shift();
     
@@ -7319,6 +7339,29 @@ function updateTimelineMarkers() {
 
     container.innerHTML = markersHtml;
 }
+
+
+// --- Jump to Deadlock Logic ---
+function jumpToDeadlock() {
+    // 1. Find the first tick where deadlock was detected
+    const deadlockIndex = simHistory.findIndex(snap => snap.deadlockDetected);
+    
+    if (deadlockIndex !== -1) {
+        // 2. Scrub to that point (this handles pausing and state restoration)
+        scrubHistory(deadlockIndex);
+        
+        // 3. Optional: Visual feedback
+        printToCli(`Jumped to deadlock at Tick ${simHistory[deadlockIndex].tick}`, 'info');
+        
+        // Flash the tick display to draw attention
+        const display = document.getElementById('tick-display');
+        display.style.transform = 'scale(1.2)';
+        setTimeout(() => display.style.transform = 'scale(1)', 200);
+    } else {
+        printToCli("No deadlock record found in history.", 'error');
+    }
+}
+
     </script>
 </body>
 </html>
