@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG OS Simulator v6.5 - Crisp</title>
+    <title>RAG OS Simulator v7.0 - Crisp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -619,6 +619,21 @@
             border: 2px solid black;
             box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
         }
+
+        /* chnages for timeline @anshu */
+
+        /* Time Travel Slider Styling */
+#history-slider { appearance:none;-webkit-appearance: none; width: 100%; height: 12px; background: #e0e0e0; border: 2px solid black; outline: none; }
+#history-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: #ff4757; border: 3px solid black; cursor: pointer; box-shadow: 2px 2px 0px black; transition: transform 0.1s; }
+#history-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* Panel Animation & Handles */
+#playback-panel { transition: opacity 0.2s, transform 0.2s; }
+#playback-panel.active { display: flex !important; animation: slideUpBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+#resize-handle:hover { background-color: #ff4757; transform: scale(1.1); transition: background 0.1s; }
+.deadlock-marker { position: absolute; height: 100%; width: 4px; background: red; top: 0; pointer-events: none; }
+
+
     </style>
 </head>
 <body class="h-screen flex flex-col" onclick="closeMenu(event)">
@@ -630,7 +645,7 @@
             <div class="relative">
                 <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
                     <span>DEADLOCK_SIM</span>
-                    <span class="neo-tag">v6.5 CRISP</span>
+                    <span class="neo-tag">v7.0 CRISP</span>
                     <span class="text-xs ml-1 opacity-70">▼</span>
                 </div>
 
@@ -860,6 +875,7 @@
             </div>
 
             <button onclick="toggleSimulation()" id="btn-play" class="neo-btn primary flex items-center gap-2"><i class="fas fa-play"></i> Run OS</button>
+            <button onclick="toggleTimeline()" id="btn-timeline" class="neo-btn" title="Toggle Timeline Debugger (History)"><i class="fas fa-history"></i></button>
             <button onclick="detectDeadlock(false)" class="neo-btn bg-white text-black hover:bg-black hover:text-white">Check Deadlock</button>
             <button onclick="detectStarvation()" class="neo-btn" style="background: #FF9800; color: white;" title="Check for Starvation"><i class="fas fa-hourglass-half"></i> Starvation</button>
             <button onclick="takeSnapshot()" class="neo-btn" title="Save Image"><i class="fas fa-camera h-5"></i></button>
@@ -1411,6 +1427,35 @@
         <div style="min-height: 50vh;"></div>
     </div>
 
+    <!-- timeline debugger panel @anshu -->
+
+    <div id="playback-panel" class="hidden absolute left-[20px] bottom-[100px] bg-white border-[3px] border-black p-3 shadow-[6px_6px_0px_rgba(0,0,0,1)] z-40 w-[500px] flex flex-col gap-2" style="min-width: 350px; min-height: 140px;">
+    
+    <div id="playback-header" class="flex justify-between items-center border-b-2 border-black pb-1 mb-1 cursor-move select-none active:cursor-grabbing">
+        <div class="flex items-center gap-2 pointer-events-none">
+            <i class="fas fa-history text-blue-600"></i>
+            <span class="font-black text-sm tracking-widest">TIMELINE DEBUGGER</span>
+        </div>
+        <span id="tick-display" class="font-mono text-xs font-bold bg-[#ffe600] px-2 py-0.5 border-2 border-black shadow-[2px_2px_0px_black] pointer-events-none">TICK: 0</span>
+    </div>
+    
+    <div class="relative w-full h-8 flex items-center flex-shrink-0">
+        <div id="timeline-markers" class="absolute top-0 left-0 w-full h-full pointer-events-none z-0"></div>
+        <input type="range" id="history-slider" min="0" max="0" value="0" step="1" 
+            class="w-full h-3 bg-gray-200 border-2 border-black appearance-none cursor-pointer z-10 bg-transparent"
+            oninput="scrubHistory(this.value)" onchange="finishScrub()">
+    </div>
+
+    <div class="flex justify-between items-center text-[10px] font-bold mt-auto pb-1">
+        <button onclick="stepHistory(-1)" class="neo-btn" style="padding: 2px 8px;"><i class="fas fa-step-backward"></i> STEP BACK</button>
+        <div class="text-gray-500 uppercase tracking-widest pointer-events-none">Drag Header to Move</div>
+        <button onclick="stepHistory(1)" class="neo-btn" style="padding: 2px 8px;">STEP FWD <i class="fas fa-step-forward"></i></button>
+    </div>
+
+    <div id="resize-handle" class="absolute bottom-[2px] right-[2px] w-4 h-4 bg-black cursor-se-resize" style="clip-path: polygon(100% 0, 0 100%, 100% 100%);"></div>
+</div>
+
+
     <!-- Footer -->
     <footer class="h-64 border-t-4 border-black flex flex-col md:flex-row" style="z-index: 20;">
 
@@ -1528,6 +1573,14 @@
         let processWaitTimes = {}; // Track how long each process has been waiting
         let starvationThreshold = 50; // Cycles before considering starvation
         let tempLinkPos = null; // Track mouse position in link mode
+
+        //time travel @anshu
+
+
+        let simHistory = [];
+        const MAX_HISTORY_STEPS = 1000;
+        let isScrubbing = false;
+        let tickCounter = 0;
 
         // Drag-to-connect
         let dragLinkStart = null; // Starting node for drag-to-connect
@@ -4182,6 +4235,15 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
         }
 
         function scheduler() {
+
+//time travel prevention @anshu
+            if (!isScrubbing) {
+        recordHistory();
+        tickCounter++;
+        const display = document.getElementById('tick-display');
+        if (display) display.innerText = `TICK: ${tickCounter}`;
+    }
+
             let activeLabel = "IDLE";
             let activeColor = "#eee";
             let preempted = false;
@@ -5676,6 +5738,14 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
             historyIndex = -1;
             simulationHistory = []; // Clear step history
 
+            //timeline @anshu
+
+            simHistory = [];
+    tickCounter = 0;
+    document.getElementById('playback-panel').classList.add('hidden');
+    document.getElementById('history-slider').value = 0;
+    document.getElementById('tick-display').style.background = '#ffe600';
+
             // Hide simulation controls
             const simControls = document.getElementById('sim-controls');
             if (simControls) {
@@ -7068,6 +7138,116 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
             requestAnimationFrame(animate);
         }
         animate();
+
+
+        // --- Time Travel Logic ---@anshu
+
+
+function recordHistory() {
+    const snapshot = {
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges)),
+        tick: tickCounter,
+        currentRunningNodeId: currentRunningNodeId,
+        quantumRemaining: quantumRemaining,
+        deadlockDetected: deadlockSet.size > 0
+    };
+    simHistory.push(snapshot);
+    if (simHistory.length > MAX_HISTORY_STEPS) simHistory.shift();
+    
+    // Update slider max, but DO NOT auto-show panel
+    const slider = document.getElementById('history-slider');
+    if (slider && !isScrubbing) {
+        slider.max = simHistory.length - 1;
+        slider.value = simHistory.length - 1;
+    }
+}
+
+function toggleTimeline() {
+    const panel = document.getElementById('playback-panel');
+    const btn = document.getElementById('btn-timeline');
+    if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        panel.classList.add('active');
+        if(btn) { btn.classList.add('active'); btn.style.backgroundColor = '#ff9aa2'; }
+    } else {
+        panel.classList.remove('active');
+        panel.classList.add('hidden');
+        if(btn) { btn.classList.remove('active'); btn.style.backgroundColor = ''; }
+    }
+}
+
+function scrubHistory(index) {
+    if (simHistory.length === 0) return;
+    if (isRunning) toggleSimulation(); 
+    isScrubbing = true;
+    index = parseInt(index);
+    if (index >= simHistory.length) index = simHistory.length - 1;
+    
+    const snapshot = simHistory[index];
+    nodes = JSON.parse(JSON.stringify(snapshot.nodes));
+    edges = JSON.parse(JSON.stringify(snapshot.edges));
+    currentRunningNodeId = snapshot.currentRunningNodeId;
+    quantumRemaining = snapshot.quantumRemaining;
+    
+    const tickDisplay = document.getElementById('tick-display');
+    tickDisplay.innerText = `TICK: ${snapshot.tick} (HISTORY)`;
+    tickDisplay.style.background = '#ff9aa2';
+    
+    detectDeadlock(true); updateSystemStats(); draw();
+}
+
+function finishScrub() { isScrubbing = false; document.getElementById('tick-display').style.background = '#ffe600'; }
+
+function stepHistory(direction) {
+    const slider = document.getElementById('history-slider');
+    let newVal = parseInt(slider.value) + direction;
+    if(newVal >= 0 && newVal <= slider.max) { slider.value = newVal; scrubHistory(newVal); }
+}
+
+// --- Drag & Resize Logic (IIFE) ---
+(function initDraggablePanel() {
+    const panel = document.getElementById('playback-panel');
+    const header = document.getElementById('playback-header');
+    const resizeHandle = document.getElementById('resize-handle');
+    let isDragging = false, isResizing = false;
+    let dragOffsetX = 0, dragOffsetY = 0, startW, startH, startX, startY;
+
+    if(!header || !resizeHandle) return;
+
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragOffsetX = e.clientX - panel.offsetLeft;
+        dragOffsetY = e.clientY - panel.offsetTop;
+        panel.style.zIndex = '50';
+    });
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        e.stopPropagation();
+        startW = parseInt(document.defaultView.getComputedStyle(panel).width, 10);
+        startH = parseInt(document.defaultView.getComputedStyle(panel).height, 10);
+        startX = e.clientX; startY = e.clientY;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            e.preventDefault();
+            panel.style.left = `${e.clientX - dragOffsetX}px`;
+            panel.style.top = `${e.clientY - dragOffsetY}px`;
+            panel.style.bottom = 'auto';
+        }
+        if (isResizing) {
+            e.preventDefault();
+            const width = startW + (e.clientX - startX);
+            const height = startH + (e.clientY - startY);
+            if (width > 350) panel.style.width = `${width}px`;
+            if (height > 140) panel.style.height = `${height}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; isResizing = false; if(panel) panel.style.zIndex = '40'; });
+})();
     </script>
 </body>
 </html>
