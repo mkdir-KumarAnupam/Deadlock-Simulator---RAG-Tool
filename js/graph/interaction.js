@@ -126,6 +126,21 @@
       const pos = getMousePos(e);
       const node = getNodeAt(pos.x, pos.y);
 
+      // Spectator Mode Check
+      if (window.Session && window.Session.activeSession && !window.Session.isHost) {
+          // Allow panning (middle click or ctrl+click)
+          if (e.button === 1 || (e.button === 0 && e.ctrlKey) || (mode === 'pan' && e.button === 0)) {
+             isPanning = true;
+             panStartX = e.clientX - offsetX;
+             panStartY = e.clientY - offsetY;
+             canvas.style.cursor = 'grabbing';
+             e.preventDefault();
+             return;
+          }
+          // Block everything else
+          return;
+      }
+
       // Pan mode: left-click to pan
       if (mode === 'pan' && e.button === 0) {
         isPanning = true;
@@ -210,6 +225,15 @@
     });
 
     canvas.addEventListener('mousemove', e => {
+      // Spectator Mode Check
+      if (window.Session && window.Session.activeSession && !window.Session.isHost) {
+          if (isPanning) {
+            offsetX = e.clientX - panStartX;
+            offsetY = e.clientY - panStartY;
+            draw();
+          }
+          return;
+      }
       // Handle panning
       if (isPanning) {
         offsetX = e.clientX - panStartX;
@@ -303,6 +327,14 @@
     });
 
     canvas.addEventListener('mouseup', e => {
+      // Spectator Mode Check
+      if (window.Session && window.Session.activeSession && !window.Session.isHost) {
+          if (isPanning) {
+              isPanning = false;
+              canvas.style.cursor = (mode === 'pan') ? 'grab' : 'default';
+          }
+          return;
+      }
       if (isPanning) {
         isPanning = false;
         // Restore cursor based on current mode
@@ -376,6 +408,11 @@
     }, { passive: false });
 
     canvas.addEventListener('contextmenu', e => {
+      // Spectator Mode Check
+      if (window.Session && window.Session.activeSession && !window.Session.isHost) {
+          e.preventDefault();
+          return;
+      }
       e.preventDefault();
       const pos = getMousePos(e);
       const clickedNode = getNodeAt(pos.x, pos.y);

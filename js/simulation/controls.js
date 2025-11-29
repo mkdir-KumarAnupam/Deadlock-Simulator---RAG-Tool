@@ -16,6 +16,8 @@
           simControlBtn.classList.add('primary');
         }
         printToCli("Simulation Paused.");
+
+        if (window.Session) Session.broadcast('sim_update', { type: 'stop' });
       } else {
         // Only set simulationStartTime on first start, not on resume
         if (simulationStartTime === 0) {
@@ -64,7 +66,10 @@
         }
         const algoName = { 'fcfs': 'FCFS', 'sjf': 'SJF', 'srtf': 'SRTF', 'rr': 'Round Robin' }[schedulingAlgorithm];
         const quantumInfo = schedulingAlgorithm === 'rr' ? ` (Q=${timeQuantum})` : '';
+
         printToCli(`Simulation Running... [${algoName}${quantumInfo}]`);
+
+        if (window.Session) Session.broadcast('sim_update', { type: 'start' });
       }
     }
 

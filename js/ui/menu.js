@@ -32,10 +32,12 @@
 
       if (useLegacy) {
         if (legacyOptions) legacyOptions.style.display = 'block';
-        localStorage.setItem('useLegacyScenarios', 'true');
+        if (window.Auth && Auth.savePreference) Auth.savePreference('useLegacyScenarios', 'true');
+        else localStorage.setItem('useLegacyScenarios', 'true');
       } else {
         if (legacyOptions) legacyOptions.style.display = 'none';
-        localStorage.setItem('useLegacyScenarios', 'false');
+        if (window.Auth && Auth.savePreference) Auth.savePreference('useLegacyScenarios', 'false');
+        else localStorage.setItem('useLegacyScenarios', 'false');
       }
     }
 

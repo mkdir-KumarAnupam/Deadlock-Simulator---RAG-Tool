@@ -250,7 +250,10 @@
       detectDeadlock(true);
       updateStarvationTracking(); // Track starvation during simulation
       updateSystemStats();
+      updateSystemStats();
       draw();
+
+      if (window.Session) Session.broadcast('sim_update', { type: 'step' });
     }
 
     function terminateProcess(p) {

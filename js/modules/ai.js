@@ -1,7 +1,11 @@
 
     // --- Gemini AI Integration ---
     function saveGeminiKey(key) {
-      localStorage.setItem('geminiApiKey', key);
+      if (window.Auth && Auth.savePreference) {
+        Auth.savePreference('geminiApiKey', key);
+      } else {
+        localStorage.setItem('geminiApiKey', key);
+      }
       printToCli('Gemini API key saved', 'success');
     }
 

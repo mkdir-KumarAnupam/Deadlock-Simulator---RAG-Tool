@@ -128,6 +128,8 @@
       updateSystemStats();
       draw();
       printToCli(`Pasted ${clipboard.nodes.length} node(s)`, 'success');
+
+      if (window.Session) Session.broadcast('graph_update', { nodes, edges });
     }
 
     function duplicateNodes() {
@@ -189,6 +191,9 @@
       updateSystemStats();
       draw();
       saveState();
+
+      if (window.Session) Session.broadcast('graph_update', { nodes, edges });
+
       return newNode;
     }
 
@@ -203,6 +208,8 @@
       updateSystemStats();
       draw();
       saveState();
+
+      if (window.Session) Session.broadcast('graph_update', { nodes, edges });
     }
 
     function addEdge(source, target) {
@@ -238,6 +245,8 @@
       updateProcessStates();
       draw();
       saveState();
+
+      if (window.Session) Session.broadcast('graph_update', { nodes, edges });
     }
     function resetGraph() {
       nodes = []; edges = []; nextId = 1;
@@ -277,6 +286,8 @@
       printToCli("System Reset.");
       saveState();
       updateUndoRedoButtons();
+
+      if (window.Session) Session.broadcast('graph_update', { nodes, edges });
     }
 
     function deleteEdge(edge) {
@@ -293,5 +304,7 @@
         if (starvingSet.size > 0) detectStarvation();
 
         draw();
+
+        if (window.Session) Session.broadcast('graph_update', { nodes, edges });
       }
     }

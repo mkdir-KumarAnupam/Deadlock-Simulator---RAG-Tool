@@ -1,4 +1,5 @@
 
+
     function getScenarioData() {
       return [
         {
@@ -509,6 +510,152 @@
         printToCli("Aging Demo: Priorities gradually increase", 'info');
         printToCli("Prevents indefinite postponement", 'success');
       }
+
       document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
       detectDeadlock(true);
     }
+
+    // --- Cloud Storage Logic (Supabase) ---
+    async function saveScenarioToCloud(name) {
+      if (!Auth.user) {
+        alert("Please login to save scenarios.");
+        return;
+      }
+
+      if (!SupabaseService.isConfigured()) {
+        alert("Please configure Supabase in Settings.");
+        return;
+      }
+
+      const supabase = SupabaseService.getClient();
+      const data = { nodes, edges, nextId };
+
+      const { error } = await supabase
+        .from('scenarios')
+        .insert({
+          user_id: Auth.user.id,
+          name: name,
+          data: data,
+          thumbnail: null
+        });
+
+      if (error) {
+        printToCli(`Error saving: ${error.message}`, 'error');
+      } else {
+        printToCli(`Scenario "${name}" saved to cloud.`, 'success');
+      }
+    }
+
+    async function fetchUserScenarios() {
+      if (!Auth.user) return [];
+      if (!SupabaseService.isConfigured()) return [];
+
+      const supabase = SupabaseService.getClient();
+      const { data, error } = await supabase
+        .from('scenarios')
+        .select('*')
+        .eq('user_id', Auth.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Failed to fetch scenarios", error);
+        return [];
+      }
+      return data;
+    }
+
+    async function loadUserScenario(id) {
+       if (!Auth.user) return;
+       if (!SupabaseService.isConfigured()) return;
+
+       const supabase = SupabaseService.getClient();
+       const { data, error } = await supabase
+        .from('scenarios')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+       if (error) {
+         printToCli(`Error loading scenario: ${error.message}`, 'error');
+         return;
+       }
+
+       if (data) {
+          const scenarioData = data.data;
+
+          resetGraph();
+          nodes = scenarioData.nodes.map(n => ({ ...n, rotation: (Math.random() - 0.5) * 0.25, pinColor: '#333' }));
+          edges = scenarioData.edges;
+          nextId = scenarioData.nextId || (nodes.length > 0 ? Math.max(...nodes.map(n => n.id)) + 1 : 1);
+
+          if (isRunning) toggleSimulation();
+          updateSystemStats();
+          draw();
+          printToCli(`Loaded cloud scenario: ${data.name}`, 'success');
+
+          // Close menus
+          document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
+       }
+    }
+
+    // --- UI Helpers ---
+    function promptSaveScenario() {
+      if (!Auth.user) {
+        alert("Please login to save scenarios.");
+        return;
+      }
+      const name = prompt("Enter scenario name:");
+      if (name) {
+        saveScenarioToCloud(name);
+      }
+    }
+
+    async function openUserScenarios() {
+      if (!Auth.user) {
+        alert("Please login to view your scenarios.");
+        return;
+      }
+
+      const scenarios = await fetchUserScenarios();
+
+      // Create a modal to list scenarios
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+
+      let listHtml = '';
+      if (scenarios.length === 0) {
+        listHtml = '<div class="p-4 text-center italic text-gray-500">No saved scenarios found.</div>';
+      } else {
+        listHtml = scenarios.map(s => `
+          <div class="flex justify-between items-center p-3 border-b border-gray-300 hover:bg-yellow-50">
+            <div>
+              <div class="font-bold">${s.name}</div>
+              <div class="text-xs text-gray-500">${new Date(s.created_at).toLocaleDateString()}</div>
+            </div>
+            <button onclick="loadUserScenario('${s.id}'); this.closest('[style*=fixed]').remove();" class="neo-btn sm" style="background: #4ecdc4;">LOAD</button>
+          </div>
+        `).join('');
+      }
+
+      modal.innerHTML = `
+        <div class="neo-box bg-white p-0" style="width: 400px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column;">
+            <div class="flex justify-between items-center p-4 border-b-4 border-black bg-gray-100">
+                <h3 class="font-black text-lg">MY SCENARIOS</h3>
+                <button onclick="this.closest('[style*=fixed]').remove()" class="text-xl font-bold hover:text-red-500">&times;</button>
+            </div>
+            <div class="flex-grow overflow-y-auto">
+                ${listHtml}
+            </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      // Close main menu if open
+      document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
+    }
+
+    window.promptSaveScenario = promptSaveScenario;
+    window.openUserScenarios = openUserScenarios;
+    window.saveScenarioToCloud = saveScenarioToCloud;
+    window.fetchUserScenarios = fetchUserScenarios;
+    window.loadUserScenario = loadUserScenario;

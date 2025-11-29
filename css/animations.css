@@ -216,3 +216,124 @@
   z-index: 10;
   position: relative;
 }
+
+/* New Animations for Session UI */
+
+/* Animated Stripe Background */
+@keyframes stripe-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+.animated-stripe-bg {
+  background: repeating-linear-gradient(
+    45deg,
+    #ffe600,
+    #ffe600 10px,
+    #ffd500 10px,
+    #ffd500 20px
+  );
+  background-size: 40px 40px;
+  animation: stripe-scroll 1s linear infinite;
+}
+
+/* Panel Slide Transitions */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-120%) translateY(-50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(-50%);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0) translateY(-50%);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-120%) translateY(-50%);
+    opacity: 0;
+  }
+}
+
+.panel-slide-in {
+  animation: slideInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.panel-slide-out {
+  animation: slideOutLeft 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+
+/* Notification Pop */
+@keyframes notification-pop {
+  0% {
+    transform: translateX(-50%) translateY(20px) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes notification-fade-out {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-20px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.neo-notification {
+  position: fixed;
+  bottom: 100px; /* Above the footer/timeline */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border: 3px solid black;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: notification-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.neo-notification.success {
+  background: #a3ffac;
+  color: black;
+}
+
+.neo-notification.error {
+  background: #ff6b6b;
+  color: black;
+}
+
+.neo-notification.info {
+  background: #fff;
+  color: black;
+}
+
+.neo-notification.hiding {
+  animation: notification-fade-out 0.3s ease-in forwards;
+}

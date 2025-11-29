@@ -4,14 +4,24 @@
       // Add selected pattern class
       document.body.classList.add(`bg-pattern-${pattern}`);
       // Save preference
-      localStorage.setItem('backgroundPattern', pattern);
+      if (window.Auth && Auth.savePreference) {
+        Auth.savePreference('backgroundPattern', pattern);
+      } else {
+        localStorage.setItem('backgroundPattern', pattern);
+      }
     }
 
     function setPatternOpacity(value) {
       const opacity = value / 100;
       document.documentElement.style.setProperty('--pattern-opacity', opacity);
       document.getElementById('pattern-opacity-value').textContent = value + '%';
-      localStorage.setItem('patternOpacity', value);
+      document.getElementById('pattern-opacity-value').textContent = value + '%';
+
+      if (window.Auth && Auth.savePreference) {
+        Auth.savePreference('patternOpacity', value);
+      } else {
+        localStorage.setItem('patternOpacity', value);
+      }
     }
     // --- Settings Functions ---
     function setToolbarPosition(position) {
@@ -38,6 +48,9 @@
       document.getElementById('settings-menu').classList.remove('show');
       printToCli(`Theme changed to: ${themeName}`, 'info');
       draw();
+      printToCli(`Theme changed to: ${themeName}`, 'info');
+      draw();
+      if (window.Auth && Auth.savePreference) Auth.savePreference('theme', themeName);
     }
 
     // --- System Configuration Functions ---
@@ -99,6 +112,7 @@
         systemConfig.edgeLabelSize = size;
         draw();
         printToCli(`Edge label size set to: ${size}px`, 'success');
+        if (window.Auth && Auth.savePreference) Auth.savePreference('edgeLabelSize', size);
       } else {
         printToCli('Edge label size must be between 0-20', 'error');
         document.getElementById('config-edge-label-size').value = systemConfig.edgeLabelSize;
@@ -109,6 +123,7 @@
       systemConfig.showEdgeLabels = show;
       draw();
       printToCli(`Edge labels ${show ? 'shown' : 'hidden'}`, 'info');
+      if (window.Auth && Auth.savePreference) Auth.savePreference('showEdgeLabels', show);
     }
 
     function updateEdgeThickness(value) {
@@ -117,6 +132,7 @@
         systemConfig.edgeThickness = thickness;
         draw();
         printToCli(`Edge thickness set to: ${thickness}px`, 'success');
+        if (window.Auth && Auth.savePreference) Auth.savePreference('edgeThickness', thickness);
       } else {
         printToCli('Edge thickness must be between 1-10', 'error');
         document.getElementById('config-edge-thickness').value = systemConfig.edgeThickness;
@@ -177,6 +193,7 @@
       });
 
       printToCli(`UI scale set to: ${Math.round(scale * 100)}%`, 'success');
+      if (window.Auth && Auth.savePreference) Auth.savePreference('uiScale', scale);
     }
 
     // --- Zoom & Pan Functions ---
@@ -236,3 +253,19 @@
       updateBackgroundScale(scale);
       printToCli('Fitted to screen', 'info');
     }
+
+    // Explicitly expose functions to window for Auth module
+    window.setBackgroundPattern = setBackgroundPattern;
+    window.setPatternOpacity = setPatternOpacity;
+    window.setToolbarPosition = setToolbarPosition;
+    window.changeTheme = changeTheme;
+    window.updateMaxMemory = updateMaxMemory;
+    window.updateCPUCores = updateCPUCores;
+    window.updateContextSwitchTime = updateContextSwitchTime;
+    window.updateSimSpeed = updateSimSpeed;
+    window.updateEdgeLabelSize = updateEdgeLabelSize;
+    window.toggleEdgeLabels = toggleEdgeLabels;
+    window.updateEdgeThickness = updateEdgeThickness;
+    window.updateUIScale = updateUIScale;
+    window.fitToScreen = fitToScreen;
+    window.resetZoom = resetZoom;

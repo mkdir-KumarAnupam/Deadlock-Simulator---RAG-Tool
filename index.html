@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAG OS Simulator v1.0</title>
+  <title>RAG OS Simulator v1.5</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
@@ -19,19 +19,25 @@
 
   <!-- Header -->
   <header
-    class="p-3 border-b-4 border-black bg-white flex flex-wrap justify-between items-center z-20 shadow-sm relative">
+    class="p-3 border-b-4 border-black bg-white flex flex-wrap justify-between items-center z-30 shadow-sm relative">
     <div class="flex items-center gap-6">
       <!-- Dropdown Menu Container -->
       <div class="relative">
         <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
           <span>DEADLOCK_SIM</span>
-          <span class="neo-tag">v1.0</span>
+          <span class="neo-tag">v1.5</span>
           <span class="text-xs ml-1 opacity-70">▼</span>
         </div>
 
         <div id="main-menu" class="neo-dropdown">
           <div class="neo-dropdown-item" onclick="exportJSON()">
             <i class="fas fa-save mr-2"></i> Save State (JSON)
+          </div>
+          <div class="neo-dropdown-item" onclick="promptSaveScenario()">
+            <i class="fas fa-cloud-upload-alt mr-2"></i> Save to Cloud
+          </div>
+          <div class="neo-dropdown-item" onclick="openUserScenarios()">
+            <i class="fas fa-cloud-download-alt mr-2"></i> Load from Server
           </div>
           <label class="neo-dropdown-item block">
             <i class="fas fa-folder-open mr-2"></i> Load State
@@ -50,7 +56,7 @@
           title="Settings" style="height: 42px;">
           <i class="fas fa-cog"></i>
         </button>
-        <div id="settings-menu" class="neo-dropdown" style="width: 280px; max-height: 500px; overflow-y: auto;">
+        <div id="settings-menu" class="neo-dropdown" style="width: 280px; left: 0; right: auto; max-height: 80vh; overflow-y: auto; z-index: 100;">
           <div class="neo-dropdown-item border-b-2 border-black pb-2 mb-2">
             <strong>System Configuration:</strong>
           </div>
@@ -148,12 +154,33 @@
             <strong>AI Analysis (Gemini):</strong>
           </div>
           <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
-            <span class="font-bold">API Key:</span>
+            <span class="font-bold">Gemini API Key:</span>
             <input type="password" id="config-gemini-key" placeholder="Enter Gemini API key"
               class="w-full p-2 border-2 border-black font-mono text-xs" onchange="saveGeminiKey(this.value)">
             <a href="https://aistudio.google.com/app/apikey" target="_blank"
               class="text-blue-600 underline text-[10px]">Get API Key →</a>
           </label>
+          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+            <strong>Supabase Config:</strong>
+          </div>
+          <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
+            <span class="font-bold">Project URL:</span>
+            <input type="text" id="config-supabase-url" placeholder="https://xyz.supabase.co"
+              class="w-full p-2 border-2 border-black font-mono text-xs"
+              onchange="SupabaseService.updateConfig(this.value, document.getElementById('config-supabase-key').value)">
+          </label>
+          <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
+            <span class="font-bold">Anon Key:</span>
+            <input type="password" id="config-supabase-key" placeholder="public-anon-key"
+              class="w-full p-2 border-2 border-black font-mono text-xs"
+              onchange="SupabaseService.updateConfig(document.getElementById('config-supabase-url').value, this.value)">
+          </label>
+          <div class="neo-dropdown-item flex justify-center pt-2">
+             <button onclick="Auth.testCloudSave()" class="neo-btn" style="width: 100%; font-size: 10px; padding: 4px;">
+               <i class="fas fa-cloud-upload-alt"></i> TEST CLOUD SAVE
+             </button>
+          </div>
+
           <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
             <strong>Theme:</strong>
           </div>
@@ -175,38 +202,50 @@
         </div>
       </div>
 
-      <!-- Scenario UI (Library or Legacy) -->
+      <!-- Explore Menu -->
       <div id="scenario-ui-container" class="relative">
-        <button class="neo-btn epic-hover" onclick="toggleMenu(event, 'explore-menu')"
+          <button class="neo-btn epic-hover flex items-center gap-2" onclick="toggleMenu(event, 'explore-menu')"
           style="height: 42px; background: white; color: black; border: 3px solid black; box-shadow: 4px 4px 0 black; font-weight: 900; letter-spacing: 1px; transition: all 0.2s;">
           <i class="fas fa-compass" style="font-size: 1.1em;"></i> EXPLORE <span class="ml-1 text-[10px]">▼</span>
-        </button>
-        <div id="explore-menu" class="neo-dropdown" style="width: 240px; border: 4px solid black; box-shadow: 8px 8px 0 rgba(0,0,0,1);">
+          </button>
+          <div id="explore-menu" class="neo-dropdown" style="width: 240px; border: 4px solid black; box-shadow: 8px 8px 0 rgba(0,0,0,1);">
           <div class="neo-dropdown-item epic-dropdown-item" onclick="openScenarioLibrary()"
-            style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
-            <div style="width: 32px; height: 32px; background: #ffe600; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
+              style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
+              <div style="width: 32px; height: 32px; background: #ffe600; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
               <i class="fas fa-book-open"></i>
-            </div>
-            <span style="font-weight: 800;">SCENARIO LIBRARY</span>
+              </div>
+              <span style="font-weight: 800;">SCENARIO LIBRARY</span>
           </div>
           <div id="challenge-mode-item" class="neo-dropdown-item epic-dropdown-item" onclick="openChallengeModal()"
-            style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
-            <div style="width: 32px; height: 32px; background: #ff9ff3; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
+              style="padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; background: white;">
+              <div style="width: 32px; height: 32px; background: #ff9ff3; border: 2px solid black; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 black;">
               <i class="fas fa-trophy"></i>
-            </div>
-            <span style="font-weight: 800;">CHALLENGE MODE</span>
+              </div>
+              <span style="font-weight: 800;">CHALLENGE MODE</span>
           </div>
-          <!-- Legacy Scenarios (Hidden by default, kept for compatibility) -->
+          <!-- Legacy Scenarios -->
           <div id="legacy-scenario-options" style="display: none; border-top: 3px solid black; margin-top: 0; padding-top: 0;">
-             <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Simple Deadlock</div>
-             <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Circular Wait</div>
-             <div class="neo-dropdown-item" onclick="loadScenario('safe_state')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Safe State</div>
-             <div class="neo-dropdown-item" onclick="loadScenario('starvation')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Starvation</div>
+              <div class="neo-dropdown-item" onclick="loadScenario('simple_deadlock')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Simple Deadlock</div>
+              <div class="neo-dropdown-item" onclick="loadScenario('circular_wait')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Circular Wait</div>
+              <div class="neo-dropdown-item" onclick="loadScenario('safe_state')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Safe State</div>
+              <div class="neo-dropdown-item" onclick="loadScenario('starvation')" style="font-size: 12px; padding: 10px 16px; background: #f0f0f0;"><i class="fas fa-caret-right mr-2"></i> Starvation</div>
+          </div>
+          </div>
+      </div>
+      </div>
+
+      <!-- Profile Section (Centered) -->
+      <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
+        <div class="relative">
+          <button id="profile-btn" class="neo-btn rounded-full p-0 overflow-hidden border-2 border-black transition-transform hover:scale-105"
+            style="width: 42px; height: 42px;">
+            <i class="fas fa-user"></i>
+          </button>
+          <!-- Profile Dropdown (Populated by JS) -->
+          <div id="profile-menu" class="neo-dropdown" style="width: 240px; right: -100px; left: auto; transform: translateX(-50%);">
           </div>
         </div>
       </div>
-      </div>
-    </div>
 
 
 
@@ -225,6 +264,8 @@
       <button id="btn-delete-top" class="neo-btn danger" onclick="setMode('delete')">Delete</button>
     </div>
     </div>
+
+    <div class="flex gap-2 items-center">
 
     <div class="flex gap-2 items-center">
 
@@ -757,7 +798,62 @@
     </div>
   </div>
 
-  <!-- Active Challenge Panel -->
+
+  <!-- Session Panel -->
+  <div id="session-panel" style="display: none; position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000; font-family: 'Courier New', monospace;">
+    <!-- Minimized Tab -->
+    <div id="session-minimized" class="hidden" onclick="Session.togglePanel()"
+         style="background: #ffe600; border: 3px solid black; padding: 10px; cursor: pointer; box-shadow: 4px 4px 0 black; writing-mode: vertical-rl; text-orientation: mixed; font-weight: 900;">
+        <i class="fas fa-chevron-right mb-2"></i> LIVE
+    </div>
+
+    <!-- Main Content -->
+    <div id="session-content" style="background: white; border: 4px solid black; box-shadow: 8px 8px 0 black; width: 300px; position: relative;">
+        <!-- Spectator Badge (Absolute) -->
+        <div id="spectator-badge" class="hidden" style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 20; background: #dbeafe; border: 2px solid #3b82f6; color: #1e40af; padding: 4px 12px; font-size: 11px; font-weight: 900; white-space: nowrap;">
+            <i class="fas fa-eye mr-1"></i> SPECTATOR MODE
+        </div>
+
+        <!-- Header -->
+        <div class="animated-stripe-bg" style="padding: 10px; border-bottom: 3px solid black; display: flex; justify-content: space-between; align-items: center;">
+            <div class="font-black flex items-center gap-2" style="background: white; padding: 6px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black;">
+                <i class="fas fa-broadcast-tower"></i> LIVE SESSION
+            </div>
+            <button onclick="Session.togglePanel()" class="hover:text-white transition-colors">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+
+        <!-- Join View -->
+        <div id="session-join-view" class="p-4">
+            <p class="text-xs font-bold mb-2">ENTER SESSION CODE:</p>
+            <div class="flex gap-2">
+                <input type="text" id="session-code-input" class="neo-input w-full font-mono text-center text-lg tracking-widest" placeholder="000000" maxlength="6">
+                <button onclick="Session.handleJoin()" class="neo-btn primary">JOIN</button>
+            </div>
+        </div>
+
+        <!-- Active View -->
+        <div id="session-active-view" class="hidden p-4">
+
+
+            <p class="text-xs font-bold mb-1 text-gray-500">SESSION CODE:</p>
+            <div class="flex items-center gap-2 mb-4">
+                <div id="display-session-code" class="bg-black text-white font-mono text-2xl font-bold px-3 py-1 flex-grow text-center tracking-widest">
+                    ------
+                </div>
+                <button onclick="Session.copyCode()" class="neo-btn" title="Copy Code">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+
+            <button onclick="Session.leaveSession()" class="neo-btn danger w-full">
+                <i class="fas fa-sign-out-alt mr-2"></i> LEAVE SESSION
+            </button>
+        </div>
+    </div>
+  </div>
+
   <div id="challenge-active-panel"
     style="display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); background: white; border: 4px solid black; border-top: none; box-shadow: 0 8px 0 black; padding: 20px; z-index: 900; width: 600px; font-family: 'Courier New', monospace;">
 
@@ -912,6 +1008,11 @@
   <script src="js/demo/ui.js"></script>
   <script src="js/simulation/scheduler.js"></script>
   <script src="js/simulation/deadlock.js"></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/modules/supabaseClient.js"></script>
+  <script src="js/modules/auth.js"></script>
+  <script src="js/modules/session.js"></script>
   <script src="js/simulation/starvation.js"></script>
   <script src="js/simulation/controls.js"></script>
   <script src="js/graph/ops.js"></script>
@@ -922,5 +1023,6 @@
   <script src="js/drawing/renderer.js"></script>
   <script src="js/modules/challenge.js"></script>
   <script src="js/core/main.js"></script>
+  <div id="notification-container"></div>
 </body>
 </html>
