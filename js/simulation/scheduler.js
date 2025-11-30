@@ -33,10 +33,57 @@
       updateSystemStats();
     }
 
+    function attemptAllocation() {
+      // Find all request edges (Process -> Resource)
+      const requests = edges.filter(e => {
+        const source = getNodeById(e.source);
+        const target = getNodeById(e.target);
+        return source && target && source.type === 'process' && target.type === 'resource';
+      });
+
+      // Sort requests by arrival time or priority if needed (FCFS for now)
+      // We iterate and try to fulfill each request
+      requests.forEach(req => {
+        const process = getNodeById(req.source);
+        const resource = getNodeById(req.target);
+
+        if (!process || !resource) return;
+
+        // Check availability
+        const allocatedCount = edges.filter(e => e.source === resource.id).length;
+        if (allocatedCount < resource.capacity) {
+           // Allocate!
+           // Remove request edge
+           const reqIndex = edges.indexOf(req);
+           if (reqIndex > -1) {
+             edges.splice(reqIndex, 1);
+             // Add allocation edge (Resource -> Process)
+             edges.push({ source: resource.id, target: process.id, label: '1' });
+             printToCli(`Auto-Allocated ${resource.label} to ${process.label}`, 'success');
+
+             // Pulse animation
+             pulseAnimations.push(
+                { nodeId: resource.id, startTime: Date.now(), duration: 500 },
+                { nodeId: process.id, startTime: Date.now(), duration: 500 }
+             );
+
+             // Update process state will happen in next updateProcessStates call
+           }
+        }
+      });
+
+      // Update states immediately after allocation to unblock processes
+      updateProcessStates();
+    }
+
     function scheduler() {
+      // Try to allocate resources to blocked processes first
+      attemptAllocation();
+
       let activeLabel = "IDLE";
       let activeColor = "#eee";
       let preempted = false;
+
 
       // Update quantum input if changed
       if (schedulingAlgorithm === 'rr') {

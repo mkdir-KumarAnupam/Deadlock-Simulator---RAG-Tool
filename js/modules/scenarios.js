@@ -126,6 +126,20 @@
           description: 'Low-priority processes gradually increase their priority over time to prevent indefinite postponement in priority scheduling.',
           outcome: 'See how aging prevents starvation. Balance between priority respect and fairness in scheduling algorithms.',
           config: [{ icon: 'fas fa-circle', text: '5 Processes' }, { icon: 'fas fa-chart-line', text: 'Dynamic Priority' }]
+        },
+
+        {
+          id: 'bankers_demo', number: '19', category: 'DEADLOCK AVOIDANCE', categoryColor: '#a3ffac', title: 'Banker\'s Algorithm Demo',
+          description: 'A classic textbook example (Silberschatz) configured with Max Claims to demonstrate the Banker\'s Algorithm safety check.',
+          outcome: 'Run the Safety Check to see the Safe Sequence < P1, P3, P4, P0, P2 >. Modify allocations to create an unsafe state.',
+          config: [{ icon: 'fas fa-circle', text: '5 Processes' }, { icon: 'fas fa-university', text: 'Max Claims Set' }]
+        },
+
+        {
+          id: 'unsafe_demo', number: '20', category: 'UNSAFE STATE', categoryColor: '#ff6b6b', title: 'Unsafe State Demo',
+          description: 'A system configuration where the Banker\'s Algorithm fails. Available resources are insufficient to satisfy the Max Claim of any process.',
+          outcome: 'Run the Safety Check to see "DEADLOCK POSSIBLE". This proves the system is in an Unsafe State.',
+          config: [{ icon: 'fas fa-circle', text: '3 Processes' }, { icon: 'fas fa-exclamation-triangle', text: 'Unsafe Config' }]
         }
       ];
     }
@@ -510,6 +524,80 @@
         printToCli("Aging Demo: Priorities gradually increase", 'info');
         printToCli("Prevents indefinite postponement", 'success');
       }
+      else if (type === 'bankers_demo') {
+        const rA = addNode('resource', cx - 150, cy - 120); rA.label = 'A'; rA.capacity = 10; rA.instances = 10;
+        const rB = addNode('resource', cx, cy - 120);       rB.label = 'B'; rB.capacity = 5;  rB.instances = 5;
+        const rC = addNode('resource', cx + 150, cy - 120); rC.label = 'C'; rC.capacity = 7;  rC.instances = 7;
+
+        const p0 = addNode('process', cx - 200, cy + 50); p0.label = 'P0';
+        const p1 = addNode('process', cx - 100, cy + 50); p1.label = 'P1';
+        const p2 = addNode('process', cx, cy + 50);       p2.label = 'P2';
+        const p3 = addNode('process', cx + 100, cy + 50); p3.label = 'P3';
+        const p4 = addNode('process', cx + 200, cy + 50); p4.label = 'P4';
+
+        // Allocations
+        // P0: B=1
+        addEdge(rB, p0);
+
+        // P1: A=2
+        addEdge(rA, p1); addEdge(rA, p1);
+
+        // P2: A=3, C=2
+        addEdge(rA, p2); addEdge(rA, p2); addEdge(rA, p2);
+        addEdge(rC, p2); addEdge(rC, p2);
+
+        // P3: A=2, B=1, C=1
+        addEdge(rA, p3); addEdge(rA, p3);
+        addEdge(rB, p3);
+        addEdge(rC, p3);
+
+        // P4: C=2
+        addEdge(rC, p4); addEdge(rC, p4);
+
+        // Max Claims
+        p0.maxClaim = { [rA.id]: 7, [rB.id]: 5, [rC.id]: 3 };
+        p1.maxClaim = { [rA.id]: 3, [rB.id]: 2, [rC.id]: 2 };
+        p2.maxClaim = { [rA.id]: 9, [rB.id]: 0, [rC.id]: 2 };
+        p3.maxClaim = { [rA.id]: 2, [rB.id]: 2, [rC.id]: 2 };
+        p4.maxClaim = { [rA.id]: 4, [rB.id]: 3, [rC.id]: 3 };
+
+        printToCli("Loaded: Banker's Algo Demo (Silberschatz Ex)", 'info');
+        printToCli("Click 'BANKER'S' button to verify Safe State", 'success');
+      }
+      else if (type === 'unsafe_demo') {
+        const r1 = addNode('resource', cx, cy - 100);
+        r1.label = 'R1';
+        r1.capacity = 12;
+        r1.instances = 12;
+
+        const p1 = addNode('process', cx - 150, cy + 50); p1.label = 'P1';
+        const p2 = addNode('process', cx, cy + 50);       p2.label = 'P2';
+        const p3 = addNode('process', cx + 150, cy + 50); p3.label = 'P3';
+
+        // Allocations (Total = 10, Available = 2)
+        // P1: Alloc 4
+        addEdge(r1, p1); addEdge(r1, p1); addEdge(r1, p1); addEdge(r1, p1);
+
+        // P2: Alloc 4
+        addEdge(r1, p2); addEdge(r1, p2); addEdge(r1, p2); addEdge(r1, p2);
+
+        // P3: Alloc 2
+        addEdge(r1, p3); addEdge(r1, p3);
+
+        // Max Claims
+        // P1 Need = 10 - 4 = 6. (6 > 2 Avail) -> Wait
+        p1.maxClaim = { [r1.id]: 10 };
+
+        // P2 Need = 8 - 4 = 4. (4 > 2 Avail) -> Wait
+        p2.maxClaim = { [r1.id]: 8 };
+
+        // P3 Need = 9 - 2 = 7. (7 > 2 Avail) -> Wait
+        p3.maxClaim = { [r1.id]: 9 };
+
+        printToCli("Loaded: Unsafe State Demo", 'info');
+        printToCli("Available: 2. Needs: P1(6), P2(4), P3(7)", 'warning');
+        printToCli("Run Safety Check to confirm UNSAFE state", 'success');
+      }
 
       document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
       detectDeadlock(true);
@@ -616,7 +704,7 @@
     window.loadAutosave = loadAutosave;
 
     // --- Cloud Storage Logic (Supabase) ---
-    async function saveScenarioToCloud(name) {
+    async function saveScenarioToCloud(name, isPublic = false) {
       if (!Auth.user) {
         alert("Please login to save scenarios.");
         return;
@@ -630,19 +718,24 @@
       const supabase = SupabaseService.getClient();
       const data = { nodes, edges, nextId };
 
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('scenarios')
         .insert({
           user_id: Auth.user.id,
           name: name,
           data: data,
-          thumbnail: null
-        });
+          thumbnail: null,
+          is_public: isPublic
+        })
+        .select()
+        .single();
 
       if (error) {
         printToCli(`Error saving: ${error.message}`, 'error');
+        return null;
       } else {
         printToCli(`Scenario "${name}" saved to cloud.`, 'success');
+        return insertedData;
       }
     }
 
@@ -692,6 +785,44 @@
           updateSystemStats();
           draw();
           printToCli(`Loaded cloud scenario: ${data.name}`, 'success');
+
+          // Close menus
+          document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
+       }
+    }
+
+    async function loadPublicScenario(id) {
+       if (!SupabaseService.isConfigured()) return;
+
+       const supabase = SupabaseService.getClient();
+       const { data, error } = await supabase
+        .from('scenarios')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+       if (error) {
+         printToCli(`Error loading shared scenario: ${error.message}`, 'error');
+         return;
+       }
+
+       if (!data) {
+         printToCli('Scenario not found or access denied (Check RLS policies)', 'error');
+         return;
+       }
+
+       if (data) {
+          const scenarioData = data.data;
+
+          resetGraph();
+          nodes = scenarioData.nodes.map(n => ({ ...n, rotation: (Math.random() - 0.5) * 0.25, pinColor: '#333' }));
+          edges = scenarioData.edges;
+          nextId = scenarioData.nextId || (nodes.length > 0 ? Math.max(...nodes.map(n => n.id)) + 1 : 1);
+
+          if (isRunning) toggleSimulation();
+          updateSystemStats();
+          draw();
+          printToCli(`Loaded shared scenario: ${data.name}`, 'success');
 
           // Close menus
           document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
@@ -806,5 +937,6 @@
     window.saveScenarioToCloud = saveScenarioToCloud;
     window.fetchUserScenarios = fetchUserScenarios;
     window.loadUserScenario = loadUserScenario;
+    window.loadPublicScenario = loadPublicScenario;
     window.closeSaveModal = closeSaveModal;
     window.confirmSaveScenario = confirmSaveScenario;

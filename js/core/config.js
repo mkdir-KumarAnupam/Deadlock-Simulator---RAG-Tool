@@ -6,7 +6,7 @@
         running: '#FFD700',
         blocked: '#FF6B9D',
         terminated: '#C0C0C0',
-        resource: '#FFFFFF',
+        resource: '#5D9CEC',
         highlight: '#FFD700',
         deadlock: '#FF3366',
         starvation: '#FF9800' // Orange for starvation

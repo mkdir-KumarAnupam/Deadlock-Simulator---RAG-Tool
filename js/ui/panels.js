@@ -200,6 +200,14 @@
                         <input type="number" class="neo-input" value="${node.memory}"
                             onchange="updateMemory(${node.id}, this.value)">
                     </div>
+
+                    <!-- Banker's Algo Config Toggle -->
+                    <div class="mt-4 pt-4 border-t-2 border-black">
+                        <button onclick="showBankersProps(${node.id})" class="neo-btn w-full flex items-center justify-center gap-2 bg-yellow-200 hover:bg-yellow-300 text-xs py-2">
+                            <i class="fas fa-university"></i> CONFIGURE BANKER'S
+                        </button>
+                    </div>
+
                     <div class="mt-2 text-xs font-bold">State: ${node.state}</div>
                 `;
       } else {
@@ -223,6 +231,42 @@
       }
       content.innerHTML = html;
     }
+
+    window.showBankersProps = (nodeId) => {
+        const node = getNodeById(nodeId);
+        if (!node) return;
+
+        const content = document.getElementById('prop-content');
+        let html = `
+            <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+                <button onclick="openProps(getNodeById(${node.id}))" class="neo-btn px-2 py-1 text-xs">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h3 class="font-black text-sm">BANKER'S CONFIG</h3>
+            </div>
+
+            <div class="mb-3 text-xs font-bold bg-yellow-100 p-2 border-2 border-black">
+                Process: ${node.label}
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs font-black mb-2 bg-yellow-200 inline-block px-1 border border-black transform -rotate-1">MAX CLAIM:</label>
+                ${nodes.filter(n => n.type === 'resource').map(r => {
+                    const currentMax = (node.maxClaim && node.maxClaim[r.id]) || 0;
+                    return `
+                        <div class="flex items-center justify-between mb-2 text-xs bg-white p-1 border border-gray-300">
+                            <span class="font-bold">${r.label}:</span>
+                            <input type="number" min="0" class="neo-input w-16 text-center"
+                                value="${currentMax}"
+                                onchange="updateMaxClaim(${node.id}, ${r.id}, this.value)">
+                        </div>
+                    `;
+                }).join('')}
+                ${nodes.filter(n => n.type === 'resource').length === 0 ? '<div class="text-xs italic text-gray-500">Add resources first</div>' : ''}
+            </div>
+        `;
+        content.innerHTML = html;
+    };
 
     function closeProps() {
       propPanel.style.right = '-280px';
@@ -272,6 +316,15 @@
         printToCli(`Updated ${n.label} capacity to ${n.capacity}`);
         saveState();
       }
+    };
+    window.updateMaxClaim = (nodeId, resourceId, val) => {
+        const n = getNodeById(nodeId);
+        if (n && n.type === 'process') {
+            if (!n.maxClaim) n.maxClaim = {};
+            n.maxClaim[resourceId] = parseInt(val);
+            printToCli(`Updated ${n.label} Max Claim for Resource ${resourceId}`);
+            saveState();
+        }
     };
 
     // Confirm clear board

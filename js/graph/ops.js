@@ -162,7 +162,8 @@
         allocated: type === 'resource' ? 0 : 0, // How many instances currently allocated
         // New Visual Props
         rotation: (Math.random() - 0.5) * 0.25, // +/- ~7 degrees
-        pinColor: ['#ff4d4d', '#2d2d2d', '#4a90e2', '#silver'][Math.floor(Math.random() * 4)]
+        pinColor: ['#ff4d4d', '#2d2d2d', '#4a90e2', '#silver'][Math.floor(Math.random() * 4)],
+        maxClaim: {} // Banker's Algorithm: Map<ResourceId, MaxCount>
       };
       nodes.push(newNode);
 
@@ -217,7 +218,8 @@
         printToCli(`Error: Cannot link ${source.type} to ${target.type}.`, 'error');
         return;
       }
-      if (edges.some(e => e.source === source.id && e.target === target.id)) return;
+      // Allow multiple edges for multi-instance resources
+      // if (edges.some(e => e.source === source.id && e.target === target.id)) return;
 
       // Check resource capacity
       if (source.type === 'resource') {

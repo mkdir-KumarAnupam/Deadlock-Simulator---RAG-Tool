@@ -47,12 +47,25 @@
       }
       document.getElementById('settings-menu').classList.remove('show');
       printToCli(`Theme changed to: ${themeName}`, 'info');
-      draw();
+
+      if (window.Auth && Auth.savePreference) {
+          Auth.savePreference('theme', themeName);
+      } else {
+          localStorage.setItem('theme', themeName);
+      }
+    }
+
+    function updateEdgeThickness(value) {
+      const thickness = parseInt(value);
       if (thickness >= 1 && thickness <= 10) {
         systemConfig.edgeThickness = thickness;
         draw();
         printToCli(`Edge thickness set to: ${thickness}px`, 'success');
-        if (window.Auth && Auth.savePreference) Auth.savePreference('edgeThickness', thickness);
+        if (window.Auth && Auth.savePreference) {
+            Auth.savePreference('edgeThickness', thickness);
+        } else {
+            localStorage.setItem('edgeThickness', thickness);
+        }
       } else {
         printToCli('Edge thickness must be between 1-10', 'error');
         document.getElementById('config-edge-thickness').value = systemConfig.edgeThickness;
@@ -64,10 +77,40 @@
       if (threshold >= 10 && threshold <= 1000) {
         starvationThreshold = threshold;
         printToCli(`Starvation threshold set to: ${threshold} cycles`, 'success');
+        if (window.Auth && Auth.savePreference) {
+            Auth.savePreference('starvationThreshold', threshold);
+        } else {
+            localStorage.setItem('starvationThreshold', threshold);
+        }
       } else {
         printToCli('Threshold must be between 10-1000', 'error');
         document.getElementById('config-starvation').value = starvationThreshold;
       }
+    }
+
+    function updateSimSpeed(value) {
+        const speed = parseInt(value);
+        if (speed >= 50 && speed <= 2000) {
+            simSpeed = speed;
+            systemConfig.simSpeed = speed;
+
+            // Restart interval if running
+            if (isRunning) {
+                clearInterval(simInterval);
+                simInterval = setInterval(scheduler, simSpeed);
+            }
+
+            printToCli(`Simulation speed set to: ${speed}ms`, 'success');
+
+            if (window.Auth && Auth.savePreference) {
+                Auth.savePreference('simSpeed', speed);
+            } else {
+                localStorage.setItem('simSpeed', speed);
+            }
+        } else {
+            printToCli('Speed must be between 50-2000ms', 'error');
+            document.getElementById('config-sim-speed').value = simSpeed;
+        }
     }
 
     function updateUIScale(value) {
@@ -124,7 +167,11 @@
       });
 
       printToCli(`UI scale set to: ${Math.round(scale * 100)}%`, 'success');
-      if (window.Auth && Auth.savePreference) Auth.savePreference('uiScale', scale);
+      if (window.Auth && Auth.savePreference) {
+          Auth.savePreference('uiScale', scale);
+      } else {
+          localStorage.setItem('uiScale', scale);
+      }
     }
 
     // --- Zoom & Pan Functions ---
@@ -194,6 +241,30 @@
       printToCli('Fitted to screen', 'info');
     }
 
+    function toggleToolsLayout(useDropdown) {
+      const dropdownContainer = document.getElementById('tools-dropdown-container');
+      const buttonsContainer = document.getElementById('tools-buttons-container');
+      const checkbox = document.getElementById('config-use-tools-dropdown');
+
+      if (useDropdown) {
+        dropdownContainer.classList.remove('hidden');
+        buttonsContainer.classList.add('hidden');
+      } else {
+        dropdownContainer.classList.add('hidden');
+        buttonsContainer.classList.remove('hidden');
+      }
+
+      if (checkbox) checkbox.checked = useDropdown;
+
+      printToCli(`Tools layout changed to: ${useDropdown ? 'Dropdown' : 'Buttons'}`, 'info');
+
+      if (window.Auth && Auth.savePreference) {
+        Auth.savePreference('useToolsDropdown', useDropdown);
+      } else {
+        localStorage.setItem('useToolsDropdown', useDropdown);
+      }
+    }
+
     // Explicitly expose functions to window for Auth module
     window.setBackgroundPattern = setBackgroundPattern;
     window.setPatternOpacity = setPatternOpacity;
@@ -210,3 +281,4 @@
     window.updateStarvationThreshold = updateStarvationThreshold;
     window.fitToScreen = fitToScreen;
     window.resetZoom = resetZoom;
+    window.toggleToolsLayout = toggleToolsLayout;

@@ -459,3 +459,11 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
         display.innerText = "Error getting hint.";
       }
     }
+    // Explicitly expose functions to window
+    window.saveGeminiKey = saveGeminiKey;
+    window.loadGeminiKey = loadGeminiKey;
+    window.analyzeWithGemini = analyzeWithGemini;
+    window.requestAIFix = requestAIFix;
+    window.askAIQuestion = askAIQuestion;
+    window.askAIHint = askAIHint;
+    window.displayAIAnalysis = displayAIAnalysis;

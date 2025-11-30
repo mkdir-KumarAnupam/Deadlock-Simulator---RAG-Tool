@@ -386,3 +386,88 @@
   animation: trophy-wobble 2s ease-in-out infinite;
   display: inline-block; /* Required for transform to work on inline elements */
 }
+
+/* Modal Entrance Animation */
+@keyframes modalPopTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%) rotate(5deg);
+  }
+  60% {
+    transform: translateY(20px) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(1deg);
+  }
+}
+
+.modal-pop-top {
+  animation: modalPopTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Page Twist Animations */
+@keyframes twistInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) rotate(15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes twistOutLeft {
+  0% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%) rotate(-15deg);
+  }
+}
+
+@keyframes twistInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) rotate(-15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+@keyframes twistOutRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) rotate(15deg);
+  }
+}
+
+.twist-in-right {
+  animation: twistInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.twist-out-left {
+  animation: twistOutLeft 0.4s ease-in forwards;
+}
+
+.twist-in-left {
+  animation: twistInLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.twist-out-right {
+  animation: twistOutRight 0.4s ease-in forwards;
+}
+
+@keyframes black-stripe-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 28px 0; }
+}

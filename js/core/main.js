@@ -38,6 +38,62 @@
 
       // Load saved Gemini API key
       loadGeminiKey();
+
+      // Load saved UI Scale
+      const savedUIScale = localStorage.getItem('uiScale');
+      if (savedUIScale) {
+        document.getElementById('config-ui-scale').value = savedUIScale;
+        updateUIScale(savedUIScale);
+      }
+
+      // Load saved Edge Thickness
+      const savedEdgeThickness = localStorage.getItem('edgeThickness');
+      if (savedEdgeThickness) {
+        document.getElementById('config-edge-thickness').value = savedEdgeThickness;
+        // updateEdgeThickness handles config update and drawing
+        if (typeof updateEdgeThickness === 'function') {
+            updateEdgeThickness(savedEdgeThickness);
+        } else {
+            systemConfig.edgeThickness = parseInt(savedEdgeThickness);
+        }
+      }
+
+      // Load saved Starvation Threshold
+      const savedStarvationThreshold = localStorage.getItem('starvationThreshold');
+      if (savedStarvationThreshold) {
+        document.getElementById('config-starvation').value = savedStarvationThreshold;
+        starvationThreshold = parseInt(savedStarvationThreshold);
+      }
+
+      // Load saved Autosave Frequency
+      const savedAutosave = localStorage.getItem('autosaveFrequency');
+      if (savedAutosave) {
+        document.getElementById('config-autosave').value = savedAutosave;
+        updateAutosaveFrequency(savedAutosave);
+      }
+
+      // Load saved Simulation Speed
+      const savedSimSpeed = localStorage.getItem('simSpeed');
+      if (savedSimSpeed) {
+        document.getElementById('config-sim-speed').value = savedSimSpeed;
+        simSpeed = parseInt(savedSimSpeed);
+        systemConfig.simSpeed = simSpeed;
+      }
+
+      // Load saved Theme
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+          changeTheme(savedTheme);
+          // Update radio button if exists
+          const themeRadio = document.querySelector(`input[name="theme"][value="${savedTheme}"]`);
+          if (themeRadio) themeRadio.checked = true;
+      }
+
+      // Load Tools Layout Preference
+      const useToolsDropdown = localStorage.getItem('useToolsDropdown') !== 'false'; // Default to true
+      if (window.toggleToolsLayout) {
+          toggleToolsLayout(useToolsDropdown);
+      }
     });
 
     // Keyboard shortcuts
@@ -96,7 +152,17 @@
     // Load state from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const shareParam = urlParams.get('s') || urlParams.get('state');
-    if (shareParam) {
+    const cloudId = urlParams.get('id');
+
+    if (cloudId) {
+        // Wait for Supabase to initialize
+        setTimeout(() => {
+            if (window.loadPublicScenario) {
+                printToCli('Loading shared scenario...', 'info');
+                loadPublicScenario(cloudId);
+            }
+        }, 1000);
+    } else if (shareParam) {
       try {
         const jsonStr = decodeURIComponent(escape(atob(shareParam)));
         const data = JSON.parse(jsonStr);

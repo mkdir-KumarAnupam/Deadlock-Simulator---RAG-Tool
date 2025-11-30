@@ -277,12 +277,11 @@ const Auth = {
             `;
         }
     },
-
     injectModal() {
         const modalHtml = `
         <div id="auth-modal" onclick="if(event.target===this) Auth.closeModal()"
             style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10002; font-family: 'Courier New', monospace;">
-            <div style="background: white; border: 4px solid black; box-shadow: 10px 10px 0 black; padding: 24px; max-width: 400px; margin: 100px auto; transform: rotate(1deg);">
+            <div id="auth-card" class="modal-pop-top" style="background: white; border: 4px solid black; box-shadow: 10px 10px 0 black; padding: 24px; max-width: 400px; margin: 100px auto; transform: rotate(1deg);">
                 <div class="flex justify-between items-center mb-4 border-b-4 border-black pb-2">
                     <h2 class="text-2xl font-black uppercase">Identity</h2>
                     <button onclick="Auth.closeModal()" class="text-xl font-bold hover:text-red-600">X</button>
@@ -346,6 +345,14 @@ const Auth = {
             modal.style.display = 'block';
             document.getElementById('auth-form-login').style.display = 'block';
             document.getElementById('auth-form-register').style.display = 'none';
+
+            // Re-trigger animation
+            const content = modal.querySelector('.modal-pop-top');
+            if (content) {
+                content.style.animation = 'none';
+                content.offsetHeight; /* trigger reflow */
+                content.style.animation = null;
+            }
         }
     },
 
@@ -355,14 +362,36 @@ const Auth = {
     },
 
     toggleMode() {
+        const card = document.getElementById('auth-card');
         const loginForm = document.getElementById('auth-form-login');
         const regForm = document.getElementById('auth-form-register');
-        if (loginForm.style.display === 'none') {
-            loginForm.style.display = 'block';
-            regForm.style.display = 'none';
+        const isLoginVisible = loginForm.style.display !== 'none';
+
+        // Reset classes
+        card.classList.remove('modal-pop-top', 'twist-in-right', 'twist-out-left', 'twist-in-left', 'twist-out-right');
+
+        if (isLoginVisible) {
+            // Switch to Register: Card twists out left, then in from right
+            card.classList.add('twist-out-left');
+
+            setTimeout(() => {
+                loginForm.style.display = 'none';
+                regForm.style.display = 'block';
+
+                card.classList.remove('twist-out-left');
+                card.classList.add('twist-in-right');
+            }, 400);
         } else {
-            loginForm.style.display = 'none';
-            regForm.style.display = 'block';
+            // Switch to Login: Card twists out right, then in from left
+            card.classList.add('twist-out-right');
+
+            setTimeout(() => {
+                regForm.style.display = 'none';
+                loginForm.style.display = 'block';
+
+                card.classList.remove('twist-out-right');
+                card.classList.add('twist-in-left');
+            }, 400);
         }
     },
 

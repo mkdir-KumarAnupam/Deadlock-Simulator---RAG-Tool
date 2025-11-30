@@ -6,7 +6,15 @@
 }
 
 .neo-title {
-  background: #000;
+  background: repeating-linear-gradient(
+    45deg,
+    #000,
+    #000 10px,
+    #1a1a1a 10px,
+    #1a1a1a 20px
+  );
+  background-size: 28px 28px;
+  animation: black-stripe-scroll 1s linear infinite;
   color: #fff;
   padding: 5px 15px;
   font-size: 1.25rem;

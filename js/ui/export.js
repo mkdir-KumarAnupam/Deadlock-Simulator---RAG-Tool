@@ -10,26 +10,53 @@
       printToCli("State exported.", 'success');
     }
 
-    function shareWithQR() {
-      const data = { nodes, edges, nextId };
-      const jsonStr = JSON.stringify(data);
+    async function shareWithQR() {
+      let shareUrl = '';
+      let isCloud = false;
 
-      // Compress using base64 and create URL
-      const compressed = btoa(unescape(encodeURIComponent(jsonStr)));
-      const shareUrl = `${window.location.origin}${window.location.pathname}?s=${compressed}`;
+      // Try Cloud Share first
+      if (window.Auth && Auth.user && window.saveScenarioToCloud) {
+        const name = `Shared Graph ${new Date().toLocaleString()}`;
+        printToCli('Saving to cloud for optimized sharing...', 'info');
+        try {
+            const saved = await saveScenarioToCloud(name, true);
+            if (saved && saved.id) {
+                shareUrl = `${window.location.origin}${window.location.pathname}?id=${saved.id}`;
+                isCloud = true;
+            }
+        } catch (e) {
+            console.error("Cloud share failed", e);
+        }
+      }
+
+      // Fallback to legacy if not logged in or cloud failed
+      if (!isCloud) {
+        if (!window.Auth || !Auth.user) {
+            alert("Tip: Login to generate a smaller, permanent QR code!");
+        }
+        const data = { nodes, edges, nextId };
+        const jsonStr = JSON.stringify(data);
+        const compressed = btoa(unescape(encodeURIComponent(jsonStr)));
+        shareUrl = `${window.location.origin}${window.location.pathname}?s=${compressed}`;
+      }
+
+      const data = { nodes, edges, nextId };
       const jsonStrFormatted = JSON.stringify(data, null, 2);
 
       // Create modal for QR code
       const modal = document.createElement('div');
       modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+
+      const qrSize = isCloud ? "200x200" : "350x350"; // Smaller QR for cloud links
+
       modal.innerHTML = `
                 <div class="neo-box bg-white p-6" style="max-width: 600px; max-height: 80vh; overflow-y: auto; transform: rotate(-1deg);">
                     <div class="flex justify-between items-center mb-4 border-b-2 border-black pb-2">
-                        <h3 class="font-black text-lg">SHARE GRAPH</h3>
+                        <h3 class="font-black text-lg">SHARE GRAPH ${isCloud ? '<span class="text-green-600 text-xs">(CLOUD LINK)</span>' : '<span class="text-orange-500 text-xs">(LEGACY)</span>'}</h3>
                         <button onclick="this.closest('[style*=fixed]').remove()" class="text-2xl font-bold hover:text-red-500">&times;</button>
                     </div>
                     <div class="text-center mb-4">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}"
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}&data=${encodeURIComponent(shareUrl)}"
                              alt="QR Code" class="border-4 border-black mx-auto" style="box-shadow: 6px 6px 0px black;">
                         <p class="text-xs mt-2 text-gray-600">Scan to load graph</p>
                     </div>
