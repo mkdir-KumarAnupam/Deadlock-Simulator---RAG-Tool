@@ -423,9 +423,49 @@
       }
     });
 
-    // --- Touch Support ---
+    // --- Tablet/Touch Support ---
     let lastTouchDist = 0;
     let lastTouchCenter = null;
+    let touchStartTime = 0;
+    let touchStartPos = null;
+    let isTouchDrag = false;
+
+    // Helper: Add node at center of screen (for radial menu)
+    window.addNodeAtCenter = () => {
+        const r = canvas.getBoundingClientRect();
+        const centerX = (r.width / 2 - offsetX) / scale;
+        const centerY = (r.height / 2 - offsetY) / scale;
+        addNode(mode, centerX, centerY);
+        setMode('select'); // Reset to select after adding
+    };
+
+    window.hideTabletMenu = () => {
+        document.getElementById('tablet-context-menu').classList.add('hidden');
+    };
+
+    function showTabletMenu(x, y) {
+        if (!config.isTouchDevice) return;
+        const menu = document.getElementById('tablet-context-menu');
+        menu.classList.remove('hidden');
+    }
+
+    function showTabletQuickActions(node) {
+        if (!config.isTouchDevice) return;
+        const tooltip = document.getElementById('tablet-quick-actions');
+        const r = canvas.getBoundingClientRect();
+
+        // Position above the node
+        const screenX = node.x * scale + offsetX + r.left;
+        const screenY = node.y * scale + offsetY + r.top;
+
+        tooltip.style.left = `${screenX}px`;
+        tooltip.style.top = `${screenY - (node.type === 'process' ? config.nodeRadius : 25) * scale}px`;
+        tooltip.classList.remove('hidden');
+    }
+
+    function hideTabletQuickActions() {
+        document.getElementById('tablet-quick-actions').classList.add('hidden');
+    }
 
     function getTouchPos(touch) {
       const r = canvas.getBoundingClientRect();
@@ -454,6 +494,10 @@
 
     canvas.addEventListener('touchstart', e => {
       if (e.touches.length === 1) {
+        touchStartTime = Date.now();
+        touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        isTouchDrag = false;
+
         // Single touch - behave like mouse
         const touch = e.touches[0];
         const mouseEvent = new MouseEvent('mousedown', {
@@ -475,8 +519,40 @@
       e.preventDefault(); // Prevent scrolling
 
       if (e.touches.length === 1) {
-        // Single touch move
         const touch = e.touches[0];
+
+        // Check for drag threshold
+        if (touchStartPos) {
+            const dx = touch.clientX - touchStartPos.x;
+            const dy = touch.clientY - touchStartPos.y;
+            if (Math.sqrt(dx*dx + dy*dy) > 5) {
+                isTouchDrag = true;
+                hideTabletQuickActions(); // Hide actions on drag
+            }
+        }
+
+        // Clamp logic for tablet padding (30px)
+        if (draggingNode && config.isTouchDevice) {
+             const pos = getTouchPos(touch);
+             const padding = 30 / scale; // Adjust padding by scale
+             // We can't easily clamp to canvas bounds because canvas is infinite,
+             // but we can ensure it doesn't go off-screen if we wanted,
+             // but user said "nodes never sit at the extreme boundaries".
+             // Since the canvas is infinite/pannable, this mostly applies to the *viewport* edges during drag.
+             // Let's implement viewport clamping for the dragging node relative to the screen.
+
+             const r = canvas.getBoundingClientRect();
+             const viewportX = touch.clientX - r.left;
+             const viewportY = touch.clientY - r.top;
+
+             // If touching near edges, stop updating node position (clamping)
+             const edgePad = 30;
+             if (viewportX < edgePad || viewportX > r.width - edgePad ||
+                 viewportY < edgePad || viewportY > r.height - edgePad) {
+                 return; // Stop moving node if finger is near edge
+             }
+        }
+
         const mouseEvent = new MouseEvent('mousemove', {
           clientX: touch.clientX,
           clientY: touch.clientY,
@@ -510,13 +586,38 @@
 
     canvas.addEventListener('touchend', e => {
       if (e.touches.length === 0 && e.changedTouches.length > 0) {
+         const touch = e.changedTouches[0];
          const mouseEvent = new MouseEvent('mouseup', {
-           clientX: e.changedTouches[0].clientX,
-           clientY: e.changedTouches[0].clientY,
+           clientX: touch.clientX,
+           clientY: touch.clientY,
            button: 0,
            ctrlKey: false
          });
          canvas.dispatchEvent(mouseEvent);
+
+         // Tablet Interaction Logic
+         if (config.isTouchDevice && !isTouchDrag) {
+             const pos = getTouchPos(touch);
+             const node = getNodeAt(pos.x, pos.y);
+
+             if (node) {
+                 // Tap on Node
+                 if (selectedNodes.has(node.id)) {
+                     // Tap selection again -> Show Quick Actions
+                     showTabletQuickActions(node);
+                 }
+             } else {
+                 // Tap on Blank Space
+                 if (selectedNodes.size > 0) {
+                     // Clear selection
+                     clearSelection();
+                     hideTabletQuickActions();
+                 } else {
+                     // Show Radial Menu
+                     showTabletMenu(touch.clientX, touch.clientY);
+                 }
+             }
+         }
       }
       if (e.touches.length < 2) {
         lastTouchDist = 0;

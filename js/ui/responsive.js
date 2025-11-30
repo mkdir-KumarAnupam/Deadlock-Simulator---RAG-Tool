@@ -6,7 +6,11 @@
 const ResponsiveUI = {
     init() {
         this.adjustToolbarScale();
-        window.addEventListener('resize', () => this.adjustToolbarScale());
+        this.handleTabletTerminal();
+        window.addEventListener('resize', () => {
+            this.adjustToolbarScale();
+            this.handleTabletTerminal();
+        });
 
         // Also adjust when toolbar position changes (if we add that feature dynamically)
         // or when other UI elements might shift
@@ -46,8 +50,66 @@ const ResponsiveUI = {
             toolbar.style.transform = 'none';
             toolbar.style.top = `${topOffset}px`; // Ensure top is reset
         }
+    },
+
+    handleTabletTerminal() {
+        const isTablet = window.innerWidth <= 1024 || config.isTouchDevice;
+        const footer = document.querySelector('footer');
+        const toggleBtn = document.getElementById('terminal-toggle-btn');
+        const zoomControls = document.getElementById('zoom-controls');
+
+        if (isTablet) {
+            // Collapse terminal by default on tablet
+            if (!footer.classList.contains('tablet-expanded')) {
+                footer.style.display = 'none'; // Initially hide
+                toggleBtn.classList.remove('hidden');
+                if (zoomControls) zoomControls.style.bottom = '20px';
+            }
+        } else {
+            // Reset for desktop
+            footer.style.display = 'flex';
+            toggleBtn.classList.add('hidden');
+            if (zoomControls) zoomControls.style.bottom = '280px'; // Reset to default CSS value
+        }
     }
 };
+
+function toggleTabletTerminal() {
+    const footer = document.querySelector('footer');
+    const toggleBtn = document.getElementById('terminal-toggle-btn');
+    const zoomControls = document.getElementById('zoom-controls');
+    const simControls = document.getElementById('sim-controls');
+
+    if (footer.style.display === 'none') {
+        // Expand
+        footer.style.display = 'flex';
+        footer.style.position = 'fixed';
+        footer.style.bottom = '0';
+        footer.style.left = '0';
+        footer.style.right = '0';
+        footer.style.zIndex = '90';
+        footer.style.height = '40vh';
+        footer.classList.add('tablet-expanded');
+
+        toggleBtn.style.bottom = '42vh';
+
+        // Move controls up
+        if (zoomControls) zoomControls.style.bottom = '42vh';
+        if (simControls) simControls.style.bottom = '42vh';
+    } else {
+        // Collapse
+        footer.style.display = 'none';
+        footer.classList.remove('tablet-expanded');
+
+        toggleBtn.style.bottom = '1rem';
+
+        // Move controls down
+        if (zoomControls) zoomControls.style.bottom = '20px';
+        if (simControls) simControls.style.bottom = '80px'; // Above the toggle button/zoom
+    }
+}
+
+window.toggleTabletTerminal = toggleTabletTerminal;
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {

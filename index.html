@@ -296,7 +296,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('fcfs', 'FCFS')" style="flex: 1; cursor: pointer;">FCFS</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('fcfs')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('fcfs')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how FCFS works">
             <i class="fas fa-eye"></i>
@@ -305,7 +305,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('sjf', 'SJF')" style="flex: 1; cursor: pointer;">SJF</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('sjf')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('sjf')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how SJF works">
             <i class="fas fa-eye"></i>
@@ -314,7 +314,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('srtf', 'SRTF')" style="flex: 1; cursor: pointer;">SRTF</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('srtf')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('srtf')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how SRTF works">
             <i class="fas fa-eye"></i>
@@ -323,7 +323,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('rr', 'Round Robin')" style="flex: 1; cursor: pointer;">Round Robin</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('rr')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('rr')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how Round Robin works">
             <i class="fas fa-eye"></i>
@@ -332,7 +332,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('priority_np', 'Priority (NP)')" style="flex: 1; cursor: pointer;">Priority (NP)</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('priority_np')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('priority_np')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how Priority (Non-Preemptive) works">
             <i class="fas fa-eye"></i>
@@ -341,7 +341,7 @@
         <div class="neo-dropdown-item"
           style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
           <span onclick="selectScheduler('priority_p', 'Priority (Preemptive)')" style="flex: 1; cursor: pointer;">Priority (P)</span>
-          <button onclick="event.stopPropagation(); showAlgorithmDemo('priority_p')"
+          <button class="hidden lg:block" onclick="event.stopPropagation(); showAlgorithmDemo('priority_p')"
             style="background: #4ecdc4; border: 2px solid black; padding: 4px 8px; cursor: pointer; font-size: 12px; box-shadow: 2px 2px 0 black;"
             title="See how Priority (Preemptive) works">
             <i class="fas fa-eye"></i>
@@ -570,7 +570,7 @@
     </div>
 
     <!-- Zoom & Pan Controls -->
-    <div class="neo-box bg-white p-2 transform rotate-1"
+    <div id="zoom-controls" class="neo-box bg-white p-2 transform rotate-1"
       style="position: fixed; left: 20px; bottom: 280px; z-index: 100;">
       <div class="flex gap-2 items-center">
         <button onclick="resetZoom()" class="neo-btn flex items-center justify-center text-xs" title="Reset Zoom (100%)"
@@ -623,8 +623,8 @@
     <canvas id="simCanvas" class="w-full h-full bg-transparent relative z-0"></canvas>
 
     <!-- Properties Panel -->
-    <div id="prop-panel" class="absolute top-4 w-60 neo-box p-4 transform z-30 rotate-1"
-      style="right: -280px; transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
+    <div id="prop-panel" class="fixed top-20 w-60 neo-box p-4 transform rotate-1"
+      style="right: -280px; transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 9999;">
       <div class="flex justify-between items-center border-b-2 border-black mb-3 pb-1">
         <h3 class="font-black text-sm">PROPERTIES</h3>
         <button onclick="closeProps()" class="text-xs font-bold hover:text-red-500">X</button>
@@ -1249,6 +1249,41 @@
   <script src="js/ui/bankers_view.js"></script>
   <script src="js/ui/responsive.js"></script>
   <script src="js/core/main.js"></script>
+  <!-- Tablet UI Elements -->
+  <!-- 1. Quick Actions Tooltip (Delete Selection) -->
+  <div id="tablet-quick-actions" class="hidden absolute z-[100] bg-white border-2 border-black shadow-[4px_4px_0_black] p-2 flex gap-2 transform -translate-x-1/2 -translate-y-full mt-[-10px]">
+    <button onclick="batchDelete()" class="neo-btn danger text-xs font-bold px-3 py-2 flex items-center gap-2">
+      <i class="fas fa-trash-alt"></i> DELETE
+    </button>
+    <button onclick="clearSelection()" class="neo-btn text-xs font-bold px-3 py-2">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- 2. Tablet Context Menu (Radial/Sheet) -->
+  <div id="tablet-context-menu" class="hidden fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm" onclick="hideTabletMenu()">
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border-4 border-black shadow-[8px_8px_0_black] p-4 flex flex-col gap-3 w-64 animate-pop-in" onclick="event.stopPropagation()">
+      <div class="text-center font-black border-b-2 border-black pb-2 mb-1">QUICK MENU</div>
+      <button onclick="setMode('process'); addNodeAtCenter(); hideTabletMenu();" class="neo-btn flex items-center gap-3 p-3 font-bold text-left">
+        <div class="w-8 h-8 rounded-full bg-[#a3ffac] border-2 border-black flex items-center justify-center"><i class="fas fa-circle text-xs"></i></div>
+        Add Process
+      </button>
+      <button onclick="setMode('resource'); addNodeAtCenter(); hideTabletMenu();" class="neo-btn flex items-center gap-3 p-3 font-bold text-left">
+        <div class="w-8 h-8 bg-[#5D9CEC] border-2 border-black flex items-center justify-center"><i class="fas fa-square text-xs"></i></div>
+        Add Resource
+      </button>
+      <button onclick="openScenarioLibrary(); hideTabletMenu();" class="neo-btn flex items-center gap-3 p-3 font-bold text-left bg-yellow-100">
+        <div class="w-8 h-8 bg-[#ffe600] border-2 border-black flex items-center justify-center"><i class="fas fa-book"></i></div>
+        Load Scenario
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. Terminal Toggle (Tablet) -->
+  <button id="terminal-toggle-btn" class="hidden fixed bottom-4 right-4 z-[100] w-12 h-12 bg-black text-white border-2 border-white shadow-[4px_4px_0_rgba(0,0,0,0.5)] rounded-full flex items-center justify-center text-xl" onclick="toggleTabletTerminal()">
+    <i class="fas fa-terminal"></i>
+  </button>
+
   <div id="notification-container"></div>
 </body>
 </html>

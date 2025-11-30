@@ -11,7 +11,8 @@
         deadlock: '#FF3366',
         starvation: '#FF9800' // Orange for starvation
       },
-      totalMemory: 1024
+      totalMemory: 1024,
+      isTouchDevice: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)
     };
 
     // System Configuration
