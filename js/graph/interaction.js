@@ -422,3 +422,104 @@
         draw();
       }
     });
+
+    // --- Touch Support ---
+    let lastTouchDist = 0;
+    let lastTouchCenter = null;
+
+    function getTouchPos(touch) {
+      const r = canvas.getBoundingClientRect();
+      const x = (touch.clientX - r.left - offsetX) / scale;
+      const y = (touch.clientY - r.top - offsetY) / scale;
+      return { x, y };
+    }
+
+    function getTouchDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function getTouchCenter(t1, t2) {
+       const r = canvas.getBoundingClientRect();
+       const cx = (t1.clientX + t2.clientX) / 2;
+       const cy = (t1.clientY + t2.clientY) / 2;
+       return {
+         x: (cx - r.left - offsetX) / scale,
+         y: (cy - r.top - offsetY) / scale,
+         clientX: cx,
+         clientY: cy
+       };
+    }
+
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        // Single touch - behave like mouse
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          button: 0,
+          ctrlKey: false
+        });
+        canvas.dispatchEvent(mouseEvent);
+      } else if (e.touches.length === 2) {
+        // Pinch start
+        e.preventDefault();
+        lastTouchDist = getTouchDistance(e.touches[0], e.touches[1]);
+        lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault(); // Prevent scrolling
+
+      if (e.touches.length === 1) {
+        // Single touch move
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          button: 0,
+          ctrlKey: false
+        });
+        canvas.dispatchEvent(mouseEvent);
+      } else if (e.touches.length === 2) {
+        // Pinch zoom
+        const dist = getTouchDistance(e.touches[0], e.touches[1]);
+        const center = getTouchCenter(e.touches[0], e.touches[1]);
+
+        if (lastTouchDist > 0) {
+          const zoomFactor = dist / lastTouchDist;
+          const newScale = Math.max(0.1, Math.min(5, scale * zoomFactor));
+
+          offsetX = center.clientX - canvas.getBoundingClientRect().left - center.x * newScale;
+          offsetY = center.clientY - canvas.getBoundingClientRect().top - center.y * newScale;
+          scale = newScale;
+
+          draw();
+          if (window.updateBackgroundScale) {
+            window.updateBackgroundScale(scale);
+          }
+        }
+
+        lastTouchDist = dist;
+        lastTouchCenter = center;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+      if (e.touches.length === 0 && e.changedTouches.length > 0) {
+         const mouseEvent = new MouseEvent('mouseup', {
+           clientX: e.changedTouches[0].clientX,
+           clientY: e.changedTouches[0].clientY,
+           button: 0,
+           ctrlKey: false
+         });
+         canvas.dispatchEvent(mouseEvent);
+      }
+      if (e.touches.length < 2) {
+        lastTouchDist = 0;
+        lastTouchCenter = null;
+      }
+    });
