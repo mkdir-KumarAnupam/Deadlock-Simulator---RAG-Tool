@@ -83,32 +83,39 @@
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive Toolbar */
-@media (max-height: 800px) {
-  #sidebar-tools {
-    transform: scale(0.9);
-    transform-origin: top right;
-  }
-}
-
-@media (max-height: 600px) {
-  #sidebar-tools {
-    transform: scale(0.8);
-    transform-origin: top right;
-  }
-}
-
-@media (max-width: 1000px) {
-  #sidebar-tools {
-    transform: scale(0.9);
-    transform-origin: top right;
-  }
-}
-
+/* Responsive Panels */
 @media (max-width: 768px) {
-  #sidebar-tools {
-    transform: scale(0.75);
-    transform-origin: top right;
-    right: 8px;
+  .stats-pane {
+    width: 100%;
+    right: -100%;
+    border-left: none;
+    box-shadow: none;
+    top: 60px; /* Adjust for smaller header */
+  }
+
+  .stats-pane.open {
+    right: 0;
+  }
+
+  #prop-panel {
+    width: 90%;
+    right: -100% !important;
+    top: 60px;
+  }
+
+  #prop-panel.open {
+    right: 5% !important; /* Center it roughly */
+  }
+
+  #ai-panel {
+    width: 95%;
+    right: -100% !important;
+    top: 60px;
+  }
+
+  #ai-panel.open {
+    right: 2.5% !important;
   }
 }
+
+/* Responsive Toolbar handled by js/ui/responsive.js */

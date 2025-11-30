@@ -48,86 +48,6 @@
       document.getElementById('settings-menu').classList.remove('show');
       printToCli(`Theme changed to: ${themeName}`, 'info');
       draw();
-      printToCli(`Theme changed to: ${themeName}`, 'info');
-      draw();
-      if (window.Auth && Auth.savePreference) Auth.savePreference('theme', themeName);
-    }
-
-    // --- System Configuration Functions ---
-    function updateMaxMemory(value) {
-      const mem = parseInt(value);
-      if (mem >= 256 && mem <= 8192) {
-        systemConfig.maxMemory = mem;
-        config.totalMemory = mem;
-        updateSystemStats();
-        printToCli(`Max memory set to: ${mem} MB`, 'success');
-      } else {
-        printToCli('Memory must be between 256-8192 MB', 'error');
-        document.getElementById('config-max-memory').value = systemConfig.maxMemory;
-      }
-    }
-
-    function updateCPUCores(value) {
-      const cores = parseInt(value);
-      if (cores >= 1 && cores <= 8) {
-        systemConfig.cpuCores = cores;
-        printToCli(`CPU cores set to: ${cores}`, 'success');
-        updateStats();
-      } else {
-        printToCli('CPU cores must be between 1-8', 'error');
-        document.getElementById('config-cpu-cores').value = systemConfig.cpuCores;
-      }
-    }
-
-    function updateContextSwitchTime(value) {
-      const time = parseInt(value);
-      if (time >= 1 && time <= 100) {
-        systemConfig.contextSwitchTime = time;
-        printToCli(`Context switch time set to: ${time} ms`, 'success');
-      } else {
-        printToCli('Context switch time must be between 1-100 ms', 'error');
-        document.getElementById('config-context-switch').value = systemConfig.contextSwitchTime;
-      }
-    }
-
-    function updateSimSpeed(value) {
-      const speed = parseInt(value);
-      if (speed >= 50 && speed <= 2000) {
-        systemConfig.simSpeed = speed;
-        simSpeed = speed;
-        if (isRunning) {
-          clearInterval(simInterval);
-          simInterval = setInterval(scheduler, simSpeed);
-        }
-        printToCli(`Simulation speed set to: ${speed} ms`, 'success');
-      } else {
-        printToCli('Sim speed must be between 50-2000 ms', 'error');
-        document.getElementById('config-sim-speed').value = systemConfig.simSpeed;
-      }
-    }
-
-    function updateEdgeLabelSize(value) {
-      const size = parseInt(value);
-      if (size >= 0 && size <= 20) {
-        systemConfig.edgeLabelSize = size;
-        draw();
-        printToCli(`Edge label size set to: ${size}px`, 'success');
-        if (window.Auth && Auth.savePreference) Auth.savePreference('edgeLabelSize', size);
-      } else {
-        printToCli('Edge label size must be between 0-20', 'error');
-        document.getElementById('config-edge-label-size').value = systemConfig.edgeLabelSize;
-      }
-    }
-
-    function toggleEdgeLabels(show) {
-      systemConfig.showEdgeLabels = show;
-      draw();
-      printToCli(`Edge labels ${show ? 'shown' : 'hidden'}`, 'info');
-      if (window.Auth && Auth.savePreference) Auth.savePreference('showEdgeLabels', show);
-    }
-
-    function updateEdgeThickness(value) {
-      const thickness = parseInt(value);
       if (thickness >= 1 && thickness <= 10) {
         systemConfig.edgeThickness = thickness;
         draw();
@@ -136,6 +56,17 @@
       } else {
         printToCli('Edge thickness must be between 1-10', 'error');
         document.getElementById('config-edge-thickness').value = systemConfig.edgeThickness;
+      }
+    }
+
+    function updateStarvationThreshold(value) {
+      const threshold = parseInt(value);
+      if (threshold >= 10 && threshold <= 1000) {
+        starvationThreshold = threshold;
+        printToCli(`Starvation threshold set to: ${threshold} cycles`, 'success');
+      } else {
+        printToCli('Threshold must be between 10-1000', 'error');
+        document.getElementById('config-starvation').value = starvationThreshold;
       }
     }
 
@@ -206,12 +137,21 @@
         // Also scale the position to match the pan offset so dots stay "pinned" to the canvas space
         // Note: The background-position is relative to the container, while offsetX/Y are canvas transforms.
         // To make it look like the background is part of the canvas, we need to sync the phase.
-        // However, simple scaling of size is often enough for the visual effect requested.
         // Let's stick to size scaling first as per request.
       }
     }
+    function updateAutosaveFrequency(value) {
+      const freq = parseInt(value);
+      if (window.startAutosave) {
+        startAutosave(freq);
+      }
+      printToCli(`Autosave frequency set to: ${freq === 0 ? 'Off' : (freq / 1000) + 's'}`, 'success');
+      if (window.Auth && Auth.savePreference) Auth.savePreference('autosaveFrequency', freq);
+      else localStorage.setItem('autosaveFrequency', freq);
+    }
     // Expose for other modules
     window.updateBackgroundScale = updateBackgroundScale;
+    window.updateAutosaveFrequency = updateAutosaveFrequency;
 
     function resetZoom() {
       scale = 1;
@@ -267,5 +207,6 @@
     window.toggleEdgeLabels = toggleEdgeLabels;
     window.updateEdgeThickness = updateEdgeThickness;
     window.updateUIScale = updateUIScale;
+    window.updateStarvationThreshold = updateStarvationThreshold;
     window.fitToScreen = fitToScreen;
     window.resetZoom = resetZoom;

@@ -19,6 +19,7 @@
     async function analyzeWithGemini(graphData, deadlockInfo) {
       const apiKey = localStorage.getItem('geminiApiKey');
       if (!apiKey) {
+        if (window.Session) Session.showNotification('Please configure Gemini API key in Settings', 'error');
         return {
           error: true,
           message: 'Please configure Gemini API key in Settings'
@@ -96,6 +97,7 @@ Be extremely brief. No fluff.`;
       const apiKey = localStorage.getItem('geminiApiKey');
       if (!apiKey) {
         printToCli('Please configure Gemini API key in Settings', 'error');
+        if (window.Session) Session.showNotification('Please configure Gemini API key in Settings', 'error');
         return;
       }
 
@@ -272,6 +274,7 @@ Rules:
       const apiKey = localStorage.getItem('geminiApiKey');
       if (!apiKey) {
         printToCli('Please configure Gemini API key in Settings', 'error');
+        if (window.Session) Session.showNotification('Please configure Gemini API key in Settings', 'error');
         return;
       }
 
@@ -421,7 +424,14 @@ Provide a concise, educational answer in 2-3 short paragraphs. Be friendly and h
 
       if (!question) return;
 
+      if (!question) return;
+
       const apiKey = localStorage.getItem('geminiApiKey');
+      if (!apiKey) {
+        if (window.Session) Session.showNotification('Please configure Gemini API key in Settings', 'error');
+        return;
+      }
+
       display.style.display = 'block';
       display.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
 

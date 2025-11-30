@@ -337,3 +337,52 @@
 .neo-notification.hiding {
   animation: notification-fade-out 0.3s ease-in forwards;
 }
+
+/* Color-specific animated backgrounds for Challenge Mode */
+.animated-stripe-bg-green {
+  background: repeating-linear-gradient(
+    45deg,
+    #a3ffac,
+    #a3ffac 10px,
+    #8ce695 10px,
+    #8ce695 20px
+  );
+  background-size: 40px 40px;
+  animation: stripe-scroll 1s linear infinite;
+}
+
+.animated-stripe-bg-yellow {
+  background: repeating-linear-gradient(
+    45deg,
+    #feca57,
+    #feca57 10px,
+    #e5b54c 10px,
+    #e5b54c 20px
+  );
+  background-size: 40px 40px;
+  animation: stripe-scroll 1s linear infinite;
+}
+
+.animated-stripe-bg-red {
+  background: repeating-linear-gradient(
+    45deg,
+    #ff6b6b,
+    #ff6b6b 10px,
+    #e66060 10px,
+    #e66060 20px
+  );
+  background-size: 40px 40px;
+  animation: stripe-scroll 1s linear infinite;
+}
+
+/* Trophy Wobble Animation */
+@keyframes trophy-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.trophy-wobble {
+  animation: trophy-wobble 2s ease-in-out infinite;
+  display: inline-block; /* Required for transform to work on inline elements */
+}

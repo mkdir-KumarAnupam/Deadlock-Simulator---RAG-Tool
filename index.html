@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAG OS Simulator v1.5</title>
+  <title>RAG OS Simulator v1.6</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
@@ -19,13 +19,13 @@
 
   <!-- Header -->
   <header
-    class="p-3 border-b-4 border-black bg-white flex flex-wrap justify-between items-center z-30 shadow-sm relative">
+    class="p-2 md:p-3 border-b-4 border-black bg-white flex flex-wrap justify-between items-center z-30 shadow-sm relative gap-2">
     <div class="flex items-center gap-6">
       <!-- Dropdown Menu Container -->
       <div class="relative">
         <div class="neo-title" onclick="toggleMenu(event, 'main-menu')" title="Click for Options">
           <span>DEADLOCK_SIM</span>
-          <span class="neo-tag">v1.5</span>
+          <span class="neo-tag">v1.6</span>
           <span class="text-xs ml-1 opacity-70">▼</span>
         </div>
 
@@ -43,6 +43,9 @@
             <i class="fas fa-folder-open mr-2"></i> Load State
             <input type="file" class="hidden" onchange="importJSON(this)">
           </label>
+          <div class="neo-dropdown-item" onclick="loadAutosave()">
+            <i class="fas fa-history mr-2"></i> Load Autosave
+          </div>
           <div class="neo-dropdown-item" onclick="shareWithQR()">
             <i class="fas fa-qrcode mr-2"></i> Share with QR Code
           </div>
@@ -50,6 +53,10 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Autosave Indicator -->
+        <div id="autosave-indicator" class="hidden text-green-600 font-black text-[10px] flex items-center gap-1 uppercase tracking-wider" style="animation: pulse 1s infinite;">
+            <i class="fas fa-save"></i> Saving
+        </div>
       <!-- Settings Dropdown -->
       <div class="relative">
         <button class="neo-btn flex items-center gap-2" onclick="toggleMenu(event, 'settings-menu')"
@@ -57,51 +64,21 @@
           <i class="fas fa-cog"></i>
         </button>
         <div id="settings-menu" class="neo-dropdown" style="width: 280px; left: 0; right: auto; max-height: 80vh; overflow-y: auto; z-index: 100;">
+
+          <!-- Appearance Category -->
           <div class="neo-dropdown-item border-b-2 border-black pb-2 mb-2">
-            <strong>System Configuration:</strong>
+            <strong>Appearance:</strong>
           </div>
           <div class="neo-dropdown-item flex flex-col gap-2">
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Max Memory (MB):</span>
-              <input type="number" id="config-max-memory" value="1024" min="256" max="8192" step="256"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono" onchange="updateMaxMemory(this.value)">
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">CPU Cores:</span>
-              <input type="number" id="config-cpu-cores" value="1" min="1" max="8"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono" onchange="updateCPUCores(this.value)">
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Context Switch (ms):</span>
-              <input type="number" id="config-context-switch" value="5" min="1" max="100"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
-                onchange="updateContextSwitchTime(this.value)">
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Sim Speed (ms):</span>
-              <input type="number" id="config-sim-speed" value="200" min="50" max="2000" step="50"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono" onchange="updateSimSpeed(this.value)">
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Step Size (cycles):</span>
-              <input type="number" id="config-step-size" value="1" min="1" max="100"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono" onchange="updateStepSize(this.value)">
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Edge Label Size:</span>
-              <input type="number" id="config-edge-label-size" value="10" min="0" max="20"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
-                onchange="updateEdgeLabelSize(this.value)">
-            </label>
-            <label class="flex items-center gap-2 text-xs cursor-pointer">
-              <input type="checkbox" id="config-show-edge-labels" checked onchange="toggleEdgeLabels(this.checked)">
-              <span class="font-bold">Show Edge Labels</span>
-            </label>
-            <label class="flex items-center justify-between text-xs">
-              <span class="font-bold">Edge Thickness:</span>
-              <input type="number" id="config-edge-thickness" value="3" min="1" max="10"
-                class="w-20 px-2 py-1 border-2 border-black text-xs font-mono"
-                onchange="updateEdgeThickness(this.value)">
+             <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Theme:</span>
+              <div class="flex gap-1">
+                <button onclick="changeTheme('default')" class="w-4 h-4 rounded-full border border-black" style="background: #ffe600;" title="Default"></button>
+                <button onclick="changeTheme('ocean')" class="w-4 h-4 rounded-full border border-black" style="background: #81d4fa;" title="Ocean"></button>
+                <button onclick="changeTheme('forest')" class="w-4 h-4 rounded-full border border-black" style="background: #aed581;" title="Forest"></button>
+                <button onclick="changeTheme('sunset')" class="w-4 h-4 rounded-full border border-black" style="background: #ff8a65;" title="Sunset"></button>
+                <button onclick="changeTheme('midnight')" class="w-4 h-4 rounded-full border border-black" style="background: #4db6ac;" title="Midnight"></button>
+              </div>
             </label>
             <label class="flex items-center justify-between text-xs">
               <span class="font-bold">UI Scale:</span>
@@ -109,95 +86,125 @@
                 style="accent-color: black;" oninput="updateUIScale(this.value)">
               <span id="ui-scale-value" class="font-mono text-xs">80%</span>
             </label>
-          </div>
-          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>Toolbar Position:</strong>
-          </div>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="toolbar-position" value="sidebar" checked
-              onchange="setToolbarPosition('sidebar')">
-            <span>Right Sidebar</span>
-          </label>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="toolbar-position" value="topbar" onchange="setToolbarPosition('topbar')">
-            <span>Top Bar</span>
-          </label>
-          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>Scenario UI:</strong>
-          </div>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="config-legacy-scenarios" onchange="toggleScenarioUIMode(this.checked)">
-            <span class="font-bold">Use Legacy Scenario Dropdown</span>
-          </label>
-          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>Background Pattern:</strong>
-          </div>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="bg-pattern" value="none" onchange="setBackgroundPattern('none')">
-            <span>None (Clean)</span>
-          </label>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="bg-pattern" value="dots" onchange="setBackgroundPattern('dots')" checked>
-            <span>Dots</span>
-          </label>
-          <label class="neo-dropdown-item flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="bg-pattern" value="grid" onchange="setBackgroundPattern('grid')">
-            <span>Grid</span>
-          </label>
-          <label class="neo-dropdown-item flex items-center justify-between text-xs">
-            <span class="font-bold">Pattern Opacity:</span>
-            <input type="range" id="config-pattern-opacity" min="0" max="30" value="10" class="w-24"
-              oninput="setPatternOpacity(this.value)">
-            <span id="pattern-opacity-value" class="font-mono" style="min-width: 35px;">10%</span>
-          </label>
-          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>AI Analysis (Gemini):</strong>
-          </div>
-          <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
-            <span class="font-bold">Gemini API Key:</span>
-            <input type="password" id="config-gemini-key" placeholder="Enter Gemini API key"
-              class="w-full p-2 border-2 border-black font-mono text-xs" onchange="saveGeminiKey(this.value)">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank"
-              class="text-blue-600 underline text-[10px]">Get API Key →</a>
-          </label>
-          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>Supabase Config:</strong>
-          </div>
-          <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
-            <span class="font-bold">Project URL:</span>
-            <input type="text" id="config-supabase-url" placeholder="https://xyz.supabase.co"
-              class="w-full p-2 border-2 border-black font-mono text-xs"
-              onchange="SupabaseService.updateConfig(this.value, document.getElementById('config-supabase-key').value)">
-          </label>
-          <label class="neo-dropdown-item flex flex-col gap-2 text-xs">
-            <span class="font-bold">Anon Key:</span>
-            <input type="password" id="config-supabase-key" placeholder="public-anon-key"
-              class="w-full p-2 border-2 border-black font-mono text-xs"
-              onchange="SupabaseService.updateConfig(document.getElementById('config-supabase-url').value, this.value)">
-          </label>
-          <div class="neo-dropdown-item flex justify-center pt-2">
-             <button onclick="Auth.testCloudSave()" class="neo-btn" style="width: 100%; font-size: 10px; padding: 4px;">
-               <i class="fas fa-cloud-upload-alt"></i> TEST CLOUD SAVE
-             </button>
+            <div class="flex flex-col gap-1 mt-1">
+                <span class="font-bold text-xs">Toolbar Position:</span>
+                <div class="flex gap-2">
+                    <label class="flex items-center gap-1 cursor-pointer text-xs">
+                        <input type="radio" name="toolbar-position" value="sidebar" checked onchange="setToolbarPosition('sidebar')"> Right
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer text-xs">
+                        <input type="radio" name="toolbar-position" value="topbar" onchange="setToolbarPosition('topbar')"> Top
+                    </label>
+                </div>
+            </div>
+             <div class="flex flex-col gap-1 mt-1">
+                <span class="font-bold text-xs">Background:</span>
+                <div class="flex gap-2">
+                    <label class="flex items-center gap-1 cursor-pointer text-xs">
+                        <input type="radio" name="bg-pattern" value="none" onchange="setBackgroundPattern('none')"> None
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer text-xs">
+                        <input type="radio" name="bg-pattern" value="dots" onchange="setBackgroundPattern('dots')" checked> Dots
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer text-xs">
+                        <input type="radio" name="bg-pattern" value="grid" onchange="setBackgroundPattern('grid')"> Grid
+                    </label>
+                </div>
+                 <label class="flex items-center justify-between text-xs mt-1">
+                    <span class="font-bold">Opacity:</span>
+                    <input type="range" id="config-pattern-opacity" min="0" max="30" value="10" class="w-20"
+                    oninput="setPatternOpacity(this.value)">
+                </label>
+            </div>
           </div>
 
+          <!-- Simulation Category -->
           <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
-            <strong>Theme:</strong>
+            <strong>Simulation:</strong>
           </div>
-          <div class="neo-dropdown-item" onclick="changeTheme('default')">
-            <i class="fas fa-circle" style="color: #ffe600;"></i> Default
+          <div class="neo-dropdown-item flex flex-col gap-2">
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Max Memory (MB):</span>
+              <input type="number" id="config-max-memory" value="1024" min="256" max="8192" step="256"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono" onchange="updateMaxMemory(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">CPU Cores:</span>
+              <input type="number" id="config-cpu-cores" value="1" min="1" max="8"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono" onchange="updateCPUCores(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Context Switch (ms):</span>
+              <input type="number" id="config-context-switch" value="5" min="1" max="100"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono"
+                onchange="updateContextSwitchTime(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Sim Speed (ms):</span>
+              <input type="number" id="config-sim-speed" value="200" min="50" max="2000" step="50"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono" onchange="updateSimSpeed(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Starvation Threshold:</span>
+              <input type="number" id="config-starvation" value="50" min="10" max="1000" step="10"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono" onchange="updateStarvationThreshold(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Step Size (cycles):</span>
+              <input type="number" id="config-step-size" value="1" min="1" max="100"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono" onchange="updateStepSize(this.value)">
+            </label>
           </div>
-          <div class="neo-dropdown-item" onclick="changeTheme('ocean')">
-            <i class="fas fa-circle" style="color: #81d4fa;"></i> Ocean
+
+          <!-- Graph Category -->
+          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+            <strong>Graph Display:</strong>
           </div>
-          <div class="neo-dropdown-item" onclick="changeTheme('forest')">
-            <i class="fas fa-circle" style="color: #aed581;"></i> Forest
+          <div class="neo-dropdown-item flex flex-col gap-2">
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Edge Label Size:</span>
+              <input type="number" id="config-edge-label-size" value="10" min="0" max="20"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono"
+                onchange="updateEdgeLabelSize(this.value)">
+            </label>
+            <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Edge Thickness:</span>
+              <input type="number" id="config-edge-thickness" value="3" min="1" max="10"
+                class="w-16 px-1 py-0.5 border-2 border-black text-xs font-mono"
+                onchange="updateEdgeThickness(this.value)">
+            </label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="checkbox" id="config-show-edge-labels" checked onchange="toggleEdgeLabels(this.checked)">
+              <span class="font-bold">Show Edge Labels</span>
+            </label>
           </div>
-          <div class="neo-dropdown-item" onclick="changeTheme('sunset')">
-            <i class="fas fa-circle" style="color: #ff8a65;"></i> Sunset
+
+          <!-- System Category -->
+          <div class="neo-dropdown-item border-b-2 border-black border-t-2 pb-2 mb-2 mt-2 pt-2">
+            <strong>System:</strong>
           </div>
-          <div class="neo-dropdown-item" onclick="changeTheme('midnight')">
-            <i class="fas fa-circle" style="color: #4db6ac;"></i> Midnight
+          <div class="neo-dropdown-item flex flex-col gap-2">
+             <label class="flex items-center justify-between text-xs">
+              <span class="font-bold">Autosave:</span>
+              <select id="config-autosave" class="neo-select text-xs font-mono p-1 border-2 border-black" onchange="updateAutosaveFrequency(this.value)">
+                <option value="0">Off</option>
+                <option value="30000">30s</option>
+                <option value="60000">1m</option>
+                <option value="300000">5m</option>
+                <option value="600000">10m</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 text-xs">
+                <span class="font-bold">Gemini API Key:</span>
+                <input type="password" id="config-gemini-key" placeholder="Enter Gemini API key"
+                class="w-full p-1 border-2 border-black font-mono text-xs" onchange="saveGeminiKey(this.value)">
+                <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                class="text-blue-600 underline text-[10px]">Get API Key →</a>
+            </label>
+             <label class="flex items-center gap-2 cursor-pointer text-xs mt-1">
+                <input type="checkbox" id="config-legacy-scenarios" onchange="toggleScenarioUIMode(this.checked)">
+                <span class="font-bold">Use Legacy Scenario Dropdown</span>
+            </label>
           </div>
         </div>
       </div>
@@ -242,7 +249,7 @@
             <i class="fas fa-user"></i>
           </button>
           <!-- Profile Dropdown (Populated by JS) -->
-          <div id="profile-menu" class="neo-dropdown" style="width: 240px; right: -100px; left: auto; transform: translateX(-50%);">
+          <div id="profile-menu" class="neo-dropdown" style="width: 240px; left: 50%; right: auto; transform: translateX(-50%);">
           </div>
         </div>
       </div>
@@ -682,6 +689,41 @@
     </div>
   </div>
 
+  <!-- Save Scenario Modal -->
+  <div id="save-scenario-modal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10002; font-family: 'Courier New', monospace;">
+    <div
+      style="position: relative; background: white; border: 4px solid black; box-shadow: 10px 10px 0 black; padding: 24px; max-width: 400px; margin: 150px auto; transform: rotate(0.5deg);">
+      <!-- Pin -->
+      <div
+        style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: radial-gradient(circle at 30% 30%, #555, #000); border: 2px solid black; border-radius: 50%; box-shadow: 2px 2px 0 rgba(0,0,0,0.5); z-index: 10;">
+      </div>
+      <h3
+        style="font-size: 18px; font-weight: 900; margin-bottom: 16px; color: #000; border-bottom: 3px solid black; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+        <span style="background: white; padding: 4px 8px; border: 2px solid black; box-shadow: 3px 3px 0 black;">
+          <i class="fas fa-cloud-upload-alt"></i> SAVE SCENARIO
+        </span>
+      </h3>
+      <p style="font-size: 14px; line-height: 1.6; margin-bottom: 15px; font-weight: 600;">
+        Enter a name for your scenario:
+      </p>
+      <input type="text" id="save-scenario-input" class="neo-input" placeholder="My Awesome Scenario"
+        style="width: 100%; margin-bottom: 20px; font-size: 14px; padding: 10px; border: 3px solid black; box-shadow: 4px 4px 0 rgba(0,0,0,0.1);"
+        onkeydown="if(event.key==='Enter') confirmSaveScenario()">
+
+      <div style="display: flex; gap: 10px;">
+        <button onclick="confirmSaveScenario()" class="neo-btn"
+          style="flex: 1; padding: 10px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; background: #a3ffac;">
+          <i class="fas fa-save"></i> SAVE
+        </button>
+        <button onclick="closeSaveModal()" class="neo-btn"
+          style="flex: 1; padding: 10px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+          CANCEL
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Algorithm Demo Modal -->
   <div id="algo-demo-modal"
     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 10005; font-family: 'Courier New', monospace; overflow-y: auto;"
@@ -710,7 +752,7 @@
         <h2 style="font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
           <span
             style="background: white; padding: 8px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black; display: inline-block;">
-            <i class="fas fa-trophy" style="color: black;"></i> Challenge Mode
+            <i class="fas fa-trophy trophy-wobble" style="color: black;"></i> Challenge Mode
           </span>
         </h2>
         <button onclick="closeChallengeModal()"
@@ -725,66 +767,66 @@
 
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
-          <button onclick="startChallenge('easy')" class="neo-btn"
-            style="position: relative; background: #a3ffac; padding: 15px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s;"
-            onmouseover="this.style.transform='translate(-4px,-4px)'; this.style.boxShadow='8px 8px 0 black'"
-            onmouseout="this.style.transform='translate(0,0)'; this.style.boxShadow='4px 4px 0 black'">
+          <button onclick="startChallenge('easy')" class="neo-btn animated-stripe-bg-green"
+            style="position: relative; padding: 15px; display: flex; align-items: stretch; gap: 10px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s; transform: rotate(-1.5deg);"
+            onmouseover="this.style.transform='translate(-4px,-4px) rotate(-1.5deg)'; this.style.boxShadow='8px 8px 0 black'"
+            onmouseout="this.style.transform='translate(0,0) rotate(-1.5deg)'; this.style.boxShadow='4px 4px 0 black'">
             <!-- Pin -->
             <div
-              style="position: absolute; top: -8px; right: 20px; width: 16px; height: 16px; background: #374151; border: 2.5px solid black; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+              style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: radial-gradient(circle at 30% 30%, #555, #000); border: 2px solid black; border-radius: 50%; box-shadow: 2px 2px 0 rgba(0,0,0,0.5); z-index: 10;">
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+
+            <!-- Title Box -->
+            <div style="width: 140px; display: flex; align-items: center; gap: 12px; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black;">
               <i class="fas fa-smile" style="font-size: 24px;"></i>
-              <div style="flex: 1;">
-                <div style="font-size: 16px; margin-bottom: 4px;">EASY</div>
-                <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                  DEADLOCK DETECTION</div>
-              </div>
+              <div style="font-size: 16px;">EASY</div>
             </div>
+
+            <!-- Description Box -->
             <div
-              style="font-size: 11px; font-weight: normal; margin-top: 10px; border-top: 2px dashed rgba(0,0,0,0.3); padding-top: 8px; font-style: italic; background: white; padding: 10px; border-radius: 4px;">
+              style="flex: 1; display: flex; align-items: center; font-size: 11px; font-weight: normal; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black; font-style: italic;">
               Identify deadlocks or simple unsafe states.</div>
           </button>
 
-          <button onclick="startChallenge('medium')" class="neo-btn"
-            style="position: relative; background: #feca57; padding: 15px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s;"
-            onmouseover="this.style.transform='translate(-4px,-4px)'; this.style.boxShadow='8px 8px 0 black'"
-            onmouseout="this.style.transform='translate(0,0)'; this.style.boxShadow='4px 4px 0 black'">
+          <button onclick="startChallenge('medium')" class="neo-btn animated-stripe-bg-yellow"
+            style="position: relative; padding: 15px; display: flex; align-items: stretch; gap: 10px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s; transform: rotate(1deg);"
+            onmouseover="this.style.transform='translate(-4px,-4px) rotate(1deg)'; this.style.boxShadow='8px 8px 0 black'"
+            onmouseout="this.style.transform='translate(0,0) rotate(1deg)'; this.style.boxShadow='4px 4px 0 black'">
             <!-- Pin -->
             <div
-              style="position: absolute; top: -8px; right: 20px; width: 16px; height: 16px; background: #374151; border: 2.5px solid black; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+              style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: radial-gradient(circle at 30% 30%, #555, #000); border: 2px solid black; border-radius: 50%; box-shadow: 2px 2px 0 rgba(0,0,0,0.5); z-index: 10;">
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+
+            <!-- Title Box -->
+            <div style="width: 140px; display: flex; align-items: center; gap: 12px; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black;">
               <i class="fas fa-meh" style="font-size: 24px;"></i>
-              <div style="flex: 1;">
-                <div style="font-size: 16px; margin-bottom: 4px;">MEDIUM</div>
-                <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                  DEADLOCK AVOIDANCE</div>
-              </div>
+              <div style="font-size: 16px;">MEDIUM</div>
             </div>
+
+            <!-- Description Box -->
             <div
-              style="font-size: 11px; font-weight: normal; margin-top: 10px; border-top: 2px dashed rgba(0,0,0,0.3); padding-top: 8px; font-style: italic; background: white; padding: 10px; border-radius: 4px;">
+              style="flex: 1; display: flex; align-items: center; font-size: 11px; font-weight: normal; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black; font-style: italic;">
               Fix unsafe states or prevent deadlock formation.</div>
           </button>
 
-          <button onclick="startChallenge('hard')" class="neo-btn"
-            style="position: relative; background: #ff6b6b; padding: 15px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s;"
-            onmouseover="this.style.transform='translate(-4px,-4px)'; this.style.boxShadow='8px 8px 0 black'"
-            onmouseout="this.style.transform='translate(0,0)'; this.style.boxShadow='4px 4px 0 black'">
+          <button onclick="startChallenge('hard')" class="neo-btn animated-stripe-bg-red"
+            style="position: relative; padding: 15px; display: flex; align-items: stretch; gap: 10px; text-align: left; font-size: 14px; font-weight: 900; border: 3px solid black; box-shadow: 4px 4px 0 black; transition: all 0.2s; transform: rotate(-0.5deg);"
+            onmouseover="this.style.transform='translate(-4px,-4px) rotate(-0.5deg)'; this.style.boxShadow='8px 8px 0 black'"
+            onmouseout="this.style.transform='translate(0,0) rotate(-0.5deg)'; this.style.boxShadow='4px 4px 0 black'">
             <!-- Pin -->
             <div
-              style="position: absolute; top: -8px; right: 20px; width: 16px; height: 16px; background: #374151; border: 2.5px solid black; border-radius: 50%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+              style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: radial-gradient(circle at 30% 30%, #555, #000); border: 2px solid black; border-radius: 50%; box-shadow: 2px 2px 0 rgba(0,0,0,0.5); z-index: 10;">
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+
+            <!-- Title Box -->
+            <div style="width: 140px; display: flex; align-items: center; gap: 12px; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black;">
               <i class="fas fa-dizzy" style="font-size: 24px;"></i>
-              <div style="flex: 1;">
-                <div style="font-size: 16px; margin-bottom: 4px;">HARD</div>
-                <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                  COMPLEX SCENARIOS</div>
-              </div>
+              <div style="font-size: 16px;">HARD</div>
             </div>
+
+            <!-- Description Box -->
             <div
-              style="font-size: 11px; font-weight: normal; margin-top: 10px; border-top: 2px dashed rgba(0,0,0,0.3); padding-top: 8px; font-style: italic; background: white; padding: 10px; border-radius: 4px;">
+              style="flex: 1; display: flex; align-items: center; font-size: 11px; font-weight: normal; background: white; padding: 10px; border: 2px solid black; box-shadow: 2px 2px 0 black; font-style: italic;">
               Multi-step resolution and race condition fixes.</div>
           </button>
         </div>
@@ -814,11 +856,30 @@
             <i class="fas fa-eye mr-1"></i> SPECTATOR MODE
         </div>
 
+        <!-- Participants Button (Absolute Top-Left) -->
+        <div id="participants-container" style="display: none; position: absolute; top: -15px; left: -10px; z-index: 30;">
+            <button onclick="Session.toggleParticipants()" class="neo-btn flex items-center gap-1"
+                style="padding: 6px 10px; font-size: 11px; font-weight: 900; background: #ffe600; border: 3px solid black; box-shadow: 3px 3px 0 black; transform: rotate(-2deg);"
+                title="Participants">
+                <i class="fas fa-users"></i>
+                <span id="participant-count" class="bg-black text-white px-1.5 rounded-sm text-[10px] ml-1">0</span>
+            </button>
+            <!-- Dropdown -->
+            <div id="participants-dropdown" class="hidden absolute top-full left-0 mt-2 w-48 bg-white border-4 border-black shadow-lg z-50 max-h-48 overflow-y-auto">
+                <div id="participants-list" class="flex flex-col">
+                    <div class="p-3 text-xs italic text-gray-500 text-center">No participants yet</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
         <div class="animated-stripe-bg" style="padding: 10px; border-bottom: 3px solid black; display: flex; justify-content: space-between; align-items: center;">
-            <div class="font-black flex items-center gap-2" style="background: white; padding: 6px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black;">
-                <i class="fas fa-broadcast-tower"></i> LIVE SESSION
+            <div class="flex items-center gap-2">
+                <div class="font-black flex items-center gap-2" style="background: white; padding: 6px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black;">
+                    <i class="fas fa-broadcast-tower"></i> LIVE SESSION
+                </div>
             </div>
+
             <button onclick="Session.togglePanel()" class="hover:text-white transition-colors">
                 <i class="fas fa-minus"></i>
             </button>
@@ -826,15 +887,16 @@
 
         <!-- Join View -->
         <div id="session-join-view" class="p-4">
-            <p class="text-xs font-bold mb-2">ENTER SESSION CODE:</p>
-            <div class="flex gap-2">
+            <div class="flex flex-col gap-3">
                 <input type="text" id="session-code-input" class="neo-input w-full font-mono text-center text-lg tracking-widest" placeholder="000000" maxlength="6">
-                <button onclick="Session.handleJoin()" class="neo-btn primary">JOIN</button>
+                <button onclick="Session.handleJoin()" class="neo-btn primary w-full">JOIN</button>
             </div>
         </div>
 
         <!-- Active View -->
         <div id="session-active-view" class="hidden p-4">
+
+
 
 
             <p class="text-xs font-bold mb-1 text-gray-500">SESSION CODE:</p>
@@ -921,7 +983,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="h-64 border-t-4 border-black flex flex-col md:flex-row" style="z-index: 20;">
+  <footer class="h-auto md:h-64 border-t-4 border-black flex flex-col md:flex-row" style="z-index: 20;">
     <!-- Left: OS Queues & Gantt -->
     <div class="w-full md:w-1/2 bg-white border-b-4 md:border-b-0 md:border-r-4 border-black flex flex-col relative">
 
@@ -992,14 +1054,12 @@
         <input type="text" id="cli-input" class="cli-input" placeholder="Enter command..." autocomplete="off"
           spellcheck="false">
       </div>
-    </div>
-  </footer>
-
   <script src="js/core/config.js"></script>
   <script src="js/core/cli.js"></script>
   <script src="js/ui/menu.js"></script>
   <script src="js/ui/settings.js"></script>
   <script src="js/ui/panels.js"></script>
+  <script src="js/ui/responsive.js"></script>
   <script src="js/ui/export.js"></script>
   <script src="js/modules/ai.js"></script>
   <script src="js/modules/scenarios.js"></script>

@@ -8,6 +8,9 @@ const Session = {
     isHost: false,
     channel: null,
     isMinimized: false,
+    participants: {}, // Map of ID -> { name, joined_at }
+    joinQueue: [], // For batched notifications
+    joinTimer: null,
 
     // Generate a random 6-digit code
     generateCode() {
@@ -105,8 +108,28 @@ const Session = {
             .on('broadcast', { event: 'sim_update' }, (payload) => {
                 if (!this.isHost) this.handleSimUpdate(payload.payload);
             })
-            .subscribe((status) => {
+            .on('presence', { event: 'sync' }, () => {
+                this.updateParticipantsFromPresence();
+            })
+            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+                this.handlePresenceJoin(newPresences);
+            })
+            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+                this.handlePresenceLeave(leftPresences);
+            })
+            .subscribe(async (status) => {
                 console.log(`Session subscription status: ${status}`);
+                if (status === 'SUBSCRIBED') {
+                    const user = Auth.user;
+                    const name = user.user_metadata.username || user.email.split('@')[0];
+                    await this.channel.track({
+                        user_id: user.id,
+                        name: name,
+                        online_at: new Date().toISOString()
+                    });
+
+                    if (this.isHost) this.startJoinWatcher();
+                }
             });
     },
 
@@ -171,6 +194,84 @@ const Session = {
         this.showNotification("Left session.", "info");
     },
 
+    // --- Presence & Participants ---
+    updateParticipantsFromPresence() {
+        const state = this.channel.presenceState();
+        this.participants = {};
+
+        Object.values(state).forEach(presences => {
+            presences.forEach(p => {
+                this.participants[p.user_id] = p;
+            });
+        });
+
+        this.updateParticipantsUI();
+    },
+
+    handlePresenceJoin(newPresences) {
+        // Add to queue for notification if host
+        if (this.isHost) {
+            newPresences.forEach(p => {
+                if (p.user_id !== Auth.user.id) { // Don't notify for self
+                    this.joinQueue.push(p.name);
+                }
+            });
+        }
+        this.updateParticipantsFromPresence();
+    },
+
+    handlePresenceLeave(leftPresences) {
+        this.updateParticipantsFromPresence();
+    },
+
+    startJoinWatcher() {
+        if (this.joinTimer) clearInterval(this.joinTimer);
+        this.joinTimer = setInterval(() => {
+            if (this.joinQueue.length > 0) {
+                const count = this.joinQueue.length;
+                const names = this.joinQueue.slice(0, 3).join(', ');
+                const suffix = count > 3 ? ` and ${count - 3} others` : '';
+
+                this.showNotification(`${names}${suffix} joined the session!`, 'info');
+                this.joinQueue = [];
+            }
+        }, 5000);
+    },
+
+    toggleParticipants() {
+        const dropdown = document.getElementById('participants-dropdown');
+        if (dropdown) dropdown.classList.toggle('hidden');
+    },
+
+    updateParticipantsUI() {
+        const list = document.getElementById('participants-list');
+        const countBadge = document.getElementById('participant-count');
+        const count = Object.keys(this.participants).length;
+
+        if (countBadge) countBadge.textContent = count;
+
+        if (list) {
+            list.innerHTML = '';
+            if (count === 0) {
+                list.innerHTML = '<div class="p-3 text-xs italic text-gray-500 text-center">No participants yet</div>';
+            } else {
+                Object.values(this.participants).forEach(p => {
+                    const isMe = p.user_id === Auth.user.id;
+                    const item = document.createElement('div');
+                    item.className = 'p-2 border-b border-gray-200 flex justify-between items-center hover:bg-yellow-50';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span class="text-xs font-bold">${p.name} ${isMe ? '(You)' : ''}</span>
+                        </div>
+                        ${p.user_id === this.activeSession?.host_id ? '<i class="fas fa-crown text-yellow-500 text-xs" title="Host"></i>' : ''}
+                    `;
+                    list.appendChild(item);
+                });
+            }
+        }
+    },
+
     // UI Functions
     openJoinPanel() {
         this.showPanel('join');
@@ -209,6 +310,10 @@ const Session = {
                 spectatorBadge.classList.add('hidden');
                 document.body.classList.remove('session-guest');
             }
+
+            // Show participants button
+            const partContainer = document.getElementById('participants-container');
+            if (partContainer) partContainer.style.display = 'block';
 
             // Minimize Legend Pane
             const legendBox = document.getElementById('legend-box');

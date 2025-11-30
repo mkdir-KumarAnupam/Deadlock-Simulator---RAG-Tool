@@ -515,6 +515,106 @@
       detectDeadlock(true);
     }
 
+    // --- Autosave Logic ---
+    let autosaveTimer = null;
+
+    function startAutosave(intervalMs) {
+      if (autosaveTimer) clearInterval(autosaveTimer);
+
+      if (!intervalMs || intervalMs <= 0) {
+        console.log("Autosave disabled");
+        return;
+      }
+
+      console.log(`Starting autosave with interval: ${intervalMs}ms`);
+      autosaveTimer = setInterval(saveAutosave, intervalMs);
+    }
+
+    function saveAutosave() {
+      console.log("Attempting autosave...");
+      if (typeof nodes === 'undefined') {
+        console.error("Autosave error: 'nodes' is undefined");
+        return;
+      }
+
+      if (nodes.length === 0) {
+        console.log("Autosave skipped: Graph is empty");
+        return;
+      }
+
+      const data = {
+        nodes: nodes,
+        edges: edges,
+        nextId: nextId,
+        timestamp: Date.now()
+      };
+
+      try {
+        localStorage.setItem('autosave_latest', JSON.stringify(data));
+        console.log("Autosave success! Timestamp:", data.timestamp);
+
+        // Optional: subtle indicator?
+        const saveIcon = document.getElementById('autosave-indicator');
+        if (saveIcon) {
+            saveIcon.classList.remove('hidden');
+            setTimeout(() => saveIcon.classList.add('hidden'), 1000);
+        }
+      } catch (e) {
+        console.error("Autosave failed:", e);
+      }
+    }
+
+    function loadAutosave() {
+      const saved = localStorage.getItem('autosave_latest');
+      if (!saved) {
+        printToCli("No autosave found.", 'error');
+        return;
+      }
+
+      try {
+        const data = JSON.parse(saved);
+        resetGraph();
+        nodes = data.nodes;
+        edges = data.edges;
+        nextId = data.nextId;
+
+        // Restore rotation if missing (legacy support)
+        nodes.forEach(n => {
+            if (n.rotation === undefined) n.rotation = (Math.random() - 0.5) * 0.25;
+            if (n.pinColor === undefined) n.pinColor = '#333';
+        });
+
+        draw();
+        updateSystemStats();
+        const date = new Date(data.timestamp).toLocaleTimeString();
+        printToCli(`Restored autosave from ${date}`, 'success');
+
+        // Close menus
+        document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));
+      } catch (e) {
+        printToCli("Failed to load autosave.", 'error');
+        console.error(e);
+      }
+    }
+
+    // Initialize Autosave from Preferences
+    setTimeout(() => {
+        const savedFreq = localStorage.getItem('autosaveFrequency');
+        if (savedFreq) {
+            const freq = parseInt(savedFreq);
+            if (freq > 0) {
+                startAutosave(freq);
+                // Update UI if it exists
+                const select = document.getElementById('config-autosave');
+                if (select) select.value = freq;
+            }
+        }
+    }, 1000);
+
+    window.startAutosave = startAutosave;
+    window.saveAutosave = saveAutosave;
+    window.loadAutosave = loadAutosave;
+
     // --- Cloud Storage Logic (Supabase) ---
     async function saveScenarioToCloud(name) {
       if (!Auth.user) {
@@ -601,13 +701,60 @@
     // --- UI Helpers ---
     function promptSaveScenario() {
       if (!Auth.user) {
-        alert("Please login to save scenarios.");
+        if (window.Session) Session.showNotification("Please login to save scenarios.", 'error');
+        else alert("Please login to save scenarios.");
         return;
       }
-      const name = prompt("Enter scenario name:");
-      if (name) {
-        saveScenarioToCloud(name);
+
+      const modal = document.getElementById('save-scenario-modal');
+      const input = document.getElementById('save-scenario-input');
+
+      if (modal && input) {
+        input.value = ''; // Clear previous input
+        modal.style.display = 'block';
+
+        // Animate content
+        const content = modal.firstElementChild;
+        content.style.animation = 'none';
+        void content.offsetHeight; // Force reflow
+        content.style.animation = 'slideFromTop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+
+        setTimeout(() => input.focus(), 100); // Focus input
+      } else {
+        // Fallback
+        const name = prompt("Enter scenario name:");
+        if (name) {
+          saveScenarioToCloud(name);
+        }
       }
+    }
+
+    function closeSaveModal() {
+      const modal = document.getElementById('save-scenario-modal');
+      if (modal) {
+        const content = modal.firstElementChild;
+        // Animate out
+        content.style.animation = 'slideToTop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+
+        setTimeout(() => {
+          modal.style.display = 'none';
+          content.style.animation = ''; // Reset
+        }, 400);
+      }
+    }
+
+    function confirmSaveScenario() {
+      const input = document.getElementById('save-scenario-input');
+      const name = input.value.trim();
+
+      if (!name) {
+        if (window.Session) Session.showNotification("Please enter a scenario name.", 'error');
+        else alert("Please enter a scenario name.");
+        return;
+      }
+
+      closeSaveModal();
+      saveScenarioToCloud(name);
     }
 
     async function openUserScenarios() {
@@ -659,3 +806,5 @@
     window.saveScenarioToCloud = saveScenarioToCloud;
     window.fetchUserScenarios = fetchUserScenarios;
     window.loadUserScenario = loadUserScenario;
+    window.closeSaveModal = closeSaveModal;
+    window.confirmSaveScenario = confirmSaveScenario;

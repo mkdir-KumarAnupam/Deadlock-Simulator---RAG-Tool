@@ -29,7 +29,8 @@
     async function startChallenge(difficulty) {
       const apiKey = localStorage.getItem('geminiApiKey');
       if (!apiKey) {
-        alert('Please configure Gemini API key in Settings first!');
+        if (window.Session) Session.showNotification('Please configure Gemini API key in Settings first!', 'error');
+        else alert('Please configure Gemini API key in Settings first!');
         return;
       }
 
