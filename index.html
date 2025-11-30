@@ -50,6 +50,9 @@
           <div class="neo-dropdown-item" onclick="shareWithQR()">
             <i class="fas fa-qrcode mr-2"></i> Share with QR Code
           </div>
+          <div class="neo-dropdown-item lg:hidden" onclick="toggleTabletTerminal()">
+            <i class="fas fa-terminal mr-2"></i> Toggle Terminal
+          </div>
         </div>
       </div>
 
@@ -627,7 +630,9 @@
       style="right: -280px; transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 9999;">
       <div class="flex justify-between items-center border-b-2 border-black mb-3 pb-1">
         <h3 class="font-black text-sm">PROPERTIES</h3>
-        <button onclick="closeProps()" class="text-xs font-bold hover:text-red-500">X</button>
+        <button onclick="closeProps()" class="w-8 h-8 bg-red-500 text-white border-2 border-black shadow-[2px_2px_0_black] flex items-center justify-center font-bold transition-all duration-200 hover:scale-110 hover:rotate-90 hover:shadow-[4px_4px_0_black]" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
       <div id="prop-content" class="space-y-3"></div>
     </div>
@@ -644,71 +649,76 @@
 
     <!-- Session Panel -->
   <div id="session-panel" style="display: none; position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000; font-family: 'Courier New', monospace;">
-    <!-- Minimized Tab -->
-    <div id="session-minimized" class="hidden" onclick="Session.togglePanel()"
-         style="background: #ffe600; border: 3px solid black; padding: 10px; cursor: pointer; box-shadow: 4px 4px 0 black; writing-mode: vertical-rl; text-orientation: mixed; font-weight: 900;">
-        <i class="fas fa-chevron-right mb-2"></i> LIVE
-    </div>
-
-    <!-- Main Content -->
-    <div id="session-content" style="background: white; border: 4px solid black; box-shadow: 8px 8px 0 black; width: 300px; position: relative;">
-        <!-- Spectator Badge (Absolute) -->
-        <div id="spectator-badge" class="hidden" style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 20; background: #dbeafe; border: 2px solid #3b82f6; color: #1e40af; padding: 4px 12px; font-size: 11px; font-weight: 900; white-space: nowrap;">
-            <i class="fas fa-eye mr-1"></i> SPECTATOR MODE
+    <div class="origin-left md:scale-75 lg:scale-100 transition-transform">
+        <!-- Minimized Tab -->
+        <div id="session-minimized" class="hidden" onclick="Session.togglePanel()"
+             style="background: #ffe600; border: 3px solid black; padding: 10px; cursor: pointer; box-shadow: 4px 4px 0 black; writing-mode: vertical-rl; text-orientation: mixed; font-weight: 900;">
+            <i class="fas fa-chevron-right mr-5"></i>
         </div>
 
-        <!-- Participants Button (Absolute Top-Left) -->
-        <div id="participants-container" style="display: none; position: absolute; top: -15px; left: -10px; z-index: 30;">
-            <button onclick="Session.toggleParticipants()" class="neo-btn flex items-center gap-1"
-                style="padding: 6px 10px; font-size: 11px; font-weight: 900; background: #ffe600; border: 3px solid black; box-shadow: 3px 3px 0 black; transform: rotate(-2deg);"
-                title="Participants">
-                <i class="fas fa-users"></i>
-                <span id="participant-count" class="bg-black text-white px-1.5 rounded-sm text-[10px] ml-1">0</span>
+        <!-- Main Content -->
+        <div id="session-content" style="background: white; border: 4px solid black; box-shadow: 8px 8px 0 black; width: 300px; position: relative;">
+            <!-- Spectator Badge (Absolute) -->
+            <div id="spectator-badge" class="hidden" style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 20; background: #dbeafe; border: 2px solid #3b82f6; color: #1e40af; padding: 4px 12px; font-size: 11px; font-weight: 900; white-space: nowrap;">
+                <i class="fas fa-eye mr-1"></i> SPECTATOR MODE
+            </div>
+
+            <!-- Participants Button (Absolute Top-Left) -->
+            <div id="participants-container" style="display: none; position: absolute; top: -15px; left: -10px; z-index: 30;">
+                <button onclick="Session.toggleParticipants()" class="neo-btn flex items-center gap-1"
+                    style="padding: 6px 10px; font-size: 11px; font-weight: 900; background: #ffe600; border: 3px solid black; box-shadow: 3px 3px 0 black; transform: rotate(-2deg);"
+                    title="Participants">
+                    <i class="fas fa-users"></i>
+                    <span id="participant-count" class="bg-black text-white px-1.5 rounded-sm text-[10px] ml-1">0</span>
+                </button>
+                <!-- Dropdown -->
+                <div id="participants-dropdown" class="hidden absolute top-full left-0 mt-2 w-48 bg-white border-4 border-black shadow-lg z-50 max-h-48 overflow-y-auto">
+                    <div id="participants-list" class="flex flex-col">
+                        <div class="p-3 text-xs italic text-gray-500 text-center">No participants yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minimize Button (Absolute Top-Right) -->
+            <button onclick="Session.togglePanel()" class="neo-btn flex items-center justify-center"
+                style="position: absolute; top: -15px; right: -15px; width: 30px; height: 30px; z-index: 30; background: #ff6b6b; border: 3px solid black; box-shadow: 3px 3px 0 black; transform: rotate(2deg);"
+                title="Minimize">
+                <i class="fas fa-minus text-white font-black"></i>
             </button>
-            <!-- Dropdown -->
-            <div id="participants-dropdown" class="hidden absolute top-full left-0 mt-2 w-48 bg-white border-4 border-black shadow-lg z-50 max-h-48 overflow-y-auto">
-                <div id="participants-list" class="flex flex-col">
-                    <div class="p-3 text-xs italic text-gray-500 text-center">No participants yet</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Header -->
-        <div class="animated-stripe-bg" style="padding: 10px; border-bottom: 3px solid black; display: flex; justify-content: space-between; align-items: center;">
-            <div class="flex items-center gap-2">
-                <div class="font-black flex items-center gap-2" style="background: white; padding: 6px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black;">
-                    <i class="fas fa-broadcast-tower"></i> LIVE SESSION
+            <!-- Header -->
+            <div class="animated-stripe-bg" style="padding: 10px; border-bottom: 3px solid black; display: flex; justify-content: space-between; align-items: center;">
+                <div class="flex items-center gap-2">
+                    <div class="font-black flex items-center gap-2" style="background: white; padding: 6px 12px; border: 3px solid black; box-shadow: 4px 4px 0 black;">
+                        <i class="fas fa-broadcast-tower"></i> LIVE SESSION
+                    </div>
                 </div>
             </div>
 
-            <button onclick="Session.togglePanel()" class="hover:text-white transition-colors">
-                <i class="fas fa-minus"></i>
-            </button>
-        </div>
-
-        <!-- Join View -->
-        <div id="session-join-view" class="p-4">
-            <div class="flex flex-col gap-3">
-                <input type="text" id="session-code-input" class="neo-input w-full font-mono text-center text-lg tracking-widest" placeholder="000000" maxlength="6">
-                <button onclick="Session.handleJoin()" class="neo-btn primary w-full">JOIN</button>
-            </div>
-        </div>
-
-        <!-- Active View -->
-        <div id="session-active-view" class="hidden p-4">
-            <p class="text-xs font-bold mb-1 text-gray-500">SESSION CODE:</p>
-            <div class="flex items-center gap-2 mb-4">
-                <div id="display-session-code" class="bg-black text-white font-mono text-2xl font-bold px-3 py-1 flex-grow text-center tracking-widest">
-                    ------
+            <!-- Join View -->
+            <div id="session-join-view" class="p-4">
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="session-code-input" class="neo-input w-full font-mono text-center text-lg tracking-widest" placeholder="000000" maxlength="6">
+                    <button onclick="Session.handleJoin()" class="neo-btn primary w-full">JOIN</button>
                 </div>
-                <button onclick="Session.copyCode()" class="neo-btn" title="Copy Code">
-                    <i class="fas fa-copy"></i>
+            </div>
+
+            <!-- Active View -->
+            <div id="session-active-view" class="hidden p-4">
+                <p class="text-xs font-bold mb-1 text-gray-500">SESSION CODE:</p>
+                <div class="flex items-center gap-2 mb-4">
+                    <div id="display-session-code" class="bg-black text-white font-mono text-2xl font-bold px-3 py-1 flex-grow text-center tracking-widest">
+                        ------
+                    </div>
+                    <button onclick="Session.copyCode()" class="neo-btn" title="Copy Code">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <button onclick="Session.leaveSession()" class="neo-btn danger w-[70%]">
+                    <i class="fas fa-sign-out-alt mr-2"></i> LEAVE
                 </button>
             </div>
-
-            <button onclick="Session.leaveSession()" class="neo-btn danger w-full">
-                <i class="fas fa-sign-out-alt mr-2"></i> LEAVE
-            </button>
         </div>
     </div>
   </div>
@@ -1018,7 +1028,7 @@
     <!-- Minimized Tab -->
     <div id="session-minimized" class="hidden" onclick="Session.togglePanel()"
          style="background: #ffe600; border: 3px solid black; padding: 10px; cursor: pointer; box-shadow: 4px 4px 0 black; writing-mode: vertical-rl; text-orientation: mixed; font-weight: 900;">
-        <i class="fas fa-chevron-right mb-2"></i> LIVE
+        <i class="fas fa-chevron-right mb-2"></i>
     </div>
 
     <!-- Main Content -->

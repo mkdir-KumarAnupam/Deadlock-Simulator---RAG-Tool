@@ -69,16 +69,15 @@ const ResponsiveUI = {
             // Reset for desktop
             footer.style.display = 'flex';
             toggleBtn.classList.add('hidden');
-            if (zoomControls) zoomControls.style.bottom = '280px'; // Reset to default CSS value
         }
     }
 };
 
 function toggleTabletTerminal() {
     const footer = document.querySelector('footer');
-    const toggleBtn = document.getElementById('terminal-toggle-btn');
     const zoomControls = document.getElementById('zoom-controls');
     const simControls = document.getElementById('sim-controls');
+    const sidebar = document.getElementById('sidebar-tools');
 
     if (footer.style.display === 'none') {
         // Expand
@@ -88,24 +87,39 @@ function toggleTabletTerminal() {
         footer.style.left = '0';
         footer.style.right = '0';
         footer.style.zIndex = '90';
-        footer.style.height = '40vh';
+        footer.style.height = '25vh'; // Reduced height
         footer.classList.add('tablet-expanded');
 
-        toggleBtn.style.bottom = '42vh';
-
         // Move controls up
-        if (zoomControls) zoomControls.style.bottom = '42vh';
-        if (simControls) simControls.style.bottom = '42vh';
+        if (zoomControls) zoomControls.style.bottom = '27vh';
+        if (simControls) simControls.style.bottom = '27vh';
+
+        // Adjust sidebar to be above footer
+        if (sidebar) {
+            sidebar.parentElement.style.bottom = '27vh';
+        }
+
+        if (window.Session && window.Session.showNotification) {
+            window.Session.showNotification("Terminal Expanded. Toggle in Menu to hide.", "info");
+        }
+
     } else {
         // Collapse
         footer.style.display = 'none';
         footer.classList.remove('tablet-expanded');
 
-        toggleBtn.style.bottom = '1rem';
-
         // Move controls down
         if (zoomControls) zoomControls.style.bottom = '20px';
-        if (simControls) simControls.style.bottom = '80px'; // Above the toggle button/zoom
+        if (simControls) simControls.style.bottom = '80px';
+
+        // Reset sidebar
+        if (sidebar) {
+            sidebar.parentElement.style.bottom = '20px'; // Default bottom
+        }
+
+        if (window.Session && window.Session.showNotification) {
+             window.Session.showNotification("Terminal Hidden", "info");
+        }
     }
 }
 
