@@ -88,12 +88,17 @@ function toggleTabletTerminal() {
         footer.style.left = '0';
         footer.style.right = '0';
         footer.style.zIndex = '90';
-        footer.style.height = '25vh'; // Reduced height
+        footer.style.height = '35vh'; // Increased height as requested
         footer.classList.add('tablet-expanded');
 
         // Move controls up
-        if (zoomControls) zoomControls.style.bottom = '27vh';
-        if (simControls) simControls.style.bottom = '27vh';
+        if (zoomControls) zoomControls.style.bottom = '37vh';
+        if (simControls) simControls.style.bottom = '37vh';
+
+        // Enforce positions to prevent moving up
+        if (sidebar) sidebar.style.top = '80px';
+        const legend = document.getElementById('legend-box');
+        if (legend) legend.style.top = '20px';
 
         if (window.Session && window.Session.showNotification) {
             window.Session.showNotification("Terminal Expanded. Toggle in Menu to hide.", "info");
@@ -107,6 +112,11 @@ function toggleTabletTerminal() {
         // Move controls down
         if (zoomControls) zoomControls.style.bottom = '20px';
         if (simControls) simControls.style.bottom = '80px';
+
+        // Reset positions (though they should be same)
+        if (sidebar) sidebar.style.top = '80px';
+        const legend = document.getElementById('legend-box');
+        if (legend) legend.style.top = '20px';
 
         if (window.Session && window.Session.showNotification) {
              window.Session.showNotification("Terminal Hidden", "info");
