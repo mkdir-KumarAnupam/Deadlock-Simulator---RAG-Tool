@@ -69,6 +69,7 @@ const ResponsiveUI = {
             // Reset for desktop
             footer.style.display = 'flex';
             toggleBtn.classList.add('hidden');
+            if (zoomControls) zoomControls.style.bottom = '280px'; // Reset to default CSS value
         }
     }
 };
@@ -94,11 +95,6 @@ function toggleTabletTerminal() {
         if (zoomControls) zoomControls.style.bottom = '27vh';
         if (simControls) simControls.style.bottom = '27vh';
 
-        // Adjust sidebar to be above footer
-        if (sidebar) {
-            sidebar.parentElement.style.bottom = '27vh';
-        }
-
         if (window.Session && window.Session.showNotification) {
             window.Session.showNotification("Terminal Expanded. Toggle in Menu to hide.", "info");
         }
@@ -111,11 +107,6 @@ function toggleTabletTerminal() {
         // Move controls down
         if (zoomControls) zoomControls.style.bottom = '20px';
         if (simControls) simControls.style.bottom = '80px';
-
-        // Reset sidebar
-        if (sidebar) {
-            sidebar.parentElement.style.bottom = '20px'; // Default bottom
-        }
 
         if (window.Session && window.Session.showNotification) {
              window.Session.showNotification("Terminal Hidden", "info");
