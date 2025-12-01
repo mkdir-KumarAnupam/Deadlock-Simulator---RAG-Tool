@@ -35,8 +35,9 @@ const ResponsiveUI = {
         const containerHeight = container.clientHeight;
         const toolbarHeight = toolbar.offsetHeight;
 
-        // Default top offset - keep this fixed to avoid overlapping the header
-        const topOffset = 80;
+        // Dynamic top offset based on device
+        const isTablet = window.innerWidth <= 1024 || config.isTouchDevice;
+        const topOffset = isTablet ? 10 : 80; // 10px for tablet, 80px for desktop
         const bottomPadding = 20;
 
         // Calculate available height
@@ -96,12 +97,13 @@ const ResponsiveUI = {
             // 20px gap above zoom controls
             const newBottom = zoomBottom + zoomHeight + 20;
 
-            statsBtn.style.position = 'fixed';
-            statsBtn.style.left = '20px';
+            // Use absolute positioning relative to the pane so it moves with it
+            statsBtn.style.position = 'absolute';
+            statsBtn.style.left = '370px'; // 350px (pane width) + 20px gap
             statsBtn.style.right = 'auto';
             statsBtn.style.top = 'auto';
             statsBtn.style.bottom = `${newBottom}px`;
-            statsBtn.style.zIndex = '10006'; // Ensure above pane
+            statsBtn.style.zIndex = '10006';
         } else {
             // Reset to desktop defaults (let CSS handle it)
             statsBtn.style.position = '';
@@ -120,6 +122,9 @@ function toggleTabletTerminal() {
     const simControls = document.getElementById('sim-controls');
     const sidebar = document.getElementById('sidebar-tools');
 
+    const isTablet = window.innerWidth <= 1024 || config.isTouchDevice;
+    const topOffset = isTablet ? '10px' : '80px';
+
     if (footer.style.display === 'none') {
         // Expand
         footer.style.display = 'flex';
@@ -136,13 +141,9 @@ function toggleTabletTerminal() {
         if (simControls) simControls.style.bottom = '37vh';
 
         // Enforce positions to prevent moving up
-        if (sidebar) sidebar.style.top = '80px';
+        if (sidebar) sidebar.style.top = topOffset;
         const legend = document.getElementById('legend-box');
         if (legend) legend.style.top = '20px';
-
-        if (window.Session && window.Session.showNotification) {
-            window.Session.showNotification("Terminal Expanded. Toggle in Menu to hide.", "info");
-        }
 
     } else {
         // Collapse
@@ -154,13 +155,9 @@ function toggleTabletTerminal() {
         if (simControls) simControls.style.bottom = '80px';
 
         // Reset positions (though they should be same)
-        if (sidebar) sidebar.style.top = '80px';
+        if (sidebar) sidebar.style.top = topOffset;
         const legend = document.getElementById('legend-box');
         if (legend) legend.style.top = '20px';
-
-        if (window.Session && window.Session.showNotification) {
-             window.Session.showNotification("Terminal Hidden", "info");
-        }
     }
 
     // Update stats button position immediately after toggling

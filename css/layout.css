@@ -3,8 +3,10 @@
   transition: right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-#sidebar-tools.shift-left {
-  right: 370px !important;
+@media (min-width: 1025px) {
+  #sidebar-tools.shift-left {
+    right: 370px !important;
+  }
 }
 
 /* Stats Pane */

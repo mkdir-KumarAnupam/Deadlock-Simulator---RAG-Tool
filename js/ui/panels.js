@@ -12,10 +12,17 @@
     function openScenarioLibrary() {
       const modal = document.getElementById('scenario-library-modal');
 
+      // Hide stats button on tablet when library is open
+      const statsBtn = document.querySelector('.stats-toggle-btn');
+      if (statsBtn && (window.innerWidth <= 1024 || config.isTouchDevice)) {
+          statsBtn.style.display = 'none';
+      }
+
       // Build modal content dynamically
       const scenarios = getScenarioData();
+      // Removed inline styles, now handled by css/features.css .scenario-library-content
       let html = `
-                <div class="scenario-library-content" style="background: #f8f8f8; background-image: radial-gradient(circle, #d0d0d0 2px, transparent 2px); background-size: 24px 24px; background-position: 0 0; border-right: 8px solid black; box-shadow: 12px 0 0 black; width: 60%; height: 100vh; overflow-y: auto; padding: 50px; position: fixed; top: 0; left: 0;">
+                <div class="scenario-library-content">
                     <button onclick="closeScenarioLibrary()" class="neo-btn library-close-btn" style="position: sticky; top: 10px; float: right; background: #ff4757; color: white; font-weight: bold; z-index: 10001; margin-bottom: 20px; margin-right: -10px;">
                         <i class="fas fa-times"></i> CLOSE
                     </button>
@@ -88,6 +95,12 @@
     function closeScenarioLibrary() {
       document.getElementById('scenario-library-modal').style.display = 'none';
       document.body.style.overflow = 'auto';
+
+      // Restore stats button visibility
+      const statsBtn = document.querySelector('.stats-toggle-btn');
+      if (statsBtn) {
+          statsBtn.style.display = ''; // Reset to default (flex/block)
+      }
     }
 
     function loadScenarioFromLibrary(type) {
