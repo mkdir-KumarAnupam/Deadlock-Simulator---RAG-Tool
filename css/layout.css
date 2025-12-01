@@ -169,3 +169,54 @@
   left: 0;
   right: auto;
 }
+
+/* Tablet Terminal Animation */
+@media (max-width: 1024px) {
+  footer.tablet-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: -40vh; /* Start off-screen */
+    height: 35vh;
+    z-index: 90;
+    transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex !important; /* Always flex, visibility controlled by bottom */
+    visibility: hidden; /* Hide when off-screen to prevent clicks */
+  }
+
+  footer.tablet-panel.visible {
+    visibility: visible;
+  }
+
+  footer.tablet-panel.animate-in {
+    bottom: 0;
+  }
+}
+
+/* Force for tablet layout class too */
+.tablet-layout footer.tablet-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: -40vh;
+  height: 35vh;
+  z-index: 90;
+  transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex !important;
+  visibility: hidden;
+}
+
+.tablet-layout footer.tablet-panel.visible {
+  visibility: visible;
+}
+
+.tablet-layout footer.tablet-panel.animate-in {
+  bottom: 0;
+}
+
+/* Synchronized Transitions for Controls */
+#zoom-controls,
+#sim-controls,
+.stats-toggle-btn {
+  transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1), right 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}

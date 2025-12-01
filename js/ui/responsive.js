@@ -8,7 +8,7 @@ const ResponsiveUI = {
         this.adjustToolbarScale();
         this.handleTabletTerminal();
         this.handleTabletStats();
-        this.handleTabletLayout(); // Add class management
+        this.handleTabletLayout();
         window.addEventListener('resize', () => {
             this.adjustToolbarScale();
             this.handleTabletTerminal();
@@ -76,15 +76,21 @@ const ResponsiveUI = {
         const zoomControls = document.getElementById('zoom-controls');
 
         if (isTablet) {
+            footer.classList.add('tablet-panel');
             // Collapse terminal by default on tablet
             if (!footer.classList.contains('tablet-expanded')) {
-                footer.style.display = 'none'; // Initially hide
+                // Ensure it's hidden initially
+                footer.classList.remove('animate-in');
+                footer.classList.remove('visible');
                 toggleBtn.classList.remove('hidden');
                 if (zoomControls) zoomControls.style.bottom = '20px';
             }
         } else {
             // Reset for desktop
-            footer.style.display = 'flex';
+            footer.classList.remove('tablet-panel');
+            footer.classList.remove('animate-in');
+            footer.classList.remove('visible');
+            footer.style.display = 'flex'; // Ensure flex for desktop
             toggleBtn.classList.add('hidden');
             if (zoomControls) zoomControls.style.bottom = '280px'; // Reset to default CSS value
         }
@@ -98,15 +104,22 @@ const ResponsiveUI = {
         if (!statsBtn || !zoomControls) return;
 
         if (isTablet) {
-            // Get zoom controls bottom position
-            // We need to compute it because it might be set via style or class
-            const zoomStyle = window.getComputedStyle(zoomControls);
-            const zoomBottom = parseInt(zoomStyle.bottom);
+            // Calculate target bottom position based on state
+            // We can't rely on getComputedStyle during animation as it returns current frame
+            const footer = document.querySelector('footer');
+            const isExpanded = footer && footer.classList.contains('tablet-expanded');
+
+            // Base bottom for zoom controls
+            // Expanded: 37vh, Collapsed: 20px
+            // We need to convert vh to pixels for accurate calculation
+            const vh = window.innerHeight;
+            const zoomBottomPx = isExpanded ? (vh * 0.37) : 20;
+
             const zoomHeight = zoomControls.offsetHeight;
 
             // Calculate new bottom for stats button
             // 20px gap above zoom controls
-            const newBottom = zoomBottom + zoomHeight + 20;
+            const newBottom = zoomBottomPx + zoomHeight + 20;
 
             // Use absolute positioning relative to the pane so it moves with it
             statsBtn.style.position = 'absolute';
@@ -136,15 +149,12 @@ function toggleTabletTerminal() {
     const isTablet = window.innerWidth <= 1024 || config.isTouchDevice;
     const topOffset = isTablet ? '10px' : '80px';
 
-    if (footer.style.display === 'none') {
+    if (!footer.classList.contains('tablet-expanded')) {
         // Expand
-        footer.style.display = 'flex';
-        footer.style.position = 'fixed';
-        footer.style.bottom = '0';
-        footer.style.left = '0';
-        footer.style.right = '0';
-        footer.style.zIndex = '90';
-        footer.style.height = '35vh'; // Increased height as requested
+        footer.classList.add('visible');
+        // Force reflow
+        void footer.offsetWidth;
+        footer.classList.add('animate-in');
         footer.classList.add('tablet-expanded');
 
         // Move controls up
@@ -158,8 +168,15 @@ function toggleTabletTerminal() {
 
     } else {
         // Collapse
-        footer.style.display = 'none';
+        footer.classList.remove('animate-in');
         footer.classList.remove('tablet-expanded');
+
+        // Wait for animation to finish before hiding visibility
+        setTimeout(() => {
+            if (!footer.classList.contains('tablet-expanded')) {
+                footer.classList.remove('visible');
+            }
+        }, 400);
 
         // Move controls down
         if (zoomControls) zoomControls.style.bottom = '20px';
@@ -171,11 +188,9 @@ function toggleTabletTerminal() {
         if (legend) legend.style.top = '20px';
     }
 
-    // Update stats button position immediately after toggling
-    // Small delay to allow transition if any, but mainly to ensure DOM update
-    setTimeout(() => {
-        ResponsiveUI.handleTabletStats();
-    }, 50);
+    // Update stats button position immediately
+    // With CSS transitions on both elements, setting the style now will sync the animation
+    ResponsiveUI.handleTabletStats();
 }
 
 window.toggleTabletTerminal = toggleTabletTerminal;
