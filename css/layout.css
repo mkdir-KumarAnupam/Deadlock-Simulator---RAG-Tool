@@ -122,12 +122,17 @@
 
 /* Responsive Toolbar handled by js/ui/responsive.js */
 
+/* Prevent toolbar shift on tablet layout (even if screen is wide) */
+.tablet-layout #sidebar-tools.shift-left {
+  right: 1rem !important; /* Keep default position */
+}
+
 @media (max-width: 1024px) {
   /* Tablet Stats Pane - Animate from Left */
   .stats-pane {
     left: -350px;
     right: auto;
-    top: 0; /* Full height or below header? User said "above all ui elements", so maybe top 0 */
+    top: 0;
     height: 100vh;
     border-left: none;
     border-right: 4px solid black;
@@ -145,4 +150,22 @@
   .stats-toggle-btn {
     /* Styles will be overridden by JS for fixed positioning */
   }
+}
+
+/* Force Tablet Stats Pane styles when .tablet-layout class is present (e.g. iPad Pro) */
+.tablet-layout .stats-pane {
+  left: -350px;
+  right: auto;
+  top: 0;
+  height: 100vh;
+  border-left: none;
+  border-right: 4px solid black;
+  box-shadow: 6px 0px 0px black;
+  transition: left 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 10005;
+}
+
+.tablet-layout .stats-pane.open {
+  left: 0;
+  right: auto;
 }

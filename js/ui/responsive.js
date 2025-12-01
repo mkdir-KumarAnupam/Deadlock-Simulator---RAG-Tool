@@ -8,10 +8,12 @@ const ResponsiveUI = {
         this.adjustToolbarScale();
         this.handleTabletTerminal();
         this.handleTabletStats();
+        this.handleTabletLayout(); // Add class management
         window.addEventListener('resize', () => {
             this.adjustToolbarScale();
             this.handleTabletTerminal();
             this.handleTabletStats();
+            this.handleTabletLayout();
         });
 
         // Also adjust when toolbar position changes (if we add that feature dynamically)
@@ -20,6 +22,15 @@ const ResponsiveUI = {
             this.adjustToolbarScale();
             this.handleTabletStats(); // Keep stats button synced
         }, 2000);
+    },
+
+    handleTabletLayout() {
+        const isTablet = window.innerWidth <= 1024 || config.isTouchDevice;
+        if (isTablet) {
+            document.body.classList.add('tablet-layout');
+        } else {
+            document.body.classList.remove('tablet-layout');
+        }
     },
 
     adjustToolbarScale() {
