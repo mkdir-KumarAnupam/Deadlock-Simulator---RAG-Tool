@@ -140,6 +140,13 @@
           description: 'A system configuration where the Banker\'s Algorithm fails. Available resources are insufficient to satisfy the Max Claim of any process.',
           outcome: 'Run the Safety Check to see "DEADLOCK POSSIBLE". This proves the system is in an Unsafe State.',
           config: [{ icon: 'fas fa-circle', text: '3 Processes' }, { icon: 'fas fa-exclamation-triangle', text: 'Unsafe Config' }]
+        },
+
+        {
+          id: 'mlq_mlfq_demo', number: '21', category: 'ADVANCED SCHEDULING', categoryColor: '#ff9ff3', title: 'MLQ & MLFQ Demo',
+          description: 'A setup designed to showcase Multilevel Queue (MLQ) and Multilevel Feedback Queue (MLFQ). Contains processes with varying priorities and burst times.',
+          outcome: 'MLQ: See processes split into FG/BG queues. MLFQ: Watch processes demote Q1->Q2->Q3 and get boosted.',
+          config: [{ icon: 'fas fa-layer-group', text: 'Mixed Priorities' }, { icon: 'fas fa-clock', text: 'Varied Bursts' }]
         }
       ];
     }
@@ -597,6 +604,31 @@
         printToCli("Loaded: Unsafe State Demo", 'info');
         printToCli("Available: 2. Needs: P1(6), P2(4), P3(7)", 'warning');
         printToCli("Run Safety Check to confirm UNSAFE state", 'success');
+      }
+      else if (type === 'mlq_mlfq_demo') {
+        selectScheduler('mlq', 'MLQ Scheduling');
+
+        // Foreground Processes (High Priority)
+        const p1 = addNode('process', cx - 150, cy - 80);
+        p1.label = 'FG-1'; p1.priorityGroup = 0; p1.burstTime = 40; p1.originalBurst = 40;
+
+        const p2 = addNode('process', cx - 50, cy - 80);
+        p2.label = 'FG-2'; p2.priorityGroup = 0; p2.burstTime = 60; p2.originalBurst = 60;
+
+        // Background Processes (Low Priority)
+        const p3 = addNode('process', cx + 50, cy + 80);
+        p3.label = 'BG-1'; p3.priorityGroup = 1; p3.burstTime = 200; p3.originalBurst = 200;
+
+        const p4 = addNode('process', cx + 150, cy + 80);
+        p4.label = 'BG-2'; p4.priorityGroup = 1; p4.burstTime = 150; p4.originalBurst = 150;
+
+        // Long running process for MLFQ demotion demo
+        const p5 = addNode('process', cx, cy);
+        p5.label = 'LongJob'; p5.priorityGroup = 1; p5.burstTime = 400; p5.originalBurst = 400;
+
+        printToCli("Loaded: MLQ & MLFQ Showcase", 'info');
+        printToCli("MLQ: FG-1/2 are Foreground, BG-1/2/LongJob are Background", 'success');
+        printToCli("MLFQ: Switch to MLFQ to see LongJob demote Q1->Q2->Q3", 'success');
       }
 
       document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));

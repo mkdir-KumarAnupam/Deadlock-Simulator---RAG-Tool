@@ -214,3 +214,35 @@
   border-style: solid;
   border-color: transparent transparent #000 transparent;
 }
+
+/* MLQ Settings Panel */
+/* MLQ Settings Panel */
+#mlq-settings-panel.visible,
+#mlfq-settings-panel.visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto;
+}
+
+.neo-select {
+  border: 2px solid black;
+  padding: 6px;
+  font-family: inherit;
+  font-weight: bold;
+  background: white;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s;
+}
+
+.neo-select:hover {
+  box-shadow: 4px 4px 0 rgba(0,0,0,1);
+}
+
+.bg-grid-white {
+  background-color: white;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

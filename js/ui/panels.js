@@ -176,6 +176,7 @@
     // --- Props Panel ---
     function openProps(node) {
       propPanel.style.right = '120px';
+      window.currentPropNode = node; // Track current node for refreshing
       const content = document.getElementById('prop-content');
 
       let html = `
@@ -206,7 +207,18 @@
                     <div class="mt-3">
                         <label class="block text-xs font-bold mb-1">PRIORITY (Lower=High):</label>
                         <input type="number" class="neo-input" value="${node.priority || 1}" min="0"
-                            onchange="updatePriority(${node.id}, this.value)">
+                            onchange="updatePriority(${node.id}, this.value)"
+                            ${(typeof schedulingAlgorithm !== 'undefined' && schedulingAlgorithm === 'mlfq') ? 'disabled title="Managed by MLFQ"' : ''}>
+                        ${(typeof schedulingAlgorithm !== 'undefined' && schedulingAlgorithm === 'mlfq') ? '<div class="text-[10px] text-red-600 font-bold mt-1">Managed by MLFQ</div>' : ''}
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs font-bold mb-1">MLQ QUEUE:</label>
+                        <select class="neo-select w-full" onchange="updatePriorityGroup(${node.id}, this.value)"
+                            ${(typeof schedulingAlgorithm !== 'undefined' && schedulingAlgorithm === 'mlfq') ? 'disabled title="Managed by MLFQ"' : ''}>
+                            <option value="0" ${(!node.priorityGroup || node.priorityGroup === 0) ? 'selected' : ''}>Foreground (High)</option>
+                            <option value="1" ${(node.priorityGroup === 1) ? 'selected' : ''}>Background (Low)</option>
+                        </select>
+                         ${(typeof schedulingAlgorithm !== 'undefined' && schedulingAlgorithm === 'mlfq') ? '<div class="text-[10px] text-red-600 font-bold mt-1">Managed by MLFQ</div>' : ''}
                     </div>
                     <div class="mt-3">
                         <label class="block text-xs font-bold mb-1">RAM (MB):</label>
@@ -283,6 +295,7 @@
 
     function closeProps() {
       propPanel.style.right = '-280px';
+      window.currentPropNode = null;
     }
     window.updateLabel = (id, val) => {
       const n = getNodeById(id);
@@ -314,6 +327,15 @@
     window.updatePriority = (id, val) => {
       const n = getNodeById(id);
       if (n) { n.priority = parseInt(val); draw(); printToCli(`Updated ${n.label} priority to ${n.priority}`); saveState(); }
+    };
+    window.updatePriorityGroup = (id, val) => {
+        const n = getNodeById(id);
+        if (n) {
+            n.priorityGroup = parseInt(val);
+            draw();
+            printToCli(`Updated ${n.label} MLQ Queue to ${n.priorityGroup === 0 ? 'Foreground' : 'Background'}`);
+            saveState();
+        }
     };
     window.updateMemory = (id, val) => {
       const n = getNodeById(id);
