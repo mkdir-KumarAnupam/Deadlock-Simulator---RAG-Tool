@@ -108,7 +108,12 @@
       const pane = document.getElementById('stats-pane');
       const toolsPanel = document.getElementById('sidebar-tools');
       pane.classList.toggle('open');
-      toolsPanel.classList.toggle('shift-left');
+
+      // Only shift toolbar on desktop
+      if (window.innerWidth > 1024) {
+        toolsPanel.classList.toggle('shift-left');
+      }
+
       updateStats();
     }
 
