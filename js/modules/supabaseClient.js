@@ -2,7 +2,7 @@
 const SupabaseService = {
     client: null,
     url: localStorage.getItem('supabase_url') || 'https://hcebfrrqyveyxhalajaa.supabase.co',
-    key: localStorage.getItem('supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZWJmcnJxeXZleXhoYWxhamFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MTE2NjksImV4cCI6MjA3OTk4NzY2OX0.2m8EJ1mG5X3S_5wh_44gGlxuFy5zY33sAiUZl5V-9B4',
+    key: localStorage.getItem('supabase_key') || '',
 
     init() {
         if (this.url && this.key && window.supabase) {
@@ -46,3 +46,4 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => SupabaseService.init(), 500);
     }
 });
+
