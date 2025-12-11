@@ -47,6 +47,7 @@
 
       switch (cmd) {
         case 'help':
+          printToCli("gencircle <P> <R> : Generate P processes and R resources in circular layout");
           printToCli("ap [burst]    : Add Process");
           printToCli("ar            : Add Resource");
           printToCli("link [u] [v]  : Link Nodes");
@@ -86,6 +87,29 @@
         case 'ar':
           addNode('resource', 100 + Math.random() * 200, 100 + Math.random() * 200);
           break;
+        case 'gencircle':
+          // usage: gencircle <P> <R>
+          (function(){
+            const p = parseInt(args[0], 10) || 5;
+            const r = parseInt(args[1], 10) || 4;
+
+            if (typeof window.DevTools === 'undefined' || typeof window.DevTools.generateCircular !== 'function') {
+              printToCli("DevTools.generateCircular not found. Make sure js/utils/devtools.js is loaded.", 'error');
+              return;
+            }
+
+            try {
+              const created = window.DevTools.generateCircular(p, r);
+              printToCli(`gencircle: created ${p} processes and ${r} resources.`, 'success');
+              // Also set lastDevCreated in case code expects it
+              window.lastDevCreated = created;
+            } catch (e) {
+              console.error(e);
+              printToCli("gencircle: failed to generate nodes. See console for details.", 'error');
+            }
+          })();
+          break;
+
         case 'link':
           if (args.length < 2) printToCli("Need 2 labels", 'error');
           else {
