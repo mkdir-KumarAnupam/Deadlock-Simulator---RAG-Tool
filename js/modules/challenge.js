@@ -26,9 +26,103 @@
       }, 400);
     }
 
+    function _generateProceduralChallenge(difficulty) {
+      function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      const pCountBase = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 5;
+      const rCountBase = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 5;
+      
+      const numProcesses = pCountBase + Math.floor(Math.random() * (difficulty === 'hard' ? 3 : 2));
+      const numResources = rCountBase + Math.floor(Math.random() * (difficulty === 'hard' ? 3 : 2));
+      
+      const nodes = [];
+      const edges = [];
+      
+      let idCounter = 1;
+      const pIds = [];
+      const rIds = [];
+      for (let i = 0; i < numProcesses; i++) pIds.push(idCounter++);
+      for (let i = 0; i < numResources; i++) rIds.push(idCounter++);
+
+      const totalNodes = numProcesses + numResources;
+      const radius = difficulty === 'easy' ? 120 : (difficulty === 'medium' ? 160 : 220);
+      
+      // Shuffle subsets for random placement
+      const allIds = shuffleArray([...pIds, ...rIds]);
+
+      // Distribute nodes randomly around a circle
+      allIds.forEach((id, i) => {
+         const angle = ((i) / totalNodes) * 2 * Math.PI - Math.PI / 2;
+         const isProc = pIds.includes(id);
+         const lbl = isProc ? "P" + (pIds.indexOf(id)+1) : "R" + (rIds.indexOf(id)+1);
+         nodes.push({ id, type: isProc ? "process" : "resource", label: lbl, x: Math.round(Math.cos(angle)*radius), y: Math.round(Math.sin(angle)*radius) });
+      });
+      
+      const maxCycle = Math.min(numProcesses, numResources);
+      let cycleLength = difficulty === 'easy' ? 2 : difficulty === 'medium' ? (Math.random() > 0.5 ? 2 : 3) : 3 + Math.floor(Math.random() * 3);
+      cycleLength = Math.min(cycleLength, maxCycle);
+      
+      // Pick random cycle participants
+      const pCycle = shuffleArray(pIds).slice(0, cycleLength);
+      const rCycle = shuffleArray(rIds).slice(0, cycleLength);
+
+      for (let i = 0; i < cycleLength; i++) {
+        edges.push({ source: pCycle[i], target: rCycle[i] }); // P requests R
+        edges.push({ source: rCycle[i], target: pCycle[(i + 1) % cycleLength] }); // R allocated to next P
+      }
+
+      // Connect any unused nodes to the main graph so they aren't awkwardly floating
+      const usedNodes = new Set([...pCycle, ...rCycle]);
+      const unusedNodes = [...pIds, ...rIds].filter(id => !usedNodes.has(id));
+      
+      unusedNodes.forEach(nodeId => {
+         const isProc = pIds.includes(nodeId);
+         const targetCycleNode = isProc ? rCycle[Math.floor(Math.random() * rCycle.length)] : pCycle[Math.floor(Math.random() * pCycle.length)];
+         const isRequest = Math.random() > 0.5;
+         
+         if (isProc && isRequest) edges.push({ source: nodeId, target: targetCycleNode });
+         else if (isProc && !isRequest) edges.push({ source: targetCycleNode, target: nodeId });
+         else if (!isProc && isRequest) edges.push({ source: targetCycleNode, target: nodeId });
+         else edges.push({ source: nodeId, target: targetCycleNode });
+      });
+
+      // Inject extra random decoy edges
+      const extraEdges = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 3 : 6;
+      for (let i = 0; i < extraEdges; i++) {
+         const p = pIds[Math.floor(Math.random() * pIds.length)];
+         const r = rIds[Math.floor(Math.random() * rIds.length)];
+         const isRequest = Math.random() > 0.5;
+         const source = isRequest ? p : r;
+         const target = isRequest ? r : p;
+         
+         if (!edges.some(e => e.source === source && e.target === target) && 
+             !edges.some(e => e.source === target && e.target === source)) { 
+             edges.push({ source, target });
+         }
+      }
+
+      const titles = ["Tangled Threads", "Resource Gridlock", "Circular Wait", "The Missing Release", "Lock Conflict", "Dependency Hell", "Deadlock Roulette", "Unsafe State Shift"];
+      const title = titles[Math.floor(Math.random() * titles.length)];
+
+      return {
+        title: title + (difficulty !== 'easy' ? ' (Advanced)' : ''),
+        description: "Analyze the graph and resolve the deadlock cycle by removing or rerouting an unsafe resource request.",
+        initialState: { nodes, edges },
+        successCriteria: "Break the circular wait."
+      };
+    }
+
     async function startChallenge(difficulty) {
+      const provider = localStorage.getItem('narratorProvider') || 'gemini';
       const apiKey = localStorage.getItem('geminiApiKey');
-      if (!apiKey) {
+      if (provider !== 'lmstudio' && !apiKey) {
         if (window.Session) Session.showNotification('Please configure Gemini API key in Settings first!', 'error');
         else alert('Please configure Gemini API key in Settings first!');
         return;
@@ -37,66 +131,67 @@
       const loading = document.getElementById('challenge-loading');
       loading.style.display = 'block';
 
-      let promptContext = "";
-      if (difficulty === 'easy') {
-        promptContext = "Create a simple Resource Allocation Graph scenario with 3-4 nodes that contains a deadlock or is in an unsafe state. The goal should be to identify it or make a simple move to fix it.";
-      } else if (difficulty === 'medium') {
-        promptContext = "Create a scenario with 5-6 nodes where a deadlock is imminent but can be avoided by careful resource allocation. The goal is to reach a safe state.";
-      } else {
-        promptContext = "Create a complex scenario with 7+ nodes involving multiple resource types and processes. It should have a subtle race condition or deadlock potential. The goal is to restructure the graph to be permanently safe.";
-      }
+      // 1. Mathematically generate a perfect graph
+      const baseChallenge = _generateProceduralChallenge(difficulty);
 
-      const prompt = `You are an OS Professor creating a challenge for a student.
-      ${promptContext}
-
-      CRITICAL: JSON ONLY. SHORT.
-      GOAL: ${difficulty === 'easy' ? 'Fix deadlock' : difficulty === 'medium' ? 'Prevent deadlock' : 'Fix race condition'}.
-      SOLVABLE: Yes.
-      NO FLUFF.
-
-      Respond ONLY with valid JSON in this format:
-      {
-        "title": "Short Title",
-        "description": "Concise instructions.",
-        "initialState": {
-          "nodes": [{"id": 1, "type": "process", "label": "P1", "x": 0, "y": 0}, ...],
-          "edges": [{"source": 1, "target": 2}, ...]
-        },
-        "successCriteria": "Hidden instructions for the AI evaluator."
-      }
-
-      Ensure coordinates (x, y) are spread out reasonably around 0,0 (center).
-      Do not include any markdown formatting or explanations outside the JSON.`;
+      // 2. Fetch the natural language story from AI
+      const prompt = `You are a creative OS Professor designing a deadlock puzzle for a student.
+      The scenario involves an operating system with ${baseChallenge.initialState.nodes.length} processes/resources and ${baseChallenge.initialState.edges.length} allocations.
+      There are ${baseChallenge.initialState.nodes.filter(n => n.type === 'process').length} processes and ${baseChallenge.initialState.nodes.filter(n => n.type === 'resource').length} resources.
+      The student must ${difficulty === 'easy' ? 'fix a simple deadlock' : difficulty === 'medium' ? 'prevent an imminent deadlock' : 'resolve a complex circular wait'}.
+      
+      CRITICAL: Give it a fun, immersive theme (like Database Locks, Server Threads, Spaceship AI cores, etc.) relating to this specific network of processes and resources.
+      
+      Respond EXACTLY with 2 lines of plain text and nothing else:
+      Line 1: A creative fun title (MAX 5 WORDS)
+      Line 2: 2-3 short sentences describing the theme and instructing the student to break the circular wait.
+      
+      Rules:
+      - Do NOT include labels like "TITLE:" or "DESCRIPTION:".
+      - Do NOT include any extra notes or parentheses. Just Line 1 and Line 2.`;
 
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || 'API Error');
-
-        let text = data.candidates[0].content.parts[0].text;
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          text = jsonMatch[0];
-        } else {
-          throw new Error("Invalid AI response format: No JSON found");
+        let text = await window.fetchAI(prompt, false, null, 250, 0.9, 80);
+        
+        // Clean up markdown and literal \n from model quirks
+        let cleanText = text.replace(/\*/g, '').replace(/\\n/g, '\n');
+        
+        // Split into lines, removing empty ones
+        let lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        
+        // Sometimes the AI puts everything on one line anyway, split by first period if needed
+        if (lines.length === 1 && lines[0].includes('.')) {
+           const periodIdx = lines[0].indexOf('.');
+           const titlePart = lines[0].substring(0, periodIdx);
+           const descPart = lines[0].substring(periodIdx + 1);
+           lines = [titlePart, descPart].filter(l => l.trim().length > 0);
         }
 
-        const challenge = JSON.parse(text);
-        loadChallenge(challenge, difficulty);
-
+        if (lines.length > 0) {
+          // Clean up AI trying to be "helpful" by prefixing
+          let t = lines[0].replace(/^(title|line 1)[\s:-]+/i, '').replace(/\(.*?\)/g, '').trim();
+          const words = t.split(/\s+/);
+          if (words.length > 5) {
+             t = words.slice(0, 5).join(' '); // Hard cap at 5 words
+          }
+          baseChallenge.title = t;
+        }
+        if (lines.length > 1) {
+          let desc = lines.slice(1).join(' ');
+          desc = desc.replace(/^(description|line 2)[\s:-]+/i, '').trim();
+          if (desc.length > 0) {
+            baseChallenge.description = desc;
+          }
+        }
       } catch (error) {
-        console.error('Challenge Gen Error:', error);
-        alert('Failed to generate challenge: ' + error.message);
+        console.warn('AI Story Generation Failed. Falling back to procedural defaults.', error);
+        // Fallback uses the titles/descriptions from _generateProceduralChallenge
       } finally {
         loading.style.display = 'none';
       }
+
+      // 3. Load the hybrid challenge
+      loadChallenge(baseChallenge, difficulty);
     }
 
     function minimizeChallenge() {
@@ -232,47 +327,15 @@
         </div>
       `;
 
-      const currentGraph = {
-        nodes: nodes.map(n => ({ id: n.id, type: n.type, label: n.label })),
-        edges: edges.map(e => ({
-          source: getNodeById(e.source).label,
-          target: getNodeById(e.target).label
-        }))
-      };
-
-      const prompt = `You are evaluating a student's solution to an OS challenge.
-
-      Keep feedback SHORT and DIRECT.
-
-      CHALLENGE: "${currentChallenge.title}"
-      GOAL: "${currentChallenge.description}"
-      SUCCESS CRITERIA: "${currentChallenge.successCriteria}"
-
-      STUDENT'S FINAL GRAPH STATE:
-      ${JSON.stringify(currentGraph, null, 2)}
-
-      Did the student solve the challenge correctly?
-      Respond with a JSON object:
-      {
-        "solved": true/false,
-        "feedback": "Short explanation."
-      }`;
-
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-
-        const data = await response.json();
-        let text = data.candidates[0].content.parts[0].text;
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) text = jsonMatch[0];
-
-        const result = JSON.parse(text);
+        // Evaluate purely programmatically to guarantee instant, error-free scoring.
+        const currentDeadlocks = await detectDeadlock(true);
+        const solved = currentDeadlocks.size === 0;
+        
+        let result = {
+          solved: solved,
+          feedback: solved ? "Excellent! You restructured the graph into a completely safe state." : "The graph still contains a deadlock cycle! Track the dependencies and try again."
+        };
 
         // Replace content with result
         contentArea.innerHTML = `
@@ -296,7 +359,16 @@
 
       } catch (error) {
         console.error('Eval Error:', error);
-        contentArea.innerHTML = `<div style="color: red; font-weight: bold;">Error evaluating solution. Please try again.</div>`;
+        contentArea.innerHTML = `
+          <div style="background: #fee2e2; border: 4px solid #ef4444; padding: 20px; box-shadow: 6px 6px 0 black;">
+             <h3 style="font-weight: 900; font-size: 20px; color: #b91c1c; margin-bottom: 10px;">EVALUATION ERROR</h3>
+             <p style="font-weight: bold; font-size: 14px; line-height: 1.5;">An error occurred while evaluating your graph, but you can retry it.</p>
+             <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button onclick="loadChallenge(currentChallenge, currentDifficulty)" class="neo-btn" style="flex: 1; background: white; border: 2px solid black; font-weight: bold; box-shadow: 3px 3px 0 black;">RETRY CHALLENGE</button>
+                <button onclick="quitChallenge()" class="neo-btn danger" style="flex: 1; font-weight: bold; border: 2px solid black; box-shadow: 3px 3px 0 black;">QUIT</button>
+             </div>
+          </div>
+        `;
       }
     }
 

@@ -36,6 +36,7 @@
           canvas.classList.add('shake-effect');
           setTimeout(() => canvas.classList.remove('shake-effect'), 500);
         }
+        if (window.pushNarratorEvent) pushNarratorEvent('deadlock', { cycle: cycleNames.join(' → ') });
         if (isRunning && !silent) toggleSimulation();
       } else {
         if (!silent) printToCli("✓ System Safe. Running AI analysis...", 'success');

@@ -16,6 +16,7 @@
           simControlBtn.classList.add('primary');
         }
         printToCli("Simulation Paused.");
+        if (window.pushNarratorEvent) pushNarratorEvent('pause', {});
 
         if (window.Session) Session.broadcast('sim_update', { type: 'stop' });
       } else {
@@ -68,6 +69,10 @@
         const quantumInfo = schedulingAlgorithm === 'rr' ? ` (Q=${timeQuantum})` : '';
 
         printToCli(`Simulation Running... [${algoName}${quantumInfo}]`);
+        if (window.pushNarratorEvent) pushNarratorEvent('start', {
+          processes: nodes.filter(n => n.type === 'process').length,
+          algo: (schedulingAlgorithm || 'fcfs').toUpperCase()
+        });
 
         if (window.Session) Session.broadcast('sim_update', { type: 'start' });
       }
