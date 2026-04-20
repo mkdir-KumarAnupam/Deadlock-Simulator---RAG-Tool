@@ -143,27 +143,42 @@
     }
 
     function addNode(type, x, y) {
-      const prefix = type === 'process' ? 'P' : 'R';
+      let prefix = 'P';
+      let state = 'READY';
+      if (type === 'process') { prefix = 'P'; state = 'READY'; }
+      else if (type === 'resource') { prefix = 'R'; state = 'RESOURCE'; }
+      else if (type === 'gateway') { prefix = 'GW'; state = 'ONLINE'; }
+      else if (type === 'balancer') { prefix = 'LB'; state = 'ONLINE'; }
+      else if (type === 'microservice') { prefix = 'SVC'; state = 'HEALTHY'; }
+      else if (type === 'database') { prefix = 'DB'; state = 'ONLINE'; }
+
       const count = nodes.filter(n => n.type === type).length + 1;
       const newNode = {
         id: nextId++,
         type: type,
         label: `${prefix}${count}`,
         x: x, y: y,
-        burstTime: type === 'process' ? 100 : 0,
+        burstTime: (type === 'process' || type === 'microservice' || type === 'database') ? 100 : 0,
         maxBurst: 100,
-        originalBurst: type === 'process' ? 100 : 0,
+        originalBurst: (type === 'process' || type === 'microservice' || type === 'database') ? 100 : 0,
         memory: type === 'process' ? Math.floor(Math.random() * 224) + 32 : 0,
         priority: type === 'process' ? 1 : 0,
-        state: type === 'process' ? 'READY' : 'RESOURCE',
-        arrivalTime: 0, // Will be set when simulation starts
-        // Resource capacity (number of instances)
+        state: state,
+        arrivalTime: 0, 
         capacity: type === 'resource' ? 1 : 0,
-        allocated: type === 'resource' ? 0 : 0, // How many instances currently allocated
-        // New Visual Props
-        rotation: (Math.random() - 0.5) * 0.25, // +/- ~7 degrees
+        allocated: type === 'resource' ? 0 : 0, 
+        
+        // Cloud Specific Metrics
+        queue: [],
+        queueCapacity: type === 'microservice' ? 5 : (type === 'database' ? 10 : (type === 'balancer' ? 20 : 0)),
+        rps: type === 'gateway' ? 5 : 0,
+        breakerState: 'CLOSED', // CLOSED, OPEN, HALF_OPEN
+        droppedRequests: 0,
+        roundRobinIndex: 0,
+
+        rotation: (Math.random() - 0.5) * 0.25, 
         pinColor: ['#ff4d4d', '#2d2d2d', '#4a90e2', '#silver'][Math.floor(Math.random() * 4)],
-        maxClaim: {} // Banker's Algorithm: Map<ResourceId, MaxCount>
+        maxClaim: {} 
       };
       nodes.push(newNode);
 
@@ -228,6 +243,16 @@
           printToCli(`Resource ${source.label} at full capacity (${source.capacity})!`, 'error');
           return;
         }
+      }
+
+      // Cloud Logic constraints
+      if (source.type === 'gateway' && target.type !== 'microservice') {
+        printToCli('Gateways can only route to Microservices!', 'error');
+        return;
+      }
+      if (source.type === 'microservice' && target.type === 'gateway') {
+        printToCli('Microservices cannot route back to Gateways natively.', 'error');
+        return;
       }
 
       edges.push({ source: source.id, target: target.id, label: '1' });

@@ -147,6 +147,12 @@
           description: 'A setup designed to showcase Multilevel Queue (MLQ) and Multilevel Feedback Queue (MLFQ). Contains processes with varying priorities and burst times.',
           outcome: 'MLQ: See processes split into FG/BG queues. MLFQ: Watch processes demote Q1->Q2->Q3 and get boosted.',
           config: [{ icon: 'fas fa-layer-group', text: 'Mixed Priorities' }, { icon: 'fas fa-clock', text: 'Varied Bursts' }]
+        },
+        {
+          id: 'cloud_demo', number: '22', category: 'CLOUD SYSTEMS', categoryColor: '#3498db', title: 'Microservices Resilience',
+          description: 'A cloud scenario with an API Gateway routing to Microservices and Database. Circuit Breakers trip under load.',
+          outcome: 'Watch the simulated packet traffic. Test resilience by spiking latency or killing nodes with the Chaos Panel!',
+          config: [{ icon: 'fas fa-cloud', text: 'Cloud Engine' }, { icon: 'fas fa-bolt', text: 'Chaos Ready' }]
         }
       ];
     }
@@ -629,6 +635,28 @@
         printToCli("Loaded: MLQ & MLFQ Showcase", 'info');
         printToCli("MLQ: FG-1/2 are Foreground, BG-1/2/LongJob are Background", 'success');
         printToCli("MLFQ: Switch to MLFQ to see LongJob demote Q1->Q2->Q3", 'success');
+      }
+      else if (type === 'cloud_demo') {
+        if (typeof toggleCloudMode === 'function') toggleCloudMode(true);
+        const gw = addNode('gateway', cx - 180, cy);
+        gw.rps = 10;
+        document.getElementById('slider-rps').value = 10;
+        updateRPS(10);
+        
+        const svc1 = addNode('microservice', cx - 20, cy - 80);
+        svc1.label = 'Auth';
+        const svc2 = addNode('microservice', cx - 20, cy + 80);
+        svc2.label = 'Cart';
+        
+        const db = addNode('database', cx + 160, cy);
+        db.label = 'UserDB';
+        
+        addEdge(gw, svc1);
+        addEdge(gw, svc2);
+        addEdge(svc1, db);
+        addEdge(svc2, db);
+        
+        printToCli("Loaded Cloud Demo! Gateways, Microservices, and Databases ready.", "success");
       }
 
       document.querySelectorAll('.neo-dropdown').forEach(d => d.classList.remove('show'));

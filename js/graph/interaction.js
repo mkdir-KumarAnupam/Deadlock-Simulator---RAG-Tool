@@ -17,6 +17,10 @@
       const map = {
         process: 'btn-process',
         resource: 'btn-resource',
+        gateway: 'btn-gateway',
+        balancer: 'btn-balancer',
+        microservice: 'btn-service',
+        database: 'btn-database',
         link: 'btn-link',
         delete: 'btn-delete',
         select: 'btn-select',
@@ -192,7 +196,7 @@
         dragStartPos = { x: pos.x, y: pos.y };
       }
 
-      if (mode === 'process' || mode === 'resource') {
+      if (mode === 'process' || mode === 'resource' || mode === 'gateway' || mode === 'microservice' || mode === 'database' || mode === 'balancer') {
         if (!node) addNode(mode, pos.x, pos.y);
         else draggingNode = node;
       }

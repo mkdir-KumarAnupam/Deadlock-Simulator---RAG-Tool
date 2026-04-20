@@ -258,6 +258,10 @@
                 <input type="checkbox" id="config-use-tools-dropdown" checked onchange="toggleToolsLayout(this.checked)">
                 <span class="font-bold">Use Tools Dropdown</span>
             </label>
+             <label class="flex items-center gap-2 cursor-pointer text-xs mt-1">
+                <input type="checkbox" id="config-cloud-mode" onchange="toggleCloudMode(this.checked)">
+                <span class="font-bold">Enable Cloud Editor Mode</span>
+            </label>
           </div>
         </div>
       </div>
@@ -811,16 +815,37 @@
 
       <!-- Tools Box -->
       <div class="neo-box bg-white p-2 transform rotate-1" id="tools-box">
-        <div class="text-xs font-black mb-2 text-center border-b-2 border-black pb-1">TOOLS</div>
+        <div class="text-[10px] font-black mb-2 text-center border-b-2 border-black pb-1 relative gap-1">
+            <span class="flex-grow text-xs tracking-widest uppercase">TOOLS</span>
+        </div>
+        
+        <!-- App Modes Tools -->
+        <div id="tools-os" class="flex flex-col gap-2">
+            <button id="btn-process" class="neo-btn active flex items-center justify-center" onclick="setMode('process')" title="Add Process" style="width: 40px; height: 40px;">
+                <i class="fas fa-circle" style="font-size: 14px;"></i>
+            </button>
+            <button id="btn-resource" class="neo-btn flex items-center justify-center" onclick="setMode('resource')" title="Add Resource" style="width: 40px; height: 40px;">
+                <i class="fas fa-square" style="font-size: 14px;"></i>
+            </button>
+        </div>
+        
+        <div id="tools-cloud" class="flex flex-col gap-2 hidden">
+            <button id="btn-gateway" class="neo-btn flex items-center justify-center bg-[#a3ffac]" onclick="setMode('gateway')" title="Add API Gateway" style="width: 40px; height: 40px;">
+                <i class="fas fa-cloud-download-alt" style="font-size: 14px;"></i>
+            </button>
+            <button id="btn-balancer" class="neo-btn flex items-center justify-center bg-[#4ecdc4]" onclick="setMode('balancer')" title="Add Load Balancer" style="width: 40px; height: 40px;">
+                <i class="fas fa-random" style="font-size: 14px;"></i>
+            </button>
+            <button id="btn-service" class="neo-btn flex items-center justify-center bg-[#ffe600]" onclick="setMode('microservice')" title="Add Microservice" style="width: 40px; height: 40px;">
+                <i class="fas fa-server" style="font-size: 14px;"></i>
+            </button>
+            <button id="btn-database" class="neo-btn flex items-center justify-center bg-[#ff9ff3]" onclick="setMode('database')" title="Add Database" style="width: 40px; height: 40px;">
+                <i class="fas fa-database" style="font-size: 14px;"></i>
+            </button>
+        </div>
+
+        <div class="w-full h-1 border-b-2 border-dashed border-gray-300 my-1"></div>
         <div class="flex flex-col gap-2">
-          <button id="btn-process" class="neo-btn active flex items-center justify-center" onclick="setMode('process')"
-            title="Add Process" style="width: 40px; height: 40px;">
-            <i class="fas fa-circle" style="font-size: 14px;"></i>
-          </button>
-          <button id="btn-resource" class="neo-btn flex items-center justify-center" onclick="setMode('resource')"
-            title="Add Resource" style="width: 40px; height: 40px;">
-            <i class="fas fa-square" style="font-size: 14px;"></i>
-          </button>
           <button id="btn-link" class="neo-btn flex items-center justify-center" onclick="setMode('link')"
             title="Link Nodes" style="width: 40px; height: 40px;">
             <i class="fas fa-link" style="font-size: 14px;"></i>
@@ -877,6 +902,36 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Cloud Chaos Panel -->
+    <div id="chaos-panel" class="neo-box bg-white p-4 hidden flex-col gap-3 absolute left-20 bottom-32 z-[100] border-4 border-black shadow-[6px_6px_0_black]" style="width: 250px;">
+        <div class="font-black text-sm border-b-2 border-black pb-1 text-center uppercase tracking-widest bg-[#ff4757] text-white py-1">Chaos Control</div>
+        
+        <div class="flex flex-col gap-1 border-2 border-black p-2 bg-[#f5f6fa]">
+            <label class="text-[10px] font-bold font-mono">GATEWAY TRAFFIC: <span id="val-rps" class="text-blue-600">10</span> RPS</label>
+            <input type="range" id="slider-rps" min="1" max="100" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updateRPS(this.value)">
+        </div>
+
+        <div class="flex flex-col gap-1 border-2 border-black p-2 bg-[#f5f6fa]">
+            <label class="text-[10px] font-bold font-mono">GLOBAL PACKET LOSS: <span id="val-ploss" class="text-red-500">0</span>%</label>
+            <input type="range" id="slider-ploss" min="0" max="100" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" oninput="updatePacketLoss(this.value)">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-1">
+            <button onclick="injectChaos('latency')" class="neo-btn bg-[#ffe600] border-2 border-black flex flex-col items-center justify-center gap-1 font-bold py-2 hover:translate-y-1 text-[9px] hover:bg-opacity-80 transition-all">
+                <i class="fas fa-bolt text-sm"></i> LATENCY
+            </button>
+            <button onclick="injectChaos('kill')" class="neo-btn bg-[#ff9ff3] border-2 border-black flex flex-col items-center justify-center gap-1 font-bold py-2 hover:translate-y-1 text-[9px] hover:bg-opacity-80 transition-all">
+                <i class="fas fa-skull text-sm"></i> KILL
+            </button>
+            <button onclick="injectChaos('leak')" class="neo-btn bg-[#ffeb3b] border-2 border-black flex flex-col items-center justify-center gap-1 font-bold py-2 hover:translate-y-1 text-[9px] hover:bg-opacity-80 transition-all">
+                <i class="fas fa-memory text-sm text-green-700"></i> MEM LEAK
+            </button>
+            <button onclick="injectChaos('partition')" class="neo-btn bg-[#eccc68] border-2 border-black flex flex-col items-center justify-center gap-1 font-bold py-2 hover:translate-y-1 text-[9px] hover:bg-opacity-80 transition-all">
+                <i class="fas fa-cut text-sm text-red-600"></i> PARTITION
+            </button>
+        </div>
     </div>
 
     <!-- Zoom & Pan Controls -->
@@ -965,7 +1020,7 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <div class="bg-gray-100 p-2 border-b-4 border-black flex justify-between items-center text-sm gap-4">
                 <div class="text-xs font-bold font-sans text-gray-700 ml-2" id="code-translator-context">Translating graph topology to C Pthreads...</div>
                 <button onclick="copyTranslatorCode()" class="neo-btn sm bg-white border-2 border-black font-bold text-xs flex items-center gap-2 shadow-[2px_2px_0_black]">

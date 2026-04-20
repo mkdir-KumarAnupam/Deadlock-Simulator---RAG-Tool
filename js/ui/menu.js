@@ -64,3 +64,118 @@
       loadGeminiKey();
     });
 
+    // --- Hardware View Toggle ---
+    window.toggleHardwareView = function() {
+        const hwPanel = document.getElementById('hardware-panel');
+        if (hwPanel) {
+            hwPanel.classList.toggle('hidden');
+            if (!hwPanel.classList.contains('hidden')) {
+                hwPanel.style.display = 'flex';
+            } else {
+                hwPanel.style.display = 'none';
+            }
+        }
+    };
+
+    // --- Cloud / OS Mode Toggle ---
+    window.isCloudMode = false;
+    window.toggleCloudMode = function(toCloud) {
+        window.isCloudMode = toCloud;
+        const toolsOs = document.getElementById('tools-os');
+        const toolsCloud = document.getElementById('tools-cloud');
+        const labelOs = document.getElementById('label-mode-os');
+        const labelCloud = document.getElementById('label-mode-cloud');
+        const chaosPanel = document.getElementById('chaos-panel');
+
+        // Update settings checkbox state if toggled programmatically
+        const cloudCheckbox = document.getElementById('config-cloud-mode');
+        if (cloudCheckbox) cloudCheckbox.checked = toCloud;
+
+        if (toCloud) {
+            toolsOs.classList.add('hidden');
+            toolsCloud.classList.remove('hidden');
+            if (labelCloud) {
+                labelCloud.classList.add('bg-[#ffe600]', 'text-black');
+                labelCloud.classList.remove('bg-white', 'text-gray-400');
+            }
+            if (labelOs) {
+                labelOs.classList.add('bg-white', 'text-gray-400');
+                labelOs.classList.remove('bg-[#ffe600]', 'text-black');
+            }
+            if (chaosPanel) { chaosPanel.classList.remove('hidden'); chaosPanel.classList.add('flex'); }
+            if (typeof setMode === 'function') setMode('microservice');
+        } else {
+            toolsCloud.classList.add('hidden');
+            toolsOs.classList.remove('hidden');
+            if (labelOs) {
+                labelOs.classList.add('bg-[#ffe600]', 'text-black');
+                labelOs.classList.remove('bg-white', 'text-gray-400');
+            }
+            if (labelCloud) {
+                labelCloud.classList.add('bg-white', 'text-gray-400');
+                labelCloud.classList.remove('bg-[#ffe600]', 'text-black');
+            }
+            if (chaosPanel) { chaosPanel.classList.add('hidden'); chaosPanel.classList.remove('flex'); }
+            if (typeof setMode === 'function') setMode('process');
+        }
+    };
+
+    // --- Chaos Engineering Controls ---
+    window.updateRPS = function(val) {
+        document.getElementById('val-rps').innerText = val;
+        if (typeof nodes !== 'undefined') {
+            nodes.filter(n => n.type === 'gateway').forEach(n => {
+                n.rps = parseInt(val);
+            });
+        }
+    };
+
+    window.globalPacketLoss = 0;
+    window.updatePacketLoss = function(val) {
+        document.getElementById('val-ploss').innerText = val;
+        window.globalPacketLoss = parseInt(val) / 100.0;
+    };
+
+    window.injectChaos = function(type) {
+        if (typeof nodes === 'undefined') return;
+        if (type === 'latency') {
+            const dbs = nodes.filter(n => n.type === 'database');
+            if (dbs.length > 0) {
+                const db = dbs[Math.floor(Math.random() * dbs.length)];
+                db.queueCapacity = 2; // severe bottleneck
+                db.droppedRequests += 10;
+                printToCli('⚡ CHAOS: Latency spiked on ' + db.label, 'warning');
+            } else {
+                printToCli('No databases to stress!', 'error');
+            }
+        } else if (type === 'kill') {
+            const svcs = nodes.filter(n => n.type === 'microservice');
+            if (svcs.length > 0) {
+                const svc = svcs[Math.floor(Math.random() * svcs.length)];
+                svc.state = 'FAILING';
+                svc.breakerState = 'OPEN';
+                svc.droppedRequests = 100; // Insta kill
+                printToCli('💀 CHAOS: Killed ' + svc.label, 'error');
+            } else {
+                 printToCli('No microservices to kill!', 'error');
+            }
+        } else if (type === 'leak') {
+            const svcs = nodes.filter(n => n.type === 'microservice');
+            if (svcs.length > 0) {
+                const svc = svcs[Math.floor(Math.random() * svcs.length)];
+                svc.memoryLeak = true;
+                svc.memLeakFactor = 1.0;
+                printToCli('⚠️ CHAOS: Memory leak injected into ' + svc.label, 'warning');
+            } else { printToCli('No microservices to leak!', 'error'); }
+        } else if (type === 'partition') {
+            const trafficEdges = edges.filter(e => {
+                const source = getNodeById(e.source);
+                return source && (source.type === 'gateway' || source.type === 'microservice' || source.type === 'balancer');
+            });
+            if (trafficEdges.length > 0) {
+                const edgeToKill = trafficEdges[Math.floor(Math.random() * trafficEdges.length)];
+                deleteEdge(edgeToKill);
+                printToCli('✂️ CHAOS: Network Partition! Connection severed.', 'error');
+            } else { printToCli('No active connections to partition!', 'error'); }
+        }
+    };

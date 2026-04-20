@@ -105,12 +105,62 @@
             ctx.fillText(e.label, midX, midY - 10);
             ctx.restore();
           }
+
+          // Circuit breaker icon if open
+          if (t.breakerState === 'OPEN' && window.isCloudMode) {
+              const ratio = 0.8;
+              const breakX = s.x + (t.x - s.x) * ratio;
+              const breakY = s.y + (t.y - s.y) * ratio;
+              
+              ctx.save();
+              ctx.fillStyle = '#ff4757';
+              ctx.strokeStyle = 'black';
+              ctx.lineWidth = 2;
+              ctx.font = 'bold 12px var(--font-neo)';
+              ctx.translate(breakX, breakY);
+              ctx.beginPath();
+              ctx.rect(-10, -10, 20, 20);
+              ctx.fill();
+              ctx.stroke();
+              
+              ctx.fillStyle = 'white';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('X', 0, 0);
+              ctx.restore();
+          }
         }
       });
 
       // Draw flow particles on top of edges
       if (isRunning) {
         drawFlowParticles();
+        
+        // Draw cloud network packets
+        if (window.networkPackets && window.networkPackets.length > 0) {
+            window.networkPackets.forEach(p => {
+                const s = getNodeById(p.source);
+                const t = getNodeById(p.target);
+                if (s && t) {
+                    const x = s.x + (t.x - s.x) * p.progress;
+                    const y = s.y + (t.y - s.y) * p.progress;
+                    
+                    ctx.save();
+                    ctx.fillStyle = p.color;
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Glow effect
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = p.color;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
+        }
       }
 
       // Draw all animations
@@ -126,19 +176,36 @@
         ctx.rotate(n.rotation || 0);
 
         const isP = n.type === 'process';
-        let color = n.customColor || (isP ? config.colors[n.state.toLowerCase()] : config.colors.resource);
+        const isGateway = n.type === 'gateway';
+        const isSvc = n.type === 'microservice';
+        const isDB = n.type === 'database';
+        
+        let color = n.customColor;
+        if (!color) {
+            if (isP) color = config.colors[n.state.toLowerCase()] || '#a3ffac';
+            else if (n.type === 'resource') color = config.colors.resource;
+            else if (isGateway) color = '#a3ffac';
+            else if (isSvc) color = '#ffe600';
+            else if (isDB) color = '#ff9ff3';
+        }
 
         // Running process bounce
         let bounceOffset = 0;
-        if (n.state === 'RUNNING' && isRunning) {
+        if ((n.state === 'RUNNING' || n.state === 'PROCESSING') && isRunning) {
           bounceOffset = Math.sin(animationFrame * 0.15) * 3;
         }
         ctx.translate(0, bounceOffset);
 
         // Highlight states with simple glow
-        if (deadlockSet.has(n.id)) {
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = 'red';
+        if (deadlockSet.has(n.id) || n.state === 'FAILING' || n.breakerState === 'OPEN') {
+          ctx.shadowBlur = 0;
+          ctx.shadowColor = 'transparent';
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#ff4757'; // Red error border
+        } else if (n.state === 'STRESSED') {
+          ctx.shadowBlur = 0;
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#ffa502'; // Orange warning border
         } else if (starvingSet.has(n.id)) {
           ctx.shadowBlur = 12;
           ctx.shadowColor = config.colors.starvation;
@@ -213,6 +280,55 @@
             ctx.arc(0, 0, config.nodeRadius - 9, startAngle, startAngle + (totalAngle * pct));
             ctx.stroke();
           }
+        } else if (isSvc || isGateway) {
+            // Hexagon for Microservice / Gateway
+            const s = config.nodeRadius * 1.2;
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle_deg = 60 * i - 30;
+                const angle_rad = Math.PI / 180 * angle_deg;
+                ctx.lineTo(s * Math.cos(angle_rad), s * Math.sin(angle_rad));
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw neat Queue indicator
+            if (isSvc) {
+               ctx.fillStyle = 'white';
+               ctx.strokeStyle = 'black';
+               ctx.lineWidth = 2;
+               ctx.beginPath();
+               ctx.rect(-15, s + 5, 30, 10);
+               ctx.fill();
+               ctx.stroke();
+               
+               // Fill bar
+               const fillPct = n.queue.length / n.queueCapacity;
+               ctx.fillStyle = fillPct > 0.8 ? '#ff4757' : (fillPct > 0.5 ? '#ffa502' : '#2ed573');
+               ctx.fillRect(-14, s + 6, 28 * fillPct, 8);
+            }
+        } else if (isDB) {
+            // Cylinder for Database
+            const w = config.nodeRadius * 2;
+            const h = config.nodeRadius * 1.5;
+            
+            ctx.beginPath();
+            // Body
+            ctx.rect(-w/2, -h/2, w, h);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Top ellipse
+            ctx.beginPath();
+            ctx.ellipse(0, -h/2, w/2, h/4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Bottom curve
+            ctx.beginPath();
+            ctx.ellipse(0, h/2, w/2, h/4, 0, 0, Math.PI);
+            ctx.stroke();
         } else {
           // Resource - Clean elegant square
           const s = config.nodeRadius * 1.85;

@@ -237,7 +237,96 @@
         updateProcessStates();
       }
 
+      // Track moving packets for the renderer
+      window.networkPackets = window.networkPackets || [];
+
+      function simulateCloudTraffic() {
+          // 1. Gateways generate traffic based on their RPS
+          nodes.filter(n => n.type === 'gateway').forEach(gw => {
+              if (Math.random() < (gw.rps / 10)) { 
+                  const targets = edges.filter(e => e.source === gw.id).map(e => getNodeById(e.target));
+                  if (targets.length > 0) {
+                      const target = targets[Math.floor(Math.random() * targets.length)];
+                      if (target.breakerState !== 'OPEN') {
+                          window.networkPackets.push({
+                              id: Math.random().toString(),
+                              source: gw.id,
+                              target: target.id,
+                              progress: 0,
+                              speed: 0.08,
+                              color: '#3498db'
+                          });
+                      }
+                  }
+              }
+          });
+
+          // 2. Move Packets
+          for (let i = window.networkPackets.length - 1; i >= 0; i--) {
+              const p = window.networkPackets[i];
+              p.progress += p.speed;
+              if (p.progress >= 1) {
+                  const dest = getNodeById(p.target);
+                  if (dest) {
+                      if (dest.queue.length < dest.queueCapacity) {
+                          dest.queue.push({ id: p.id, arrivalTime: Date.now() });
+                      } else {
+                          dest.droppedRequests++;
+                      }
+                  }
+                  window.networkPackets.splice(i, 1);
+              }
+          }
+
+          // 3. Process Queues in Microservices & Databases
+          nodes.filter(n => n.type === 'microservice' || n.type === 'database').forEach(n => {
+              const processRate = n.type === 'database' ? 0.3 : 0.6; // DBs are slower
+              if (n.queue.length > 0 && Math.random() < processRate) {
+                  n.queue.shift(); // processed
+                  
+                  // If microservice, maybe it needs to call DB
+                  if (n.type === 'microservice' && Math.random() < 0.6) {
+                      const dbs = edges.filter(e => e.source === n.id).map(e => getNodeById(e.target));
+                      if (dbs.length > 0) {
+                          const db = dbs[Math.floor(Math.random() * dbs.length)];
+                          // Circuit Breaker simulation
+                          if (db.breakerState !== 'OPEN') {
+                              window.networkPackets.push({
+                                  id: Math.random().toString(),
+                                  source: n.id,
+                                  target: db.id,
+                                  progress: 0,
+                                  speed: 0.06, 
+                                  color: '#9b59b6'
+                              });
+                          }
+                      }
+                  }
+              }
+
+              // Update Health States
+              const fillRatio = n.queue.length / n.queueCapacity;
+              if (n.droppedRequests > 15) {
+                  n.state = 'FAILING';
+                  if (Math.random() < 0.1) n.breakerState = 'OPEN'; // Trip breaker
+              } else if (fillRatio > 0.8 || n.droppedRequests > 5) {
+                  n.state = 'STRESSED';
+              } else {
+                  n.state = 'HEALTHY';
+                  if (n.droppedRequests > 0 && Math.random() < 0.1) n.droppedRequests--;
+                  if (n.breakerState === 'OPEN' && Math.random() < 0.01) n.breakerState = 'CLOSED'; // Auto-recover
+              }
+          });
+      }
+
       function scheduler() {
+        if (window.isCloudMode) {
+          simulateCloudTraffic();
+          draw();
+          if (window.Session) Session.broadcast('sim_update', { type: 'step' });
+          return;
+        }
+
         // Try to allocate resources to blocked processes first
         attemptAllocation();
 
@@ -741,6 +830,36 @@
           chart.appendChild(container);
           lastGanttEntry = div;
           chart.scrollLeft = chart.scrollWidth;
+        }
+      }
+
+      function updateGanttMetrics() {
+        const metricsHtml = Object.values(processMetrics)
+          .filter(m => m.completionTime !== null)
+          .map(m => {
+            const contextSwitches = Math.max(0, (m.executionSegments?.length || 1) - 1);
+            return `
+                          <div style="border: 3px solid black; padding: 12px; background: white; font-family: 'Courier New', monospace; font-size: 11px; box-shadow: 6px 6px 0 black; margin-bottom: 12px;">
+                              <div style="font-weight: bold; border: 2px solid black; margin-bottom: 8px; background: #ffe600; padding: 8px; box-shadow: 3px 3px 0 black; font-size: 13px; text-transform: uppercase;">
+                                  ${m.label} - PROCESS METRICS
+                              </div>
+                              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                  <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>ARRIVAL:</strong> ${m.arrivalTime}ms</div>
+                                  <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>FIRST RUN:</strong> ${m.firstRunTime}ms</div>
+                                  <div style="border: 2px solid black; padding: 6px; background: #f5f5f5;"><strong>COMPLETION:</strong> ${m.completionTime}ms</div>
+                                  <div style="border: 2px solid black; padding: 6px; background: #ffeaa7;"><strong>BURST TIME:</strong> ${m.totalExecutionTime}ms</div>
+                                  <div style="border: 3px solid black; padding: 6px; background: #a3ffac; box-shadow: 3px 3px 0 black;"><strong>TURNAROUND:</strong> ${m.turnaroundTime}ms</div>
+                                  <div style="border: 3px solid black; padding: 6px; background: #ff9aa2; box-shadow: 3px 3px 0 black;"><strong>WAITING:</strong> ${m.waitingTime}ms</div>
+                                  <div style="border: 2px solid black; padding: 6px; background: #e8f4f8;"><strong>RESPONSE:</strong> ${m.responseTime}ms</div>
+                                  <div style="border: 2px solid black; padding: 6px; background: #d6e4ff;"><strong>CTX SWITCHES:</strong> ${contextSwitches}</div>
+                              </div>
+                          </div>
+                      `;
+          }).join('');
+
+        const metricsDisplay = document.getElementById('metrics-display');
+        if (metricsDisplay) {
+          metricsDisplay.innerHTML = metricsHtml || '<div style="color: #666; font-style: italic; padding: 16px; border: 2px dashed #ccc; text-align: center;">No completed processes yet. Start simulation to see metrics.</div>';
         }
       }
 
